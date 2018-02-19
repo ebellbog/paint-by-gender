@@ -1,0 +1,28 @@
+body {
+  background-color: skyblue;
+}
+
+canvas {
+  background-color: white;
+  margin-top: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+#eraser {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 15px;
+  display: block;
+  width: 100px;
+  height: 30px;
+}
+
+#progress {
+  width: 100%;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 18px;
+  color: gray;
+}
