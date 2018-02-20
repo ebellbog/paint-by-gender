@@ -8,9 +8,12 @@
 <script src="./js/paint.js"></script>
 </head>
 <body>
-<div id="progress">
-  <span> Percent painted: </span>
-  <span id="percent-painted"> 0% </span>
+<div class="slider">
+  <div class="slider-wrapper">
+    <div class="slider-outline"></div>
+    <div class="slider-fill"></div>
+  </div>
+  <div class="slider-label">% Painted </div>
 </div>
 <canvas id="game" width=500px height=500px></canvas>
 <input type="button" value="Erase" id="eraser"/>
