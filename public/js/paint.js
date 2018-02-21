@@ -1,3 +1,20 @@
+colors = {
+  paint: [255, 150, 150],//#bd354d',
+  canvas: [132, 189, 250],
+  shape: [255, 255, 255],
+  spill: [132, 150, 150]
+}
+
+function rgbToStr(rgbList) {
+ return 'rgb('+rgbList.join(', ')+')';
+}
+
+// significantly faster than reduce
+function rgbSum(pixelData, start) {
+  if (!start) start = 0;
+  return pixelData[start]+pixelData[start+1]+pixelData[start+2];
+}
+
 function midPointBtw(p1, p2) {
   return {
     x: p1.x + (p2.x - p1.x) / 2,
@@ -23,26 +40,37 @@ function getContext($canvas) {
   return ctx;
 }
 
-function getPercentPainted() {
+function analyzeCanvas() {
   var ctx = getContext();
   var imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height).data;
-  var white = 0, painted = 0;
   
+  var totals = {
+    unpainted: 0,
+    painted: 0,
+    spill: 0
+  }
+
   for (var i = 0; i < imageData.length; i+=4) {
-    if (imageData[i] == 255) {
-      white++;
-    } else if (imageData[i] == 132) {
-      continue;
-    } else {
-      painted++;
+    switch(rgbSum(imageData, i)) {
+      case rgbSum(colors.shape):
+        totals.unpainted++;
+        break;
+      case rgbSum(colors.paint):
+        totals.painted++;
+        break;
+      case rgbSum(colors.spill):
+        totals.spill++;
+        break;
     }
   }
-  return painted/(painted+white);
+
+  return totals;
 }
 
 function updatePercentPainted() {
   var ctx = getContext();
-  var percent = getPercentPainted(ctx);
+  var canvasData = analyzeCanvas();
+  var percent = canvasData.painted/(canvasData.painted+canvasData.unpainted);
 
   var $slider = $('.slider-outline').first();
   var height = $slider.height();
@@ -56,11 +84,13 @@ function updatePercentAsync() {
 
 function setupLevel(level) {
   var ctx = getContext();
+  ctx.save();
+  ctx.globalCompositeOperation = 'normal';
   switch(level) {
     case 1:
-      ctx.fillStyle = 'rgb(132, 189, 250)';
+      ctx.fillStyle = rgbToStr(colors.canvas);
       ctx.fillRect(0, 0, 500, 500);
-      ctx.fillStyle = 'white';
+      ctx.fillStyle = rgbToStr(colors.shape);
       ctx.beginPath();
       ctx.arc(250, 200, 225, 0, Math.PI);
       ctx.fill();
@@ -68,21 +98,23 @@ function setupLevel(level) {
     default:
       break;
   }
+  ctx.restore();
 }
 
 $(document).ready(function(){
-  var paintColor = '#bd354d'; //#ff9696
-  $('.slider-fill').css('background-color', paintColor);
+  $('.slider-fill').css('background-color', rgbToStr(colors.paint));
 
+  setupLevel(1);
+  
   var $canvas = $('#game');
   var ctx = getContext($canvas);
 
   ctx.lineWidth = 15;
   ctx.lineJoin = ctx.lineCap = 'round';
-  ctx.strokeStyle = paintColor;
+  ctx.strokeStyle = rgbToStr(colors.paint);
+  ctx.globalCompositeOperation = 'darken';
 
   var isDrawing, strokes = [];
-  setupLevel(1);
 
   $canvas.on('mousedown', function(e) {
     isDrawing = true;
