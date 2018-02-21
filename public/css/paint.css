@@ -20,12 +20,30 @@ canvas {
   height: 30px;
 }
 
+#percent-painted {
+  left: 10px;
+  top: 150px;
+}
+
+#spill-warning {
+  left: 110px;
+  top: 150px;
+}
+
+#spill-warning .slider-outline {
+  background: linear-gradient(red,yellow 45%,#0f0);
+  opacity: 0.75;
+}
+
+#spill-warning .slider-fill{
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
 .slider {
   width: 100px;
   text-align: center;
   position: absolute;
-  left: 50px;
-  top: 150px;
  }
 
 .slider-wrapper {
@@ -52,6 +70,16 @@ canvas {
  position: absolute;
  bottom: 2px;
  left: 2px;
+}
+
+.slider-mark {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+  background-color: rgba(50, 50, 50, 0.6);
 }
 
 .slider-label {

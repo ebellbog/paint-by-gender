@@ -8,12 +8,20 @@
 <script src="./js/paint.js"></script>
 </head>
 <body>
-<div class="slider">
+<div class="slider" id="percent-painted">
   <div class="slider-wrapper">
     <div class="slider-outline"></div>
     <div class="slider-fill"></div>
   </div>
   <div class="slider-label">% Painted </div>
+</div>
+<div class="slider" id="spill-warning">
+  <div class="slider-wrapper">
+    <div class="slider-outline"></div>
+    <div class="slider-fill"></div>
+    <div class="slider-mark"></div>
+  </div>
+  <div class="slider-label">Spill Warning </div>
 </div>
 <canvas id="game" width=500px height=500px></canvas>
 <input type="button" value="Erase" id="eraser"/>

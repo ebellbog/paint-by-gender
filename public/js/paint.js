@@ -1,5 +1,5 @@
 colors = {
-  paint: [255, 150, 150],//#bd354d',
+  paint: [255, 150, 150],//'#bd354d'
   canvas: [132, 189, 250],
   shape: [255, 255, 255],
   spill: [132, 150, 150]
@@ -72,10 +72,23 @@ function updatePercentPainted() {
   var canvasData = analyzeCanvas();
   var percent = canvasData.painted/(canvasData.painted+canvasData.unpainted);
 
-  var $slider = $('.slider-outline').first();
+  var $slider = $('#percent-painted .slider-outline');
   var height = $slider.height();
-  var $fill = $('.slider-fill');
+  var $fill = $('#percent-painted .slider-fill');
   $fill.animate({height: height*percent}, 100, 'linear');
+  $fill.css('background-color', percent>=1?'#0f0':rgbToStr(colors.paint));
+
+  var bottom, maxSpill = 12000;
+
+  if(canvasData.spill >= maxSpill) {
+    console.log(canvasData.spill);
+    bottom = height-7;
+  } else {
+    bottom = (height-7)*canvasData.spill/maxSpill+2;
+  }
+  
+  var $spillSlider = $('#spill-warning .slider-mark');
+  $spillSlider.animate({bottom:bottom}, 100, 'linear');
 }
 
 function updatePercentAsync() {
@@ -101,18 +114,22 @@ function setupLevel(level) {
   ctx.restore();
 }
 
-$(document).ready(function(){
-  $('.slider-fill').css('background-color', rgbToStr(colors.paint));
+function setupContext(ctx, type) {
+  if (type=='painting') {
+    ctx.lineWidth = 30;
+    ctx.lineJoin = ctx.lineCap = 'round';
+    ctx.strokeStyle = rgbToStr(colors.paint);
+    ctx.globalCompositeOperation = 'darken';
+  }
+}
 
-  setupLevel(1);
+$(document).ready(function(){
+  $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
   
   var $canvas = $('#game');
   var ctx = getContext($canvas);
 
-  ctx.lineWidth = 15;
-  ctx.lineJoin = ctx.lineCap = 'round';
-  ctx.strokeStyle = rgbToStr(colors.paint);
-  ctx.globalCompositeOperation = 'darken';
+  setupLevel(1);
 
   var isDrawing, strokes = [];
 
@@ -133,8 +150,8 @@ $(document).ready(function(){
     strokes[strokes.length-1].push(curPos);
 
     setupLevel(1);
-    //ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    
+    setupContext(ctx,'painting');
+
     var total = 0;
     for (var j = 0; j < strokes.length; j++) {
       var points = strokes[j];
@@ -167,7 +184,6 @@ $(document).ready(function(){
   $('#eraser').click(function() {
     strokes.length = 0;
     setupLevel(1);
-    //ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     updatePercentPainted();
   });
 });
