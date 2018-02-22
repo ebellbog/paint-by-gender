@@ -89,9 +89,9 @@ function updatePercentPainted() {
   var bottom, maxSpill = 12000;
 
   if(canvasData.spill >= maxSpill) {
-    bottom = height-7;
+    bottom = height-10;
   } else {
-    bottom = (height-7)*canvasData.spill/maxSpill+2;
+    bottom = (height-10)*canvasData.spill/maxSpill+2;
   }
 
   var $spillSlider = $('#spill-warning .slider-mark');
@@ -152,8 +152,8 @@ function drawReticle() {
 function updateReticle(e) {
   var $reticle = $('#reticle');
   var size = $reticle.height();
-  $reticle.css('top', e.clientY-size/2+2);
-  $reticle.css('left', e.clientX-size/2+2);
+  $reticle.css('top', e.clientY-size/2);
+  $reticle.css('left', e.clientX-size/2);
 }
 
 function drawPoint(ctx, pt) {

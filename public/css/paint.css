@@ -1,15 +1,24 @@
 body {
-  background-color: #ddd;
+ background: repeating-linear-gradient(
+  45deg,
+  #b59cc4,
+  #b59cc4 20px,
+  #ac8fbc 20px,
+  #ac8fbc 40px
+  );
+  margin: 0;
+  padding: 0;
+  height: 100vh;
 }
 
 #game {
   background-color: white;
-  border: 3px solid #bbb;
-  margin-top: 10px;
+  margin-top: 15px;
   margin-left: auto;
   margin-right: auto;
   display: block;
   cursor: none;
+  box-shadow: 3px 3px 30px #777;
 }
 
 #reticle {
@@ -46,6 +55,7 @@ body {
 #spill-warning .slider-fill{
   height: 100%;
   background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
 }
 
 .slider {
@@ -62,9 +72,9 @@ body {
 }
 
 .slider-outline {
-  width: 10px;
+  width: 12px;
   height: 200px;
-  border-radius: 5px;
+  border-radius: 7px;
   border: 2px solid #888;
   background-color: white;
   position: absolute;
@@ -72,18 +82,18 @@ body {
 }
 
 .slider-fill {
- width: 10px;
+ width: 12px;
  height: 0;
- border-radius: 0 0 3px 3px;
+ border-radius: 0 0 5px 5px;
  position: absolute;
  bottom: 2px;
  left: 2px;
 }
 
 .slider-mark {
-  width: 10px;
-  height: 10px;
-  border-radius: 5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
   position: absolute;
   left: 2px;
   bottom: 2px;
@@ -92,6 +102,6 @@ body {
 
 .slider-label {
   font-weight: 600;
-  color: #555;
+  color: white;
   margin-top: 5px;
 }
