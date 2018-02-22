@@ -120,7 +120,7 @@ function setupContext(ctx, type) {
   if (type=='painting') {
     ctx.lineWidth = 30;
     ctx.lineJoin = ctx.lineCap = 'round';
-    ctx.strokeStyle = rgbToStr(colors.paint);
+    ctx.strokeStyle = ctx.fillStyle = rgbToStr(colors.paint);
     ctx.globalCompositeOperation = 'darken';
   }
 }
@@ -148,6 +148,13 @@ function updateReticle(e) {
   $reticle.css('left', e.clientX-size/2+2);
 }
 
+function drawPoint(ctx, pt) {
+  setupContext(ctx,'painting');
+  ctx.beginPath();
+  ctx.arc(pt.x, pt.y, 15, 0, Math.PI*2);
+  ctx.fill();
+}
+
 function redrawGame(ctx) {
   setupLevel(1);
   setupContext(ctx,'painting');
@@ -156,7 +163,8 @@ function redrawGame(ctx) {
   for (var j = 0; j < strokes.length; j++) {
     var points = strokes[j];
 
-    if (points.length < 2) continue;
+    if (!points.length) continue;
+    if (points.length===1) drawPoint(ctx, points[0]);
 
     var p1 = points[0];
     var p2 = points[1];
@@ -189,7 +197,11 @@ $(document).ready(function(){
   $canvas.on('mousedown', function(e) {
     isDrawing = true;
     if (!strokes.length) strokes.push([]);
-    strokes[strokes.length-1].push(getCursorPos($canvas[0], e));
+
+    var pt = getCursorPos($canvas[0], e);
+    strokes[strokes.length-1].push(pt);
+
+    drawPoint(ctx, pt);
   });
 
   $canvas.on('mousemove', function(e) {
