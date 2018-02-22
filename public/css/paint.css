@@ -2,13 +2,21 @@ body {
   background-color: #ddd;
 }
 
-canvas {
+#game {
   background-color: white;
   border: 3px solid #bbb;
   margin-top: 10px;
   margin-left: auto;
   margin-right: auto;
   display: block;
+  cursor: none;
+}
+
+#reticle {
+  position: absolute;
+  cursor: none;
+  pointer-events: none;
+  display: none;
 }
 
 #eraser {

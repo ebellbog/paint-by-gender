@@ -3,7 +3,10 @@ colors = {
   canvas: [132, 189, 250],
   shape: [255, 255, 255],
   spill: [132, 150, 150]
-}
+};
+
+strokes = [];
+isDrawing = 0;
 
 function rgbToStr(rgbList) {
  return 'rgb('+rgbList.join(', ')+')';
@@ -75,20 +78,19 @@ function updatePercentPainted() {
   var $slider = $('#percent-painted .slider-outline');
   var height = $slider.height();
   var $fill = $('#percent-painted .slider-fill');
-  $fill.animate({height: height*percent}, 100, 'linear');
+  $fill.animate({height: height*percent}, 60, 'linear');
   $fill.css('background-color', percent>=1?'#0f0':rgbToStr(colors.paint));
 
   var bottom, maxSpill = 12000;
 
   if(canvasData.spill >= maxSpill) {
-    console.log(canvasData.spill);
     bottom = height-7;
   } else {
     bottom = (height-7)*canvasData.spill/maxSpill+2;
   }
-  
+
   var $spillSlider = $('#spill-warning .slider-mark');
-  $spillSlider.animate({bottom:bottom}, 100, 'linear');
+  $spillSlider.animate({bottom:bottom}, 80, 'linear');
 }
 
 function updatePercentAsync() {
@@ -123,15 +125,66 @@ function setupContext(ctx, type) {
   }
 }
 
+function drawReticle() {
+  var $reticle = $('#reticle');
+  var ctx = getContext($reticle);
+  ctx.lineWidth = 1;
+
+  ctx.strokeStyle = '#999';
+  ctx.beginPath();
+  ctx.arc(30, 30, 15, 0, 2*Math.PI);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#ddd';
+  ctx.beginPath();
+  ctx.arc(30, 30, 16, 0, 2*Math.PI);
+  ctx.stroke();
+}
+
+function updateReticle(e) {
+  var $reticle = $('#reticle');
+  var size = $reticle.height();
+  $reticle.css('top', e.clientY-size/2+2);
+  $reticle.css('left', e.clientX-size/2+2);
+}
+
+function redrawGame(ctx) {
+  setupLevel(1);
+  setupContext(ctx,'painting');
+
+  var total = 0;
+  for (var j = 0; j < strokes.length; j++) {
+    var points = strokes[j];
+
+    if (points.length < 2) continue;
+
+    var p1 = points[0];
+    var p2 = points[1];
+
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+
+    for (var i=1; i< points.length; i++) {
+      var midPoint = midPointBtw(p1, p2);
+      ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
+      p1 = points[i];
+      p2 = points[i+1];
+      total++;
+    }
+    ctx.lineTo(p1.x, p1.y);
+    ctx.stroke();
+  }
+  if(total%10===0) updatePercentAsync();
+}
+
 $(document).ready(function(){
   $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
   
   var $canvas = $('#game');
   var ctx = getContext($canvas);
 
+  drawReticle();
   setupLevel(1);
-
-  var isDrawing, strokes = [];
 
   $canvas.on('mousedown', function(e) {
     isDrawing = true;
@@ -140,39 +193,23 @@ $(document).ready(function(){
   });
 
   $canvas.on('mousemove', function(e) {
+    updateReticle(e);
     if (!isDrawing) return;
 
-    var lastPos = strokes[strokes.length-1].slice(-1)[0];
     var curPos = getCursorPos($canvas[0], e);
-
+    var lastPos = strokes[strokes.length-1].slice(-1)[0];
     if (getDistance(lastPos, curPos) < 2) return;
 
     strokes[strokes.length-1].push(curPos);
+    redrawGame(ctx);
+  });
 
-    setupLevel(1);
-    setupContext(ctx,'painting');
+  $canvas.on('mouseover', function(e) {
+    $('#reticle').show();
+  });
 
-    var total = 0;
-    for (var j = 0; j < strokes.length; j++) {
-      var points = strokes[j];
-
-      var p1 = points[0];
-      var p2 = points[1];
-
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-
-      for (var i = 1, len = points.length; i < len; i++) {
-        var midPoint = midPointBtw(p1, p2);
-        ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
-        p1 = points[i];
-        p2 = points[i+1];
-        total++;
-      }
-      ctx.lineTo(p1.x, p1.y);
-      ctx.stroke();
-    }
-    if(total%25===0) updatePercentAsync();
+  $canvas.on('mouseout', function(e) {
+    $('#reticle').hide();
   });
 
   $(document).on('mouseup', function() {
