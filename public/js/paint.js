@@ -5,8 +5,12 @@ colors = {
   spill: [132, 150, 150]
 };
 
+brushes = [8, 15, 28];
+currentBrush = 1;
+
 strokes = [];
 isDrawing = 0;
+currentLevel = 1;
 
 function rgbToStr(rgbList) {
  return 'rgb('+rgbList.join(', ')+')';
@@ -29,11 +33,12 @@ function getDistance(p1, p2) {
   return Math.pow(Math.pow(p1.x-p2.x,2)+Math.pow(p1.y-p2.y,2), 0.5);
 }
 
-function getCursorPos(canvas, e) {
+function getPathPoint(canvas, e) {
   var rect = canvas.getBoundingClientRect();
   return {
     x: e.clientX-rect.left,
-    y: e.clientY-rect.top
+    y: e.clientY-rect.top,
+    brushIndex: currentBrush
   };
 }
 
@@ -118,7 +123,6 @@ function setupLevel(level) {
 
 function setupContext(ctx, type) {
   if (type=='painting') {
-    ctx.lineWidth = 30;
     ctx.lineJoin = ctx.lineCap = 'round';
     ctx.strokeStyle = ctx.fillStyle = rgbToStr(colors.paint);
     ctx.globalCompositeOperation = 'darken';
@@ -128,16 +132,20 @@ function setupContext(ctx, type) {
 function drawReticle() {
   var $reticle = $('#reticle');
   var ctx = getContext($reticle);
+  ctx.clearRect(0, 0, $reticle.width(), $reticle.height());
   ctx.lineWidth = 1;
+
+  var centerX = $reticle.width()/2;
+  var centerY = $reticle.height()/2;
 
   ctx.strokeStyle = '#999';
   ctx.beginPath();
-  ctx.arc(30, 30, 15, 0, 2*Math.PI);
+  ctx.arc(centerX, centerY, brushes[currentBrush], 0, 2*Math.PI);
   ctx.stroke();
 
   ctx.strokeStyle = '#ddd';
   ctx.beginPath();
-  ctx.arc(30, 30, 16, 0, 2*Math.PI);
+  ctx.arc(centerX, centerY, brushes[currentBrush]+1, 0, 2*Math.PI);
   ctx.stroke();
 }
 
@@ -151,12 +159,12 @@ function updateReticle(e) {
 function drawPoint(ctx, pt) {
   setupContext(ctx,'painting');
   ctx.beginPath();
-  ctx.arc(pt.x, pt.y, 15, 0, Math.PI*2);
+  ctx.arc(pt.x, pt.y, brushes[pt.brushIndex], 0, Math.PI*2);
   ctx.fill();
 }
 
 function redrawGame(ctx) {
-  setupLevel(1);
+  setupLevel(currentLevel);
   setupContext(ctx,'painting');
 
   var total = 0;
@@ -169,6 +177,7 @@ function redrawGame(ctx) {
     var p1 = points[0];
     var p2 = points[1];
 
+    ctx.lineWidth = brushes[p1.brushIndex]*2;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
 
@@ -192,13 +201,13 @@ $(document).ready(function(){
   var ctx = getContext($canvas);
 
   drawReticle();
-  setupLevel(1);
+  setupLevel(currentLevel);
 
   $canvas.on('mousedown', function(e) {
     isDrawing = true;
     if (!strokes.length) strokes.push([]);
 
-    var pt = getCursorPos($canvas[0], e);
+    var pt = getPathPoint($canvas[0], e);
     strokes[strokes.length-1].push(pt);
 
     drawPoint(ctx, pt);
@@ -208,7 +217,7 @@ $(document).ready(function(){
     updateReticle(e);
     if (!isDrawing) return;
 
-    var curPos = getCursorPos($canvas[0], e);
+    var curPos = getPathPoint($canvas[0], e);
     var lastPos = strokes[strokes.length-1].slice(-1)[0];
     if (getDistance(lastPos, curPos) < 2) return;
 
@@ -230,9 +239,23 @@ $(document).ready(function(){
     updatePercentPainted();
   });
 
+  $(document).keydown(function(e) {
+    switch(e.which) {
+      case 38: // up arrow
+        currentBrush = Math.min(brushes.length-1, currentBrush+1);
+        break;
+      case 40: // down arrow
+        currentBrush = Math.max(0, currentBrush-1);
+        break;
+      default:
+        break;
+    }
+    drawReticle();
+  });
+
   $('#eraser').click(function() {
     strokes.length = 0;
-    setupLevel(1);
+    setupLevel(currentLevel);
     updatePercentPainted();
   });
 });
