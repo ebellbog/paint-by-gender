@@ -13,7 +13,7 @@ brushTypes = {
   triangle: {index: 2, sizes:[12, 24, 36]}
 };
 
-currentBrushType = brushTypes.triangle;
+currentBrushType = brushTypes.circle;
 currentSizeIndex = 1;
 
 strokes = [];
