@@ -16,8 +16,6 @@ brushTypes = {
 currentBrushType = brushTypes.circle;
 currentSizeIndex = 1;
 
-strokes = [];
-isDrawing = 0;
 currentLevel = 1;
 
 function getBrushSize() {
@@ -96,11 +94,10 @@ function updatePercentPainted() {
   var height = $slider.height();
   var $fill = $('#percent-painted .slider-fill');
   $fill.animate({height: height*percent}, 60, 'linear');
-  $fill.css('background-color', percent>=1?'#0f0':rgbToStr(colors.paint));
 
   var bottom, maxSpill = 12000;
 
-  if(canvasData.spill >= maxSpill) {
+  if (canvasData.spill >= maxSpill) {
     bottom = height-10;
   } else {
     bottom = (height-10)*canvasData.spill/maxSpill+2;
@@ -108,6 +105,22 @@ function updatePercentPainted() {
 
   var $spillSlider = $('#spill-warning .slider-mark');
   $spillSlider.animate({bottom:bottom}, 80, 'linear');
+
+  if (levelComplete) return;
+  else if (canvasData.spill >= maxSpill) {
+    $spillSlider.css('background-color', 'red');
+    isDrawing = false;
+    levelComplete = true;
+    setTimeout(()=>alert('Oops, you\'ve transgressed too far! Polite society won\'t stand for it \:\('), 100);
+  }
+  else if(percent >= 1 && !levelComplete) {
+    $fill.css('background-color', '#0f0');
+    $fill.css('border-radius', '5px');
+    isDrawing = false;
+    levelComplete = true;
+    setTimeout(()=>alert(`Congrats, you passed Level ${currentLevel}!`), 100);
+  }
+
 }
 
 function updatePercentAsync() {
@@ -254,14 +267,24 @@ function redrawGame(ctx) {
   if(total%10===0) updatePercentAsync();
 }
 
-$(document).ready(function(){
+function startGame() {
   $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
-  
-  var $canvas = $('#game');
-  var ctx = getContext($canvas);
+  $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
+  $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
 
+  strokes = [];
+  isDrawing = 0;
+  levelComplete = 0;
   drawReticle();
   setupLevel(currentLevel);
+  updatePercentPainted();
+}
+
+$(document).ready(function(){
+  startGame();
+
+  var $canvas = $('#game');
+  var ctx = getContext($canvas);
 
   $canvas.on('mousedown', function(e) {
     isDrawing = true;
@@ -333,8 +356,6 @@ $(document).ready(function(){
   });
 
   $('#eraser').click(function() {
-    strokes.length = 0;
-    setupLevel(currentLevel);
-    updatePercentPainted();
+    startGame();
   });
 });
