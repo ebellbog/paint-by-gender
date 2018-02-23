@@ -124,7 +124,16 @@ function setupLevel(level) {
       ctx.fillRect(0, 0, 500, 500);
       ctx.fillStyle = rgbToStr(colors.shape);
       ctx.beginPath();
-      ctx.arc(250, 200, 225, 0, Math.PI);
+
+      // generated at http://www.victoriakirst.com/beziertool/
+      var xoff = -35, yoff = -10;
+      ctx.moveTo(289 + xoff, 446 + yoff);
+      ctx.bezierCurveTo(197 + xoff, 355 + yoff, 150 + xoff, 316 + yoff, 89 + xoff, 236 + yoff);
+      ctx.bezierCurveTo(67 + xoff, 207 + yoff, 77 + xoff, 124 + yoff, 144 + xoff, 100 + yoff);
+      ctx.bezierCurveTo(225 + xoff, 71 + yoff, 273 + xoff, 145 + yoff, 291 + xoff, 184 + yoff);
+      ctx.bezierCurveTo(296 + xoff, 171 + yoff, 347 + xoff, 60 + yoff, 440 + xoff, 101 + yoff);
+      ctx.bezierCurveTo(516 + xoff, 135 + yoff, 500 + xoff, 219 + yoff, 469 + xoff, 248 + yoff);
+
       ctx.fill();
       break;
     default:
