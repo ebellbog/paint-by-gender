@@ -9,23 +9,32 @@
 <script src="./js/paint.js"></script>
 </head>
 <body>
-<div class="slider" id="percent-painted">
-  <div class="slider-wrapper">
-    <div class="slider-outline"></div>
-    <div class="slider-fill"></div>
-  </div>
-  <div class="slider-label">% Painted </div>
-</div>
-<div class="slider" id="spill-warning">
-  <div class="slider-wrapper">
-    <div class="slider-outline"></div>
-    <div class="slider-fill"></div>
-    <div class="slider-mark"></div>
-  </div>
-  <div class="slider-label">Transgression </div>
-</div>
-<canvas id="game" width=500px height=500px></canvas>
-<canvas id="reticle" width=100px height=100px></canvas>
-<div id="eraser">ERASE</div>
+<table id="layout">
+  <tr>
+    <td id="sliders" align="right">
+      <div class="slider" id="percent-painted">
+        <div class="slider-wrapper">
+          <div class="slider-outline"></div>
+          <div class="slider-fill"></div>
+        </div>
+        <div class="slider-label">% Painted </div>
+      </div>
+      <div class="slider" id="spill-warning">
+        <div class="slider-wrapper">
+          <div class="slider-outline"></div>
+          <div class="slider-fill"></div>
+          <div class="slider-mark"></div>
+        </div>
+        <div class="slider-label">Transgression </div>
+      </div>
+    </td>
+    <td id="main">
+      <canvas id="game" width=500px height=500px></canvas>
+      <canvas id="reticle" width=100px height=100px></canvas>
+      <div id="eraser">ERASE</div>
+    </td>
+    <td></td>
+  </tr>
+</table>
 </body>
 </html>
