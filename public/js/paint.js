@@ -152,8 +152,8 @@ function drawReticle() {
 function updateReticle(e) {
   var $reticle = $('#reticle');
   var size = $reticle.height();
-  $reticle.css('top', e.clientY-size/2);
-  $reticle.css('left', e.clientX-size/2);
+  $reticle.css('top', e.pageY-size/2);
+  $reticle.css('left', e.pageX-size/2);
 }
 
 function drawPoint(ctx, pt) {
