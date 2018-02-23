@@ -5,12 +5,22 @@ colors = {
   spill: [132, 150, 150]
 };
 
-brushes = [8, 15, 28];
-currentBrush = 1;
+brushTypes = {
+  circle: {index: 0, sizes:[8, 20, 28]},
+  square: {index: 1, sizes:[8, 20, 28]},
+  triangle: {index: 2, sizes:[12, 24, 36]}
+};
+
+currentBrushType = brushTypes.triangle;
+currentSizeIndex = 1;
 
 strokes = [];
 isDrawing = 0;
 currentLevel = 1;
+
+function getBrushSize() {
+  return currentBrushType.sizes[currentSizeIndex];
+}
 
 function rgbToStr(rgbList) {
  return 'rgb('+rgbList.join(', ')+')';
@@ -38,7 +48,7 @@ function getPathPoint(canvas, e) {
   return {
     x: e.clientX-rect.left,
     y: e.clientY-rect.top,
-    brushIndex: currentBrush
+    brushSize: getBrushSize()
   };
 }
 
@@ -129,6 +139,30 @@ function setupContext(ctx, type) {
   }
 }
 
+function drawPolygon(ctx, x, y, sides, size, options) {
+  options = options || {};
+  ctx.beginPath();
+  for (var i = 0; i < sides; i++) {
+    var angle = (Math.PI*2/sides)*i;
+    angle = options.rotation ? angle+options.rotation : angle;
+    var ptX = x+size*Math.cos(angle);
+    var ptY = y+size*Math.sin(angle);
+    if (i) {
+      ctx.lineTo(ptX, ptY);
+    } else {
+      ctx.moveTo(ptX, ptY);
+    }
+  }
+  ctx.closePath();
+  if (options.style=='fill') {
+    if(options.color) ctx.fillStyle=options.color;
+    ctx.fill();
+  } else {
+    if(options.color) ctx.strokeStyle=options.color;
+    ctx.stroke();
+  }
+}
+
 function drawReticle() {
   var $reticle = $('#reticle');
   var ctx = getContext($reticle);
@@ -138,15 +172,27 @@ function drawReticle() {
   var centerX = $reticle.width()/2;
   var centerY = $reticle.height()/2;
 
-  ctx.strokeStyle = '#999';
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, brushes[currentBrush], 0, 2*Math.PI);
-  ctx.stroke();
+  if(currentBrushType == brushTypes.circle) {
+    ctx.strokeStyle = '#999';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, getBrushSize(), 0, 2*Math.PI);
+    ctx.stroke();
 
-  ctx.strokeStyle = '#ddd';
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, brushes[currentBrush]+1, 0, 2*Math.PI);
-  ctx.stroke();
+    ctx.strokeStyle = '#ddd';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, getBrushSize()+1, 0, 2*Math.PI);
+    ctx.stroke();
+  } else if (currentBrushType == brushTypes.triangle) {
+    drawPolygon(ctx, centerX, centerY, 3, getBrushSize(),
+                {style:'stroke', rotation:Math.PI/6, color: '#999'});
+    drawPolygon(ctx, centerX, centerY, 3, getBrushSize()+1,
+                {style:'stroke', rotation:Math.PI/6, color: '#ddd'});
+  } else if (currentBrushType == brushTypes.square) {
+    drawPolygon(ctx, centerX, centerY, 4, getBrushSize(),
+                {style:'stroke', rotation:Math.PI/4, color: '#999'});
+    drawPolygon(ctx, centerX, centerY, 4, getBrushSize()+1,
+                {style:'stroke', rotation:Math.PI/4, color: '#ddd'});
+  }
 }
 
 function updateReticle(e) {
@@ -159,7 +205,7 @@ function updateReticle(e) {
 function drawPoint(ctx, pt) {
   setupContext(ctx,'painting');
   ctx.beginPath();
-  ctx.arc(pt.x, pt.y, brushes[pt.brushIndex], 0, Math.PI*2);
+  ctx.arc(pt.x, pt.y, getBrushSize(), 0, Math.PI*2);
   ctx.fill();
 }
 
@@ -177,7 +223,7 @@ function redrawGame(ctx) {
     var p1 = points[0];
     var p2 = points[1];
 
-    ctx.lineWidth = brushes[p1.brushIndex]*2;
+    ctx.lineWidth = p1.brushSize*2;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
 
@@ -242,10 +288,29 @@ $(document).ready(function(){
   $(document).keydown(function(e) {
     switch(e.which) {
       case 38: // up arrow
-        currentBrush = Math.min(brushes.length-1, currentBrush+1);
+        e.preventDefault();
+        currentSizeIndex = Math.min(currentBrushType.sizes.length-1, currentSizeIndex+1);
         break;
       case 40: // down arrow
-        currentBrush = Math.max(0, currentBrush-1);
+        e.preventDefault();
+        currentSizeIndex = Math.max(0, currentSizeIndex-1);
+        break;
+      case 37: // left arrow
+        var typeIndex = currentBrushType.index;
+        if(typeIndex>0) {
+          typeIndex--;
+          currentBrushType = Object.values(brushTypes).find(value => value.index === typeIndex);
+          drawReticle();
+        }
+        break;
+      case 39: // right arrow
+        var typeIndex = currentBrushType.index;
+        var brushValues = Object.values(brushTypes);
+        if(typeIndex<brushValues.length-1) {
+          typeIndex++;
+          currentBrushType = brushValues.find(value => value.index === typeIndex);
+          drawReticle();
+        }
         break;
       default:
         break;
