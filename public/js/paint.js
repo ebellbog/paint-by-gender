@@ -2,7 +2,9 @@ colors = {
   paint: [255, 150, 150],//'#bd354d'
   canvas: [132, 189, 250],
   shape: [255, 255, 255],
-  spill: [132, 150, 150]
+  spill: [132, 150, 150],
+  innerReticle: [153, 153, 153],
+  outerReticle: [221, 221, 221]
 };
 
 brushTypes = {
@@ -172,26 +174,29 @@ function drawReticle() {
   var centerX = $reticle.width()/2;
   var centerY = $reticle.height()/2;
 
+  var innerColor = rgbToStr(colors.innerReticle);
+  var outerColor = rgbToStr(colors.outerReticle);
+
   if(currentBrushType == brushTypes.circle) {
-    ctx.strokeStyle = '#999';
+    ctx.strokeStyle = innerColor;
     ctx.beginPath();
     ctx.arc(centerX, centerY, getBrushSize(), 0, 2*Math.PI);
     ctx.stroke();
 
-    ctx.strokeStyle = '#ddd';
+    ctx.strokeStyle = outerColor;
     ctx.beginPath();
     ctx.arc(centerX, centerY, getBrushSize()+1, 0, 2*Math.PI);
     ctx.stroke();
   } else if (currentBrushType == brushTypes.triangle) {
     drawPolygon(ctx, centerX, centerY, 3, getBrushSize(),
-                {style:'stroke', rotation:Math.PI/6, color: '#999'});
+                {style:'stroke', rotation:Math.PI/6, color: innerColor});
     drawPolygon(ctx, centerX, centerY, 3, getBrushSize()+1,
-                {style:'stroke', rotation:Math.PI/6, color: '#ddd'});
+                {style:'stroke', rotation:Math.PI/6, color: outerColor});
   } else if (currentBrushType == brushTypes.square) {
     drawPolygon(ctx, centerX, centerY, 4, getBrushSize(),
-                {style:'stroke', rotation:Math.PI/4, color: '#999'});
+                {style:'stroke', rotation:Math.PI/4, color: innerColor});
     drawPolygon(ctx, centerX, centerY, 4, getBrushSize()+1,
-                {style:'stroke', rotation:Math.PI/4, color: '#ddd'});
+                {style:'stroke', rotation:Math.PI/4, color: outerColor});
   }
 }
 
