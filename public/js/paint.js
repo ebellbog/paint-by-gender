@@ -231,9 +231,18 @@ function updateReticle(e) {
 
 function drawPoint(ctx, pt) {
   setupContext(ctx,'painting');
-  ctx.beginPath();
-  ctx.arc(pt.x, pt.y, getBrushSize(), 0, Math.PI*2);
-  ctx.fill();
+
+  if (currentBrushType == brushTypes.circle) {
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.brushSize, 0, Math.PI*2);
+    ctx.fill();
+  } else if (currentBrushType == brushTypes.triangle) {
+    drawPolygon(ctx, pt.x, pt.y, 3, pt.brushSize,
+                {style:'fill', rotation:Math.PI/6});
+  } else if (currentBrushType == brushTypes.square) {
+    drawPolygon(ctx, pt.x, pt.y, 4, pt.brushSize,
+                {style:'fill', rotation:Math.PI/4});
+  }
 }
 
 function redrawGame(ctx) {
