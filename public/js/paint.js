@@ -18,6 +18,8 @@ currentSizeIndex = 1;
 
 currentLevel = 1;
 
+/* Helper functions */
+
 function getBrushSize() {
   return currentBrushType.sizes[currentSizeIndex];
 }
@@ -57,6 +59,8 @@ function getContext($canvas) {
   var ctx = $canvas[0].getContext('2d');
   return ctx;
 }
+
+/* Logic functions */
 
 function analyzeCanvas() {
   var ctx = getContext();
@@ -127,6 +131,8 @@ function updatePercentAsync() {
   setTimeout(updatePercentPainted, 0);
 }
 
+/* Setup & draw functions */
+
 function setupLevel(level) {
   var ctx = getContext();
   ctx.save();
@@ -163,21 +169,29 @@ function setupContext(ctx, type) {
   }
 }
 
-function drawPolygon(ctx, x, y, sides, size, options) {
-  options = options || {};
-  ctx.beginPath();
+function getPolyPath(x, y, sides, size, rotation) {
+  var path = [];
   for (var i = 0; i < sides; i++) {
     var angle = (Math.PI*2/sides)*i;
-    angle = options.rotation ? angle+options.rotation : angle;
+    angle = rotation ? angle+rotation : angle;
     var ptX = x+size*Math.cos(angle);
     var ptY = y+size*Math.sin(angle);
-    if (i) {
-      ctx.lineTo(ptX, ptY);
-    } else {
-      ctx.moveTo(ptX, ptY);
-    }
+    path.push({x: ptX, y:ptY});
   }
+  return path;
+}
+
+function drawPolygon(ctx, x, y, sides, size, options) {
+  options = options || {};
+
+  var path = getPolyPath(x, y, sides, size, options.rotation);
+  var start = path.shift();
+
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  path.map(p => ctx.lineTo(p.x, p.y));
   ctx.closePath();
+
   if (options.style=='fill') {
     if(options.color) ctx.fillStyle=options.color;
     ctx.fill();
@@ -245,6 +259,26 @@ function drawPoint(ctx, pt) {
   }
 }
 
+function drawPath(ctx, pts) {
+  if (currentBrushType == brushTypes.circle) {
+    var p1 = pts[0];
+    var p2 = pts[1];
+
+    ctx.lineWidth = p1.brushSize*2;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+
+    for (var i=1; i< pts.length; i++) {
+      var midPoint = midPointBtw(p1, p2);
+      ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
+      p1 = pts[i];
+      p2 = pts[i+1];
+    }
+    ctx.lineTo(p1.x, p1.y);
+    ctx.stroke();
+  }
+}
+
 function redrawGame(ctx) {
   setupLevel(currentLevel);
   setupContext(ctx,'painting');
@@ -252,29 +286,16 @@ function redrawGame(ctx) {
   var total = 0;
   for (var j = 0; j < strokes.length; j++) {
     var points = strokes[j];
+    total += points.length;
 
     if (!points.length) continue;
     if (points.length===1) drawPoint(ctx, points[0]);
-
-    var p1 = points[0];
-    var p2 = points[1];
-
-    ctx.lineWidth = p1.brushSize*2;
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-
-    for (var i=1; i< points.length; i++) {
-      var midPoint = midPointBtw(p1, p2);
-      ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
-      p1 = points[i];
-      p2 = points[i+1];
-      total++;
-    }
-    ctx.lineTo(p1.x, p1.y);
-    ctx.stroke();
+    else drawPath(ctx, points);
   }
   if(total%10===0) updatePercentAsync();
 }
+
+/* Initialization & event handlers */
 
 function startGame() {
   $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
