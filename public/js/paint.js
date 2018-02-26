@@ -9,19 +9,27 @@ colors = {
 
 brushTypes = {
   circle: {index: 0, sizes:[8, 20, 28]},
-  square: {index: 1, sizes:[8, 20, 28]},
-  triangle: {index: 2, sizes:[12, 24, 36]}
+  square: {index: 1, sides: 4, sizes:[8, 20, 28]},
+  triangle: {index: 2, sides: 3, sizes:[12, 24, 36]}
 };
 
-currentBrushType = brushTypes.circle;
-currentSizeIndex = 1;
-
-currentLevel = 1;
+gameState = {
+  level: 1,
+  levelComplete: 0,
+  brushType: brushTypes.circle,
+  brushSizeIndex: 1,
+  strokes: [],
+  isDrawing: 0
+}
 
 /* Helper functions */
 
 function getBrushSize() {
-  return currentBrushType.sizes[currentSizeIndex];
+  return gameState.brushType.sizes[gameState.brushSizeIndex];
+}
+
+function getBrushSides() {
+  return gameState.brushType.sides;
 }
 
 function rgbToStr(rgbList) {
@@ -110,19 +118,19 @@ function updatePercentPainted() {
   var $spillSlider = $('#spill-warning .slider-mark');
   $spillSlider.animate({bottom:bottom}, 80, 'linear');
 
-  if (levelComplete) return;
+  if (gameState.levelComplete) return;
   else if (canvasData.spill >= maxSpill) {
     $spillSlider.css('background-color', 'red');
-    isDrawing = false;
-    levelComplete = true;
+    gameState.isDrawing = false;
+    gameState.levelComplete = true;
     setTimeout(()=>alert('Oops, you\'ve transgressed too far! Polite society won\'t stand for it \:\('), 100);
   }
-  else if(percent >= 1 && !levelComplete) {
+  else if(percent >= 1 && !gameState.levelComplete) {
     $fill.css('background-color', '#0f0');
     $fill.css('border-radius', '5px');
-    isDrawing = false;
-    levelComplete = true;
-    setTimeout(()=>alert(`Congrats, you passed Level ${currentLevel}!`), 100);
+    gameState.isDrawing = false;
+    gameState.levelComplete = true;
+    setTimeout(()=>alert(`Congrats, you passed Level ${gameState.level}!`), 100);
   }
 
 }
@@ -171,9 +179,9 @@ function setupContext(ctx, type) {
 
 function getPolyPath(x, y, sides, size, rotation) {
   var path = [];
+  var rotation = rotation || (Math.PI-(Math.PI*2/sides))/2;
   for (var i = 0; i < sides; i++) {
-    var angle = (Math.PI*2/sides)*i;
-    angle = rotation ? angle+rotation : angle;
+    var angle = (Math.PI*2/sides)*i + rotation;
     var ptX = x+size*Math.cos(angle);
     var ptY = y+size*Math.sin(angle);
     path.push({x: ptX, y:ptY});
@@ -201,6 +209,10 @@ function drawPolygon(ctx, x, y, sides, size, options) {
   }
 }
 
+function joinPolys(ctx, p1, p2) {
+  // TODO: implement
+}
+
 function drawReticle() {
   var $reticle = $('#reticle');
   var ctx = getContext($reticle);
@@ -213,7 +225,7 @@ function drawReticle() {
   var innerColor = rgbToStr(colors.innerReticle);
   var outerColor = rgbToStr(colors.outerReticle);
 
-  if(currentBrushType == brushTypes.circle) {
+  if(gameState.brushType == brushTypes.circle) {
     ctx.strokeStyle = innerColor;
     ctx.beginPath();
     ctx.arc(centerX, centerY, getBrushSize(), 0, 2*Math.PI);
@@ -223,16 +235,11 @@ function drawReticle() {
     ctx.beginPath();
     ctx.arc(centerX, centerY, getBrushSize()+1, 0, 2*Math.PI);
     ctx.stroke();
-  } else if (currentBrushType == brushTypes.triangle) {
-    drawPolygon(ctx, centerX, centerY, 3, getBrushSize(),
-                {style:'stroke', rotation:Math.PI/6, color: innerColor});
-    drawPolygon(ctx, centerX, centerY, 3, getBrushSize()+1,
-                {style:'stroke', rotation:Math.PI/6, color: outerColor});
-  } else if (currentBrushType == brushTypes.square) {
-    drawPolygon(ctx, centerX, centerY, 4, getBrushSize(),
-                {style:'stroke', rotation:Math.PI/4, color: innerColor});
-    drawPolygon(ctx, centerX, centerY, 4, getBrushSize()+1,
-                {style:'stroke', rotation:Math.PI/4, color: outerColor});
+  } else {
+    drawPolygon(ctx, centerX, centerY, getBrushSides(), getBrushSize(),
+                {style:'stroke', color: innerColor});
+    drawPolygon(ctx, centerX, centerY, getBrushSides(), getBrushSize()+1,
+                {style:'stroke', color: outerColor});
   }
 }
 
@@ -245,22 +252,17 @@ function updateReticle(e) {
 
 function drawPoint(ctx, pt) {
   setupContext(ctx,'painting');
-
-  if (currentBrushType == brushTypes.circle) {
+  if (gameState.brushType == brushTypes.circle) {
     ctx.beginPath();
     ctx.arc(pt.x, pt.y, pt.brushSize, 0, Math.PI*2);
     ctx.fill();
-  } else if (currentBrushType == brushTypes.triangle) {
-    drawPolygon(ctx, pt.x, pt.y, 3, pt.brushSize,
-                {style:'fill', rotation:Math.PI/6});
-  } else if (currentBrushType == brushTypes.square) {
-    drawPolygon(ctx, pt.x, pt.y, 4, pt.brushSize,
-                {style:'fill', rotation:Math.PI/4});
+  } else {
+    drawPolygon(ctx, pt.x, pt.y, getBrushSides(), pt.brushSize, {style:'fill'});
   }
 }
 
 function drawPath(ctx, pts) {
-  if (currentBrushType == brushTypes.circle) {
+  if (gameState.brushType == brushTypes.circle) {
     var p1 = pts[0];
     var p2 = pts[1];
 
@@ -268,7 +270,7 @@ function drawPath(ctx, pts) {
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
 
-    for (var i=1; i< pts.length; i++) {
+    for (var i=1; i<pts.length; i++) {
       var midPoint = midPointBtw(p1, p2);
       ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
       p1 = pts[i];
@@ -276,16 +278,19 @@ function drawPath(ctx, pts) {
     }
     ctx.lineTo(p1.x, p1.y);
     ctx.stroke();
+  } else {
+    //pts.map(p => drawPoint(ctx, p));
+    //TODO: use joinPolys
   }
 }
 
 function redrawGame(ctx) {
-  setupLevel(currentLevel);
+  setupLevel(gameState.level);
   setupContext(ctx,'painting');
 
   var total = 0;
-  for (var j = 0; j < strokes.length; j++) {
-    var points = strokes[j];
+  for (var j = 0; j < gameState.strokes.length; j++) {
+    var points = gameState.strokes[j];
     total += points.length;
 
     if (!points.length) continue;
@@ -302,11 +307,12 @@ function startGame() {
   $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
   $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
 
-  strokes = [];
-  isDrawing = 0;
-  levelComplete = 0;
+  gameState.strokes = [];
+  gameState.isDrawing = 0;
+  gameState.levelComplete = 0;
+
   drawReticle();
-  setupLevel(currentLevel);
+  setupLevel(gameState.level);
   updatePercentPainted();
 }
 
@@ -315,9 +321,10 @@ $(document).ready(function(){
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
+  var strokes = gameState.strokes;
 
   $canvas.on('mousedown', function(e) {
-    isDrawing = true;
+    gameState.isDrawing = true;
     if (!strokes.length) strokes.push([]);
 
     var pt = getPathPoint($canvas[0], e);
@@ -328,7 +335,7 @@ $(document).ready(function(){
 
   $canvas.on('mousemove', function(e) {
     updateReticle(e);
-    if (!isDrawing) return;
+    if (!gameState.isDrawing) return;
 
     var curPos = getPathPoint($canvas[0], e);
     var lastPos = strokes[strokes.length-1].slice(-1)[0];
@@ -347,7 +354,7 @@ $(document).ready(function(){
   });
 
   $(document).on('mouseup', function() {
-    isDrawing = false;
+    gameState.isDrawing = false;
     if (strokes.length && strokes[strokes.length-1].length > 0) strokes.push([]);
     updatePercentPainted();
   });
@@ -356,26 +363,26 @@ $(document).ready(function(){
     switch(e.which) {
       case 38: // up arrow
         e.preventDefault();
-        currentSizeIndex = Math.min(currentBrushType.sizes.length-1, currentSizeIndex+1);
+        gameState.brushSizeIndex = Math.min(gameState.brushType.sizes.length-1, gameState.brushSizeIndex+1);
         break;
       case 40: // down arrow
         e.preventDefault();
-        currentSizeIndex = Math.max(0, currentSizeIndex-1);
+        gameState.brushSizeIndex = Math.max(0, gameState.brushSizeIndex-1);
         break;
       case 37: // left arrow
-        var typeIndex = currentBrushType.index;
+        var typeIndex = gameState.brushType.index;
         if(typeIndex>0) {
           typeIndex--;
-          currentBrushType = Object.values(brushTypes).find(value => value.index === typeIndex);
+          gameState.brushType = Object.values(brushTypes).find(value => value.index === typeIndex);
           drawReticle();
         }
         break;
       case 39: // right arrow
-        var typeIndex = currentBrushType.index;
+        var typeIndex = gameState.brushType.index;
         var brushValues = Object.values(brushTypes);
         if(typeIndex<brushValues.length-1) {
           typeIndex++;
-          currentBrushType = brushValues.find(value => value.index === typeIndex);
+          gameState.brushType = brushValues.find(value => value.index === typeIndex);
           drawReticle();
         }
         break;
