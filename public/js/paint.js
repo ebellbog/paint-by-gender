@@ -210,7 +210,16 @@ function drawPolygon(ctx, x, y, sides, size, options) {
 }
 
 function joinPolys(ctx, p1, p2) {
-  // TODO: implement
+  if (p1.length != p2.length) return;
+  for (var i = 0; i < p1.length; i++) {
+    var j = (i+1)%p1.length;
+    ctx.beginPath();
+    ctx.moveTo(p1[i].x, p1[i].y);
+    ctx.lineTo(p1[j].x, p1[j].y);
+    ctx.lineTo(p2[j].x, p2[j].y);
+    ctx.lineTo(p2[i].x, p2[i].y);
+    ctx.fill();
+  }
 }
 
 function drawReticle() {
@@ -270,7 +279,7 @@ function drawPath(ctx, pts) {
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
 
-    for (var i=1; i<pts.length; i++) {
+    for (var i = 1; i < pts.length; i++) {
       var midPoint = midPointBtw(p1, p2);
       ctx.quadraticCurveTo(p1.x, p1.y, midPoint.x, midPoint.y);
       p1 = pts[i];
@@ -279,8 +288,13 @@ function drawPath(ctx, pts) {
     ctx.lineTo(p1.x, p1.y);
     ctx.stroke();
   } else {
-    //pts.map(p => drawPoint(ctx, p));
-    //TODO: use joinPolys
+    drawPoint(ctx, pts[0]); // start cap
+    for (var i = 0; i < pts.length-1; i++) {
+      var p1 = getPolyPath(pts[i].x, pts[i].y, getBrushSides(), pts[i].brushSize);
+      var p2 = getPolyPath(pts[i+1].x, pts[i+1].y, getBrushSides(), pts[i+1].brushSize);
+      joinPolys(ctx, p1, p2);
+    }
+    drawPoint(ctx, pts[pts.length-1]); // end cap
   }
 }
 
@@ -321,10 +335,11 @@ $(document).ready(function(){
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
-  var strokes = gameState.strokes;
 
   $canvas.on('mousedown', function(e) {
     gameState.isDrawing = true;
+
+    var strokes = gameState.strokes;
     if (!strokes.length) strokes.push([]);
 
     var pt = getPathPoint($canvas[0], e);
@@ -337,12 +352,13 @@ $(document).ready(function(){
     updateReticle(e);
     if (!gameState.isDrawing) return;
 
+    var strokes = gameState.strokes;
     var curPos = getPathPoint($canvas[0], e);
     var lastPos = strokes[strokes.length-1].slice(-1)[0];
     if (getDistance(lastPos, curPos) < 2) return;
 
     strokes[strokes.length-1].push(curPos);
-    redrawGame(ctx);
+    redrawGame(ctx); //TODO: consider not redrawing for poly brushes
   });
 
   $canvas.on('mouseover', function(e) {
@@ -355,6 +371,7 @@ $(document).ready(function(){
 
   $(document).on('mouseup', function() {
     gameState.isDrawing = false;
+    var strokes = gameState.strokes;
     if (strokes.length && strokes[strokes.length-1].length > 0) strokes.push([]);
     updatePercentPainted();
   });
