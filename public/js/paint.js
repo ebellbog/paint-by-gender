@@ -253,10 +253,14 @@ function drawReticle() {
 }
 
 function updateReticle(e) {
+  var canvas = $('#canvas-texture')[0];
+  var rect = canvas.getBoundingClientRect();
+
   var $reticle = $('#reticle');
   var size = $reticle.height();
-  $reticle.css('top', e.pageY-size/2);
-  $reticle.css('left', e.pageX-size/2);
+
+  $reticle.css('top', e.pageY-size/2-2);
+  $reticle.css('left',e.pageX-rect.left-size/2);
 }
 
 function drawPoint(ctx, pt) {

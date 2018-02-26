@@ -19,7 +19,27 @@ body {
   padding-right: 30px;
 }
 
+#main {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+#canvas-texture {
+  pointer-events: none;
+  background-image: url('../img/canvas_texture.png');
+  background-size: 250px;
+  mix-blend-mode: multiply;
+  width: 500px;
+  height: 500px;
+  position: absolute;
+  top: 15px;
+  left: 0;
+  opacity: .6;
+}
+
 #game {
+  cursor: none;
   background-color: white;
   margin-top: 15px;
   margin-left: auto;
