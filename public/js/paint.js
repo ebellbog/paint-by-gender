@@ -168,6 +168,7 @@ function setupLevel(level) {
       break;
   }
   ctx.restore();
+  updateLevelIcon(level);
 }
 
 function setupContext(ctx, type) {
@@ -260,8 +261,13 @@ function updateReticle(e) {
   var $reticle = $('#reticle');
   var size = $reticle.height();
 
-  $reticle.css('top', e.pageY-size/2-2);
-  $reticle.css('left',e.pageX-rect.left-size/2);
+  $reticle.css('top', e.clientY-rect.top+canvas.offsetTop-size/2);
+  $reticle.css('left',e.clientX-rect.left-size/2);
+}
+
+function updateTexture() {
+  console.log($('#game')[0].offsetTop);
+  $('#canvas-texture').css('top', $('#game')[0].offsetTop);
 }
 
 function drawPoint(ctx, pt) {
@@ -321,6 +327,17 @@ function redrawGame(ctx) {
 
 /* Initialization & event handlers */
 
+function updateLevelIcon(level) {
+  var $levelIcon = $('#level-icon');
+  var iconList = [];
+  var openCircle = '&#9675';
+  var closedCircle = '&#9679';
+  for (var i = 0; i < 6; i++) {
+    iconList.push(i< level ? closedCircle : openCircle);
+  }
+  $levelIcon.html(iconList.join('&nbsp;'));
+}
+
 function startGame() {
   $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
   $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
@@ -337,6 +354,7 @@ function startGame() {
 
 $(document).ready(function(){
   startGame();
+  setTimeout(updateTexture, 100);
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
@@ -352,6 +370,7 @@ $(document).ready(function(){
     strokes[strokes.length-1].push(pt);
 
     drawPoint(ctx, pt);
+    updatePercentAsync();
   });
 
   $canvas.on('mousemove', function(e) {
@@ -427,4 +446,6 @@ $(document).ready(function(){
   $('#eraser').click(function() {
     startGame();
   });
+
+  $(window).resize(()=>updateTexture());
 });

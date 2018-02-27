@@ -1,14 +1,67 @@
 body {
- background: repeating-linear-gradient(
-  45deg,
-  #b59cc4,
-  #b59cc4 20px,
-  #ac8fbc 20px,
-  #ac8fbc 40px
+  background: repeating-linear-gradient(
+    45deg,
+    #b59cc4,
+    #b59cc4 20px,
+    #ac8fbc 20px,
+    #ac8fbc 40px
   );
   margin: 0;
   padding: 0;
   height: 100vh;
+}
+
+#layout {
+  border-collapse: collapse;
+}
+
+#header {
+  color: white;
+  background-color: purple;
+  font-family: 'Megrim', cursive;
+}
+
+#header span {
+  vertical-align: middle;
+}
+
+.spacer {
+  height: 20px;
+}
+
+#title {
+  padding-left: 10px;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+#title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#status {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 26px;
+  padding-bottom: 8px;
+}
+
+#level-number {
+  font-weight: 400;
+  margin-left: 3px;
+}
+
+#level-separator {
+  padding: 0 5px 0 5px;
+}
+
+#level-name {
+  font-weight:200;
+}
+
+#level-icon-wrapper {
+  float: right;
+  font-size: 22px;
 }
 
 #layout td {
@@ -16,7 +69,7 @@ body {
 }
 
 #sliders {
-  padding-right: 30px;
+  padding-right: 40px;
 }
 
 #main {
@@ -33,7 +86,7 @@ body {
   width: 500px;
   height: 500px;
   position: absolute;
-  top: 15px;
+  top: 0;
   left: 0;
   opacity: .6;
 }
@@ -41,11 +94,9 @@ body {
 #game {
   cursor: none;
   background-color: white;
-  margin-top: 15px;
   margin-left: auto;
   margin-right: auto;
   display: block;
-  cursor: none;
   box-shadow: 3px 3px 30px #777;
 }
 
@@ -71,7 +122,7 @@ body {
   font-size: 20px;
   font-weight: 600;
   letter-spacing: 1px;
-  font-family: 'Oswald', sans-serif;
+  font-family: 'Exo 2', sans-serif;
   cursor: pointer;
 }
 
@@ -91,7 +142,7 @@ body {
 }
 
 .slider {
-  width: 110px;
+  width: 120px;
   margin-bottom: 20px;
   text-align: center;
   display: inline-block;
@@ -136,8 +187,8 @@ body {
 .slider-label {
   font-family: 'Amatic SC', sans-serif;
   font-weight: 600;
-  font-size: 24px;
+  font-size: 26px;
   color: white;
   margin-top: 5px;
-  text-shadow: 2px 2px 6px #777;
+  text-shadow: 2px 2px 4px #777;
 }
