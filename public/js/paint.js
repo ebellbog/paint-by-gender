@@ -19,6 +19,7 @@ gameState = {
   brushType: brushTypes.circle,
   brushSizeIndex: 1,
   strokes: [],
+  buffer: [],
   isDrawing: 0
 }
 
@@ -342,6 +343,7 @@ $(document).ready(function(){
 
   $canvas.on('mousedown', function(e) {
     gameState.isDrawing = true;
+    gameState.buffer = [];
 
     var strokes = gameState.strokes;
     if (!strokes.length) strokes.push([]);
@@ -357,12 +359,21 @@ $(document).ready(function(){
     if (!gameState.isDrawing) return;
 
     var strokes = gameState.strokes;
-    var curPos = getPathPoint($canvas[0], e);
-    var lastPos = strokes[strokes.length-1].slice(-1)[0];
-    if (getDistance(lastPos, curPos) < 2) return;
+    var buffer = gameState.buffer;
 
-    strokes[strokes.length-1].push(curPos);
-    redrawGame(ctx); //TODO: consider not redrawing for poly brushes
+    var curPos = getPathPoint($canvas[0], e);
+    buffer.push(curPos);
+
+    if (buffer.length > 3) {
+      var totals = buffer.reduce((a,b) => ({x:a.x+b.x, y:a.y+b.y}));
+      var avgPos = {x: totals.x/buffer.length, y: totals.y/buffer.length, brushSize: buffer[0].brushSize};
+
+      strokes[strokes.length-1].splice(-(buffer.length-1), buffer.length-1, avgPos);
+      gameState.buffer = [];
+    } else {
+      strokes[strokes.length-1].push(curPos);
+    }
+    redrawGame(ctx);
   });
 
   $canvas.on('mouseover', function(e) {
