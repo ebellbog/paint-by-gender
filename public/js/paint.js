@@ -266,7 +266,6 @@ function updateReticle(e) {
 }
 
 function updateTexture() {
-  console.log($('#game')[0].offsetTop);
   $('#canvas-texture').css('top', $('#game')[0].offsetTop);
 }
 
