@@ -17,6 +17,7 @@ gameState = {
   level: 1,
   levelComplete: 0,
   startTime: 0,
+  maxTime: 120,
   brushType: brushTypes.circle,
   brushSizeIndex: 1,
   strokes: [],
@@ -338,6 +339,19 @@ function updateLevelIcon(level) {
   $levelIcon.html(iconList.join('&nbsp;'));
 }
 
+function updateTime() {
+  var elapsed = (Date.now()-gameState.startTime)/1000;
+  var remaining = gameState.maxTime-Math.round(elapsed);
+  var min = Math.floor(remaining/60);
+  var sec = remaining-60*min;
+  $('#time').html(min.toString()+':'+(sec<10?'0':'')+sec.toString());
+  if (min+sec) {
+    setTimeout(updateTime, 1000)
+  } else {
+   // TODO: trigger gameover
+  };
+}
+
 function startGame() {
   $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
   $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
@@ -353,6 +367,7 @@ function startGame() {
   drawReticle();
   setupLevel(gameState.level);
   updatePercentPainted();
+  updateTime();
 }
 
 $(document).ready(function(){
