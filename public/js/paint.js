@@ -16,6 +16,7 @@ brushTypes = {
 gameState = {
   level: 1,
   levelComplete: 0,
+  startTime: 0,
   brushType: brushTypes.circle,
   brushSizeIndex: 1,
   strokes: [],
@@ -342,9 +343,12 @@ function startGame() {
   $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
   $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
 
+  $('#strokes').html(0);
+
   gameState.strokes = [];
   gameState.isDrawing = 0;
   gameState.levelComplete = 0;
+  gameState.startTime = Date.now();
 
   drawReticle();
   setupLevel(gameState.level);
@@ -370,6 +374,7 @@ $(document).ready(function(){
 
     drawPoint(ctx, pt);
     updatePercentAsync();
+    $('#strokes').html(strokes.length);
   });
 
   $canvas.on('mousemove', function(e) {

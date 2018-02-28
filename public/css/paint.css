@@ -34,6 +34,13 @@ body {
   padding-left: 5px;
   font-size: 30px;
   font-weight: 600;
+  background: linear-gradient(
+    90deg,
+    #85bdfa,
+    #ffb3b3 160px
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 #header a {
@@ -67,7 +74,7 @@ body {
 
 #help {
   text-align: right;
-  padding-right: 5px;
+  padding-right: 8px;
 }
 
 #help-icon {
@@ -97,10 +104,6 @@ body {
 
 #layout td {
   width: 33%;
-}
-
-#sliders {
-  padding-right: 40px;
 }
 
 #main {
@@ -172,9 +175,16 @@ body {
   border-radius: 5px;
 }
 
+#stats {
+  position: relative;
+  vertical-align: bottom;
+  padding-right: 20px;
+  padding-bottom: 30px;
+}
+
 .slider {
-  width: 120px;
-  margin-bottom: 20px;
+  width: 110px;
+  margin-bottom: 15px;
   text-align: center;
   display: inline-block;
  }
@@ -221,4 +231,49 @@ body {
   color: white;
   margin-top: 5px;
   text-shadow: 2px 2px 4px #777;
+}
+
+#counters {
+  position: absolute;
+  top: 35px;
+  left: 50%;
+  transform: translate(-50%, 0);
+}
+
+.counter-wrapper {
+  white-space: nowrap;
+  float: left;
+  margin-bottom: 5px;
+  padding-left: 10px;
+  padding-right: 15px;
+  font-family: 'Amatic SC', sans-serif;
+  font-weight: 600;
+  font-size: 32px;
+  color: white;
+  background-color: rgba(138, 31, 141, 0.4);
+}
+
+#tools {
+  padding-left: 20px;
+  padding-right: 15px;
+  color: white;
+  vertical-align: center;
+}
+
+.tool-wrapper {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding-top: 3px;
+  padding-left: 8px;
+  margin-bottom: 12px;
+  min-width: 200px;
+  max-width: 350px;
+  height: 130px;
+}
+
+.tool-title {
+  font-family: 'Amatic SC', sans-serif;
+  font-size: 34px;
+  font-weight: 600;
+  float: left;
 }

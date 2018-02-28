@@ -29,7 +29,7 @@
   </tr>
   <tr class="spacer"></tr>
   <tr id="body">
-    <td id="sliders" align="right">
+    <td id="stats" align="center">
       <div class="slider" id="percent-painted">
         <div class="slider-wrapper">
           <div class="slider-outline"></div>
@@ -45,13 +45,33 @@
         </div>
         <div class="slider-label">Transgression </div>
       </div>
+      <div id="counters">
+        <div class="counter-wrapper">
+          <span class="counter">Time remaining =</span>
+          <span class="counter" id="time">0:00</span>
+        </div>
+        <div class="counter-wrapper">
+          <span class="counter">Strokes used =</span>
+          <span class="counter" id="strokes">0</span>
+        </div>
+      </div>
     </td>
     <td id="main">
       <div id="canvas-texture"></div>
       <canvas id="game" width=500px height=500px></canvas>
       <canvas id="reticle" width=100px height=100px></canvas>
     </td>
-    <td></td>
+    <td id="tools" align="center">
+      <div class="tool-wrapper">
+        <span class="tool-title">Brush size:</span>
+      </div>
+      <div class="tool-wrapper">
+        <span class="tool-title">Brush shape:</span>
+      </div>
+      <div class="tool-wrapper">
+        <span class="tool-title">Tool type:</span>
+      </div>
+    </td>
   </tr>
   <tr id="footer">
     <td/>
