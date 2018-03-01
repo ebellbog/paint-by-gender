@@ -362,7 +362,7 @@ function updateTimeRing() {
   ctx.stroke();
 
   var elapsed = (Date.now()-gameState.startTime)/1000;
-  var remaining = gameState.maxTime-Math.round(elapsed);
+  var remaining = gameState.maxTime-elapsed;
 
   var angle, min, sec;
   if (elapsed > gameState.maxTime) {
@@ -370,12 +370,18 @@ function updateTimeRing() {
   } else {
     angle = (2*Math.PI)*(1-elapsed/gameState.maxTime);
     min = Math.floor(remaining/60);
-    sec = remaining-60*min;
+    sec = Math.round(remaining)-60*min;
   }
 
   $('#time').html(min.toString()+':'+(sec<10?'0':'')+sec.toString());
 
-  ctx.strokeStyle = 'white';
+  if (remaining > 5) {
+    ctx.strokeStyle = 'white';
+  } else {
+    var greenblue = Math.abs(Math.round(255*Math.cos((remaining-5)*Math.PI)));
+    ctx.strokeStyle = rgbToStr([255, greenblue, greenblue]);
+  }
+
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, angle);
   ctx.stroke();
@@ -383,8 +389,9 @@ function updateTimeRing() {
   if (angle > 0) {
     setTimeout(updateTimeRing, 10);
   } else {
+    gameState.isDrawing = 0;
     gameState.levelComplete = 1;
-    //TODO: trigger gameover
+    setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
   }
 }
 
