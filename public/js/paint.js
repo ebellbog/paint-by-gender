@@ -17,7 +17,7 @@ gameState = {
   level: 1,
   levelComplete: 0,
   startTime: 0,
-  maxTime: 120,
+  maxTime: 30,
   brushType: brushTypes.circle,
   brushSizeIndex: 1,
   strokes: [],
@@ -178,6 +178,13 @@ function setupContext(ctx, type) {
     ctx.lineJoin = ctx.lineCap = 'round';
     ctx.strokeStyle = ctx.fillStyle = rgbToStr(colors.paint);
     ctx.globalCompositeOperation = 'darken';
+  } else if (type=='timer') {
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'butt';
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY= 2;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'gray';
   }
 }
 
@@ -339,17 +346,46 @@ function updateLevelIcon(level) {
   $levelIcon.html(iconList.join('&nbsp;'));
 }
 
-function updateTime() {
+function updateTimeRing() {
+  var $ring = $('#time-ring');
+  var ringSize = $ring.height();
+  var ctx = getContext($ring);
+  ctx.clearRect(0, 0, ringSize, ringSize);
+  setupContext(ctx, 'timer');
+
+  var radius = 75;
+  var center = ringSize/2;
+
+  ctx.strokeStyle = 'rgba(90, 90, 90, 0.25)';
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, 2*Math.PI);
+  ctx.stroke();
+
   var elapsed = (Date.now()-gameState.startTime)/1000;
   var remaining = gameState.maxTime-Math.round(elapsed);
-  var min = Math.floor(remaining/60);
-  var sec = remaining-60*min;
-  $('#time').html(min.toString()+':'+(sec<10?'0':'')+sec.toString());
-  if (min+sec>0) {
-    setTimeout(updateTime, 1000)
+
+  var angle, min, sec;
+  if (elapsed > gameState.maxTime) {
+    angle = min = sec = 0;
   } else {
-   // TODO: trigger gameover
-  };
+    angle = (2*Math.PI)*(1-elapsed/gameState.maxTime);
+    min = Math.floor(remaining/60);
+    sec = remaining-60*min;
+  }
+
+  $('#time').html(min.toString()+':'+(sec<10?'0':'')+sec.toString());
+
+  ctx.strokeStyle = 'white';
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, angle);
+  ctx.stroke();
+
+  if (angle > 0) {
+    setTimeout(updateTimeRing, 10);
+  } else {
+    gameState.levelComplete = 1;
+    //TODO: trigger gameover
+  }
 }
 
 function startGame() {
@@ -361,18 +397,22 @@ function startGame() {
 
   gameState.strokes = [];
   gameState.isDrawing = 0;
-  gameState.levelComplete = 0;
   gameState.startTime = Date.now();
+
+  if (gameState.levelComplete) {
+    updateTimeRing();
+    gameState.levelComplete = 0;
+  }
 
   drawReticle();
   setupLevel(gameState.level);
   updatePercentPainted();
-  updateTime();
 }
 
 $(document).ready(function(){
   startGame();
   setTimeout(updateTexture, 100);
+  updateTimeRing();
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);

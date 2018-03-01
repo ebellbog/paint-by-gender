@@ -13,6 +13,7 @@ body {
 
 #layout {
   border-collapse: collapse;
+  min-width: 1030px;
 }
 
 #header {
@@ -164,6 +165,12 @@ body {
   background-color: purple;
 }
 
+#stats {
+  position: relative;
+  vertical-align: bottom;
+  padding-right: 5px;
+}
+
 #spill-warning .slider-outline {
   background: linear-gradient(red,yellow 45%,#0f0);
   opacity: 0.75;
@@ -175,16 +182,8 @@ body {
   border-radius: 5px;
 }
 
-#stats {
-  position: relative;
-  vertical-align: bottom;
-  padding-right: 20px;
-  padding-bottom: 30px;
-}
-
 .slider {
   width: 110px;
-  margin-bottom: 15px;
   text-align: center;
   display: inline-block;
  }
@@ -233,35 +232,23 @@ body {
   text-shadow: 2px 2px 4px #777;
 }
 
-#counters {
+#time-ring {
   position: absolute;
-  top: 35px;
+  top: 0;
   left: 50%;
   transform: translate(-50%, 0);
 }
 
-.counter-wrapper {
-  white-space: nowrap;
-  float: left;
-  margin-bottom: 5px;
-  padding-left: 15px;
-  font-family: 'Amatic SC', sans-serif;
-  font-weight: 600;
-  font-size: 32px;
+#time {
+  position: absolute;
+  top: 46px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  font-size: 70px;
+  font-weight: 400;
+  font-family: 'Amatic SC', cursive;
   color: white;
-  background-color: rgba(138, 31, 141, 0.4);
-}
-
-.counter-wrapper span {
-  float: left;
-}
-
-#time-wrapper {
-  width: 230px;
-}
-
-#strokes-wrapper {
-  width: 170px;
+  text-shadow: 0 0 6px #777;
 }
 
 #tools {
