@@ -345,7 +345,7 @@ function updateTime() {
   var min = Math.floor(remaining/60);
   var sec = remaining-60*min;
   $('#time').html(min.toString()+':'+(sec<10?'0':'')+sec.toString());
-  if (min+sec) {
+  if (min+sec>0) {
     setTimeout(updateTime, 1000)
   } else {
    // TODO: trigger gameover

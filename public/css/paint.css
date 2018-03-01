@@ -191,14 +191,14 @@ body {
 
 .slider-wrapper {
   position: relative;
-  height: 200px;
+  height: 250px;
   width: 12px;
   margin: 0 auto;
 }
 
 .slider-outline {
   width: 12px;
-  height: 200px;
+  height: 250px;
   border-radius: 7px;
   border: 2px solid #888;
   background-color: white;
@@ -244,13 +244,24 @@ body {
   white-space: nowrap;
   float: left;
   margin-bottom: 5px;
-  padding-left: 10px;
-  padding-right: 15px;
+  padding-left: 15px;
   font-family: 'Amatic SC', sans-serif;
   font-weight: 600;
   font-size: 32px;
   color: white;
   background-color: rgba(138, 31, 141, 0.4);
+}
+
+.counter-wrapper span {
+  float: left;
+}
+
+#time-wrapper {
+  width: 230px;
+}
+
+#strokes-wrapper {
+  width: 170px;
 }
 
 #tools {
