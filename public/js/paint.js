@@ -21,7 +21,8 @@ gameState = {
   strokes: [],
   buffer: [],
   isDrawing: 0,
-  toolOptions: [0, 0, 0]
+  toolOptions: [1, 0, 0],
+  toolFocus: -1
 }
 
 /* Helper functions */
@@ -36,6 +37,11 @@ function getBrushSize() {
 
 function getBrushSides() {
   return getBrushType().sides;
+}
+
+function getOptionCount() {
+  var $tool = $(`#tools .tool-wrapper:eq(${gameState.toolFocus})`);
+  return $tool.find('.tool-option').length;
 }
 
 function rgbToStr(rgbList) {
@@ -286,9 +292,11 @@ function setSelector(toolIndex, optionIndex, animated) {
   var $selector = $tool.find('.option-selector');
   var $option = $tool.find(`.tool-option:eq(${optionIndex})`);
 
+  $selector.toggleClass('focus', toolIndex == gameState.toolFocus);
+
   var position = $option.position();
   if (animated) {
-    $selector.animate({'left':position.left+2}, 500);
+    $selector.animate({'left':position.left+2}, 300);
   } else {
     $selector.css('left', position.left+2);
   }
@@ -425,7 +433,8 @@ function startGame() {
   gameState.strokes = [];
   gameState.isDrawing = 0;
   gameState.startTime = Date.now();
-  gameState.toolOptions = [0,0,0];
+  gameState.toolOptions = [1,0,0];
+  gameState.toolFocus = -1;
 
   if (gameState.levelComplete) {
     updateTimeRing();
@@ -445,6 +454,11 @@ $(document).ready(function(){
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
+
+  $(document).on('mousedown', function(e) {
+    gameState.toolFocus = -1;
+    updateSelectors(0);
+  });
 
   $canvas.on('mousedown', function(e) {
     gameState.isDrawing = 1;
@@ -502,21 +516,28 @@ $(document).ready(function(){
     e.preventDefault();
     switch(e.which) {
       case 38: // up arrow
-        gameState.toolOptions[0] = Math.min(getBrushType().sizes.length-1, gameState.toolOptions[0]+1);
+        gameState.toolFocus = Math.max(0, gameState.toolFocus-1);
         break;
       case 40: // down arrow
-        gameState.toolOptions[0] = Math.max(0, gameState.toolOptions[0]-1);
+        gameState.toolFocus = Math.min(gameState.toolOptions.length-1, gameState.toolFocus+1);
         break;
       case 37: // left arrow
-        gameState.toolOptions[1] = Math.max(0, gameState.toolOptions[1]-1);
+        if (gameState.toolFocus >= 0) {
+          gameState.toolOptions[gameState.toolFocus] = Math.max(0, gameState.toolOptions[gameState.toolFocus]-1);
+        }
         break;
       case 39: // right arrow
-        gameState.toolOptions[1] = Math.min(brushTypes.length-1, gameState.toolOptions[1]+1);
+        if (gameState.toolFocus >= 0) {
+          gameState.toolOptions[gameState.toolFocus] = Math.min(
+            getOptionCount()-1,
+            gameState.toolOptions[gameState.toolFocus]+1);
+        }
         break;
       default:
         break;
     }
-    drawReticle();
+    updateSelectors(1);
+    setTimeout(drawReticle, 200);
   });
 
   $('#eraser').click(function() {
