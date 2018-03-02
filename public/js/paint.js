@@ -7,32 +7,35 @@ colors = {
   outerReticle: [221, 221, 221]
 };
 
-brushTypes = {
-  circle: {index: 0, sizes:[8, 20, 28]},
-  square: {index: 1, sides: 4, sizes:[8, 20, 28]},
-  triangle: {index: 2, sides: 3, sizes:[12, 24, 36]}
-};
+brushTypes = [
+  {sides: 0, sizes:[8, 20, 28]},
+  {sides: 4, sizes:[8, 20, 28]},
+  {sides: 3, sizes:[12, 24, 36]}
+];
 
 gameState = {
   level: 1,
   levelComplete: 0,
   startTime: 0,
   maxTime: 30,
-  brushType: brushTypes.circle,
-  brushSizeIndex: 1,
   strokes: [],
   buffer: [],
-  isDrawing: 0
+  isDrawing: 0,
+  toolOptions: [0, 0, 0]
 }
 
 /* Helper functions */
 
+function getBrushType() {
+  return brushTypes[gameState.toolOptions[1]];
+}
+
 function getBrushSize() {
-  return gameState.brushType.sizes[gameState.brushSizeIndex];
+  return getBrushType().sizes[gameState.toolOptions[0]];
 }
 
 function getBrushSides() {
-  return gameState.brushType.sides;
+  return getBrushType().sides;
 }
 
 function rgbToStr(rgbList) {
@@ -245,7 +248,7 @@ function drawReticle() {
   var innerColor = rgbToStr(colors.innerReticle);
   var outerColor = rgbToStr(colors.outerReticle);
 
-  if(gameState.brushType == brushTypes.circle) {
+  if (!getBrushSides()) {
     ctx.strokeStyle = innerColor;
     ctx.beginPath();
     ctx.arc(centerX, centerY, getBrushSize(), 0, 2*Math.PI);
@@ -274,13 +277,30 @@ function updateReticle(e) {
   $reticle.css('left',e.clientX-rect.left-size/2);
 }
 
+function updateSelectors(animated) {
+  gameState.toolOptions.map((v,i)=>setSelector(i,v,animated));
+}
+
+function setSelector(toolIndex, optionIndex, animated) {
+  var $tool = $(`#tools .tool-wrapper:eq(${toolIndex})`);
+  var $selector = $tool.find('.option-selector');
+  var $option = $tool.find(`.tool-option:eq(${optionIndex})`);
+
+  var position = $option.position();
+  if (animated) {
+    $selector.animate({'left':position.left+2}, 500);
+  } else {
+    $selector.css('left', position.left+2);
+  }
+}
+
 function updateTexture() {
   $('#canvas-texture').css('top', $('#game')[0].offsetTop);
 }
 
 function drawPoint(ctx, pt) {
   setupContext(ctx,'painting');
-  if (gameState.brushType == brushTypes.circle) {
+  if (!getBrushSides()) {
     ctx.beginPath();
     ctx.arc(pt.x, pt.y, pt.brushSize, 0, Math.PI*2);
     ctx.fill();
@@ -290,7 +310,7 @@ function drawPoint(ctx, pt) {
 }
 
 function drawPath(ctx, pts) {
-  if (gameState.brushType == brushTypes.circle) {
+  if (!getBrushSides()) {
     var p1 = pts[0];
     var p2 = pts[1];
 
@@ -391,7 +411,7 @@ function updateTimeRing() {
   } else {
     gameState.isDrawing = 0;
     gameState.levelComplete = 1;
-    setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
+    //setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
   }
 }
 
@@ -405,6 +425,7 @@ function startGame() {
   gameState.strokes = [];
   gameState.isDrawing = 0;
   gameState.startTime = Date.now();
+  gameState.toolOptions = [0,0,0];
 
   if (gameState.levelComplete) {
     updateTimeRing();
@@ -420,12 +441,13 @@ $(document).ready(function(){
   startGame();
   setTimeout(updateTexture, 100);
   updateTimeRing();
+  updateSelectors(0);
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
 
   $canvas.on('mousedown', function(e) {
-    gameState.isDrawing = true;
+    gameState.isDrawing = 1;
     gameState.buffer = [];
 
     var strokes = gameState.strokes;
@@ -477,31 +499,19 @@ $(document).ready(function(){
   });
 
   $(document).keydown(function(e) {
+    e.preventDefault();
     switch(e.which) {
       case 38: // up arrow
-        e.preventDefault();
-        gameState.brushSizeIndex = Math.min(gameState.brushType.sizes.length-1, gameState.brushSizeIndex+1);
+        gameState.toolOptions[0] = Math.min(getBrushType().sizes.length-1, gameState.toolOptions[0]+1);
         break;
       case 40: // down arrow
-        e.preventDefault();
-        gameState.brushSizeIndex = Math.max(0, gameState.brushSizeIndex-1);
+        gameState.toolOptions[0] = Math.max(0, gameState.toolOptions[0]-1);
         break;
       case 37: // left arrow
-        var typeIndex = gameState.brushType.index;
-        if(typeIndex>0) {
-          typeIndex--;
-          gameState.brushType = Object.values(brushTypes).find(value => value.index === typeIndex);
-          drawReticle();
-        }
+        gameState.toolOptions[1] = Math.max(0, gameState.toolOptions[1]-1);
         break;
       case 39: // right arrow
-        var typeIndex = gameState.brushType.index;
-        var brushValues = Object.values(brushTypes);
-        if(typeIndex<brushValues.length-1) {
-          typeIndex++;
-          gameState.brushType = brushValues.find(value => value.index === typeIndex);
-          drawReticle();
-        }
+        gameState.toolOptions[1] = Math.min(brushTypes.length-1, gameState.toolOptions[1]+1);
         break;
       default:
         break;
@@ -513,5 +523,8 @@ $(document).ready(function(){
     startGame();
   });
 
-  $(window).resize(()=>updateTexture());
+  $(window).resize(function() {
+    updateTexture();
+    updateSelectors(0);
+  });
 });
