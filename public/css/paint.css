@@ -284,6 +284,7 @@ body {
   margin-left: 7px;
   margin-right: 7px;
   background-color: lightgray;
+  cursor: pointer;
 }
 
 .option-wrapper {
@@ -294,6 +295,7 @@ body {
 }
 
 .option-selector {
+  pointer-events: none;
   position: absolute;
   top: 0;
   left: 49px;
@@ -304,5 +306,5 @@ body {
 }
 
 .focus, .option-selector.focus {
-  border: 3px solid #ffd400;
+  border: 3px solid #fbff00;
 }

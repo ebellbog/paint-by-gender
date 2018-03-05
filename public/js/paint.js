@@ -22,7 +22,7 @@ gameState = {
   buffer: [],
   isDrawing: 0,
   toolOptions: [1, 0, 0],
-  toolFocus: -1
+  toolFocus: 3
 }
 
 /* Helper functions */
@@ -434,7 +434,7 @@ function startGame() {
   gameState.isDrawing = 0;
   gameState.startTime = Date.now();
   gameState.toolOptions = [1,0,0];
-  gameState.toolFocus = -1;
+  gameState.toolFocus = gameState.toolOptions.length;
 
   if (gameState.levelComplete) {
     updateTimeRing();
@@ -444,20 +444,31 @@ function startGame() {
   drawReticle();
   setupLevel(gameState.level);
   updatePercentPainted();
+  updateSelectors(0);
 }
 
 $(document).ready(function(){
   startGame();
   setTimeout(updateTexture, 100);
   updateTimeRing();
-  updateSelectors(0);
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
 
   $(document).on('mousedown', function(e) {
-    gameState.toolFocus = -1;
+    //only respond to clicks outside the game space
+    if ($(e.target).closest('#game').length) return;
+
+    gameState.toolFocus = gameState.toolOptions.length;
     updateSelectors(0);
+  });
+
+  $('.tool-option').click(function(e) {
+    var optionIndex = $(e.target).index();
+    var toolIndex = $(e.target).parents('.tool-wrapper').first().index();
+    gameState.toolOptions[toolIndex] = optionIndex;
+    setSelector(toolIndex, optionIndex, false);
+    drawReticle();
   });
 
   $canvas.on('mousedown', function(e) {
@@ -516,22 +527,21 @@ $(document).ready(function(){
     e.preventDefault();
     switch(e.which) {
       case 38: // up arrow
-        gameState.toolFocus = Math.max(0, gameState.toolFocus-1);
+        var n = gameState.toolOptions.length+1; // fix mod for negatives
+        gameState.toolFocus = (gameState.toolFocus-1+n)%n;
         break;
       case 40: // down arrow
-        gameState.toolFocus = Math.min(gameState.toolOptions.length-1, gameState.toolFocus+1);
+        gameState.toolFocus = (gameState.toolFocus+1)%(gameState.toolOptions.length+1);
         break;
       case 37: // left arrow
-        if (gameState.toolFocus >= 0) {
-          gameState.toolOptions[gameState.toolFocus] = Math.max(0, gameState.toolOptions[gameState.toolFocus]-1);
-        }
+        if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
+        gameState.toolOptions[gameState.toolFocus] = Math.max(0, gameState.toolOptions[gameState.toolFocus]-1);
         break;
       case 39: // right arrow
-        if (gameState.toolFocus >= 0) {
-          gameState.toolOptions[gameState.toolFocus] = Math.min(
-            getOptionCount()-1,
-            gameState.toolOptions[gameState.toolFocus]+1);
-        }
+        if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
+        gameState.toolOptions[gameState.toolFocus] = Math.min(
+          getOptionCount()-1,
+          gameState.toolOptions[gameState.toolFocus]+1);
         break;
       default:
         break;
