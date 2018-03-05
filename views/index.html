@@ -54,30 +54,40 @@
       <canvas id="reticle" width=100px height=100px></canvas>
     </td>
     <td id="tools" align="center">
-      <div class="tool-wrapper">
+      <div class="tool-wrapper" id="brush-size">
         <div class="tool-title">Brush size:</div>
         <div class="option-wrapper">
-          <div class="tool-option"></div>
-          <div class="tool-option"></div>
-          <div class="tool-option"></div>
+          <canvas width="40px" height="40px" class="tool-option"></canvas>
+          <canvas width="40px" height="40px" class="tool-option"></canvas>
+          <canvas width="40px" height="40px" class="tool-option"></canvas>
           <div class="option-selector"></div>
         </div>
       </div>
-      <div class="tool-wrapper">
+      <div class="tool-wrapper" id="brush-shape">
         <span class="tool-title">Brush shape:</span>
         <div class="option-wrapper">
-          <div class="tool-option"></div>
-          <div class="tool-option"></div>
-          <div class="tool-option"></div>
+          <canvas width="40px" height="40px" class="tool-option"></canvas>
+          <canvas width="40px" height="40px" class="tool-option"></canvas>
+          <canvas width="40px" height="40px" class="tool-option"></canvas>
           <div class="option-selector"></div>
         </div>
       </div>
-      <div class="tool-wrapper">
+      <div class="tool-wrapper" id="tool-type">
         <span class="tool-title">Tool type:</span>
         <div class="option-wrapper">
-          <div class="tool-option"></div>
-          <div class="tool-option"></div>
-          <div class="tool-option"></div>
+          <div class="tool-option">
+            <div id="paint-brush-wrapper">
+              <i class="fas fa-2x fa-paint-brush" data-fa-transform="shrink-2"></i>
+            </div>
+          </div>
+          <div class="tool-option">
+            <img id="lipstick" src='../img/lipstick.svg'></img>
+          </div>
+          <div class="tool-option">
+            <div id="pill-wrapper"
+              <i class="fas fa-2x fa-pills" data-fa-transform="shrink-2"></i>
+            </div>
+          </div>
           <div class="option-selector"></div>
         </div>
       </div>
@@ -85,8 +95,9 @@
   </tr>
   <tr id="footer">
     <td/>
-    <td>
-      <div id="eraser">ERASE</div>
+    <td align="center">
+      <div id="eraser" class="bottom-btn">ERASE</div>
+      <div id="restart" class="bottom-btn">RESTART</div>
     </td>
     <td/>
   </tr>

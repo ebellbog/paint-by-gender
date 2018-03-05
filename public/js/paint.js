@@ -4,7 +4,8 @@ colors = {
   shape: [255, 255, 255],
   spill: [132, 150, 150],
   innerReticle: [153, 153, 153],
-  outerReticle: [221, 221, 221]
+  outerReticle: [221, 221, 221],
+  toolOption: [255, 255, 255]
 };
 
 brushTypes = [
@@ -242,6 +243,65 @@ function joinPolys(ctx, p1, p2) {
   }
 }
 
+function drawToolOptions() {
+  var toolColor = rgbToStr(colors.toolOption);
+
+  // draw brush size
+
+  var sides = getBrushSides();
+  var size = sides ? 5 : 4;
+
+  $('#brush-size canvas').each(function() {
+    var $canvas = $(this);
+    var ctx = getContext($canvas);
+    ctx.clearRect(0, 0, $canvas.width(), $canvas.height());
+
+    var centerX = $canvas.width()/2;
+    var centerY = centerX;
+
+    if (!sides) {
+      ctx.fillStyle = toolColor;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, size, 0, Math.PI*2);
+      ctx.fill();
+      size += 6;
+    } else {
+      var centerX = $canvas.width()/2;
+      var centerY = centerX;
+      if (sides == 3) centerY += 4;
+      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: toolColor});
+      size += 7;
+    }
+  });
+
+  // draw brush shape
+
+  var sideValues = brushTypes.map(v => v.sides);
+
+  $('#brush-shape canvas').each(function(index) {
+    var $canvas = $(this);
+    var ctx = getContext($canvas);
+    ctx.clearRect(0, 0, $canvas.width(), $canvas.height());
+
+    var centerX = $canvas.width()/2;
+    var centerY = centerX;
+    size = 12;
+
+    sides = sideValues[index];
+    if (!sides) {
+      ctx.fillStyle = toolColor;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, size-1, 0, Math.PI*2);
+      ctx.fill();
+    } else {
+      var centerX = $canvas.width()/2;
+      var centerY = centerX;
+      if (sides == 3) centerY += 4;
+      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: toolColor});
+    }
+  });
+}
+
 function drawReticle() {
   var $reticle = $('#reticle');
   var ctx = getContext($reticle);
@@ -296,9 +356,9 @@ function setSelector(toolIndex, optionIndex, animated) {
 
   var position = $option.position();
   if (animated) {
-    $selector.animate({'left':position.left+2}, 300);
+    $selector.animate({'left':position.left}, 300);
   } else {
-    $selector.css('left', position.left+2);
+    $selector.css('left', position.left);
   }
 }
 
@@ -428,8 +488,6 @@ function startGame() {
   $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
   $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
 
-  $('#strokes').html(0);
-
   gameState.strokes = [];
   gameState.isDrawing = 0;
   gameState.startTime = Date.now();
@@ -442,6 +500,7 @@ function startGame() {
   }
 
   drawReticle();
+  drawToolOptions();
   setupLevel(gameState.level);
   updatePercentPainted();
   updateSelectors(0);
@@ -524,7 +583,7 @@ $(document).ready(function(){
   });
 
   $(document).keydown(function(e) {
-    e.preventDefault();
+    var pressedArrow = true;
     switch(e.which) {
       case 38: // up arrow
         var n = gameState.toolOptions.length+1; // fix mod for negatives
@@ -544,13 +603,23 @@ $(document).ready(function(){
           gameState.toolOptions[gameState.toolFocus]+1);
         break;
       default:
+        pressedArrow = false;
         break;
     }
+    if (pressedArrow) e.preventDefault();
     updateSelectors(1);
     setTimeout(drawReticle, 200);
+    setTimeout(drawToolOptions, 200);
   });
 
   $('#eraser').click(function() {
+    gameState.strokes = [];
+    gameState.isDrawing = 0;
+    setupLevel(gameState.level);
+    updatePercentPainted();
+  });
+
+  $('#restart').click(function() {
     startGame();
   });
 
