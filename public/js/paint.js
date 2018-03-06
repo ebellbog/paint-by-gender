@@ -236,6 +236,7 @@ function setGameFade(amount) {
   $('#game, #canvas-texture').css('filter', filter);
 }
 
+// TODO: investigate performance on non-Chrome browsers
 function fadeIn(options) {
   var amount = options.amount || options.start || 1;
   setGameFade(amount);
@@ -603,6 +604,7 @@ function startGame() {
   setupButtons();
 
   $('#overlay-text').show();
+  $('#game').css('cursor','default');
 }
 
 $(document).ready(function(){
@@ -647,7 +649,9 @@ $(document).ready(function(){
   });
 
   $canvas.on('mousemove', function(e) {
+    if(gameState.mode==gameMode.playing)$('#reticle').show();
     updateReticle(e);
+
     if (!gameState.isDrawing) return;
 
     var strokes = gameState.strokes;
@@ -666,10 +670,6 @@ $(document).ready(function(){
       strokes[strokes.length-1].push(curPos);
     }
     redrawGame(ctx);
-  });
-
-  $canvas.on('mouseover', function(e) {
-    $('#reticle').show();
   });
 
   $canvas.on('mouseout', function(e) {
@@ -737,6 +737,7 @@ $(document).ready(function(){
 
       restartTimer();
       gameState.mode = gameMode.playing;
+      $('#game').css('cursor','none');
       setupButtons();
     });
   });

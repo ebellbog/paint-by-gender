@@ -149,7 +149,6 @@ body {
 
 #reticle {
   position: absolute;
-  cursor: none;
   pointer-events: none;
   display: none;
 }
