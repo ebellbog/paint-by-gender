@@ -601,6 +601,8 @@ function startGame() {
   updateSelectors(0);
   setGameFade(1);
   setupButtons();
+
+  $('#overlay-text').show();
 }
 
 $(document).ready(function(){
@@ -718,7 +720,7 @@ $(document).ready(function(){
     updatePercentPainted();
   });
 
-  $('#restart').click(function() {
+  $('#restart,#retry').click(function() {
     startGame();
   });
 
@@ -727,6 +729,7 @@ $(document).ready(function(){
 
     gameState.mode = gameMode.starting;
     setupButtons();
+    $('#overlay-text').hide();
 
     showCountdown(3, function() {
       flashStationary('Paint!', 1000, 200);

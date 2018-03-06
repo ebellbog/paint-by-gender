@@ -192,7 +192,20 @@ body {
   transform: translate(-50%,-50%);
   z-index: 3;
   color: white;
-  text-shadow: 5px 0 5px #f99, -5px 0 5px #99bfe6;
+  text-shadow: 4px 0 5px #f99, -4px 0 5px #99bfe6;
+}
+
+#overlay-text {
+  font-family: 'Amatic SC', cursive;
+  font-size: 120px;
+  font-weight: 400;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  z-index: 3;
+  color: white;
+  text-shadow: 0 0 8px black;
 }
 
 #stats {
