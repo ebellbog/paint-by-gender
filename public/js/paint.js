@@ -250,7 +250,7 @@ function fadeIn(options) {
                     callback:options.callback};
   if (amount>0) {
     setTimeout(()=>fadeIn(newOptions), timeDelta)
-  } else  {
+  } else if (options.callback) {
     options.callback();
   }
 }
@@ -556,6 +556,29 @@ function restartTimer() {
   }
 }
 
+function flashExpanding(message, duration, hold) {
+  var hold = hold || 200;
+  var $gameCell = $('td#main');
+  var $number = $(document.createElement('div')).addClass('flash').html(message);
+  $gameCell.append($number);
+  setTimeout(()=>$number.animate({'font-size':'+=350', opacity:0}, duration-hold, ()=>$number.remove()), hold);
+}
+
+function flashStationary(message, duration, fade) {
+  var fade = fade || 1000;
+  var $gameCell = $('td#main');
+  var $number = $(document.createElement('div')).addClass('flash').html(message);
+  $gameCell.append($number);
+  setTimeout(()=>$number.animate({opacity:0}, fade, ()=>$number.remove()), duration-fade); 
+}
+
+function showCountdown(count, cb) {
+  if (count > 0) {
+    flashExpanding(count, 1200);
+    setTimeout(()=>showCountdown(count-1, cb),1000);
+  } else if (cb) cb();
+}
+
 function startGame() {
   $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
   $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
@@ -705,11 +728,14 @@ $(document).ready(function(){
     gameState.mode = gameMode.starting;
     setupButtons();
 
-    fadeIn({duration:1, callback:function(){
+    showCountdown(3, function() {
+      flashStationary('Paint!', 1000, 200);
+      fadeIn({duration:0.5});
+
       restartTimer();
       gameState.mode = gameMode.playing;
       setupButtons();
-    }});
+    });
   });
 
   $(window).resize(function() {
