@@ -49,9 +49,10 @@
       </div>
     </td>
     <td id="main">
-      <div id="canvas-texture"></div>
-      <canvas id="game" width=500px height=500px></canvas>
+      <div id="canvas-texture" class="blurred"></div>
+      <canvas id="game" class="blurred" width=500px height=500px></canvas>
       <canvas id="reticle" width=100px height=100px></canvas>
+      <div id="game-background"></div>
     </td>
     <td id="tools" align="center">
       <div class="tool-wrapper" id="brush-size">
@@ -98,6 +99,7 @@
     <td align="center">
       <div id="eraser" class="bottom-btn">ERASE</div>
       <div id="restart" class="bottom-btn">RESTART</div>
+      <div id="start" class="bottom-btn inactive">START</div>
     </td>
     <td/>
   </tr>

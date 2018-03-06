@@ -14,9 +14,16 @@ brushTypes = [
   {sides: 3, sizes:[12, 24, 36]}
 ];
 
+gameMode = {
+  ready: 0,
+  starting: 1,
+  playing: 2,
+  complete: {success: 3, failure: 4},
+}
+
 gameState = {
   level: 1,
-  levelComplete: 0,
+  mode: gameMode.ready,
   startTime: 0,
   maxTime: 30,
   strokes: [],
@@ -131,18 +138,18 @@ function updatePercentPainted() {
   var $spillSlider = $('#spill-warning .slider-mark');
   $spillSlider.animate({bottom:bottom}, 80, 'linear');
 
-  if (gameState.levelComplete) return;
+  if (gameState.mode != gameMode.playing) return;
   else if (canvasData.spill >= maxSpill) {
     $spillSlider.css('background-color', 'red');
     gameState.isDrawing = false;
-    gameState.levelComplete = true;
+    gameState.mode = gameMode.complete.failure;
     setTimeout(()=>alert('Oops, you\'ve transgressed too far! Polite society won\'t stand for it \:\('), 100);
   }
-  else if(percent >= 1 && !gameState.levelComplete) {
+  else if(percent >= 1 && gameState.mode == gameMode.playing) {
     $fill.css('background-color', '#0f0');
     $fill.css('border-radius', '5px');
     gameState.isDrawing = false;
-    gameState.levelComplete = true;
+    gameState.mode = gameMode.complete.failure;
     setTimeout(()=>alert(`Congrats, you passed Level ${gameState.level}!`), 100);
   }
 
@@ -154,7 +161,30 @@ function updatePercentAsync() {
 
 /* Setup & draw functions */
 
+function setupButtons() {
+  switch(gameState.mode) {
+    case gameMode.ready:
+      $('#start').removeClass('inactive');
+      $('#start').css('display','inline-block');
+      $('#restart, #eraser').css('display','none');
+      break;
+    case gameMode.starting:
+      $('#start').addClass('inactive');
+      break;
+    case gameMode.playing:
+      $('#start').css('display','none');
+      $('#restart, #eraser').css('display', 'inline-block');
+      break;
+    default:
+      break;
+  }
+}
+
 function setupLevel(level) {
+  // configure level-specific colors
+  $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
+  $('#game-background').css('background-color', rgbToStr(colors.canvas));
+
   var ctx = getContext();
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
@@ -195,6 +225,33 @@ function setupContext(ctx, type) {
     ctx.shadowOffsetY= 2;
     ctx.shadowBlur = 10;
     ctx.shadowColor = 'gray';
+  }
+}
+
+function setGameFade(amount) {
+  var blur = 40*amount;
+  var saturate = 100-(50*amount);
+
+  var filter = amount > 0.001 ? `blur(${blur}px) saturate(${saturate}%)` : 'none';
+  $('#game, #canvas-texture').css('filter', filter);
+}
+
+function fadeIn(options) {
+  var amount = options.amount || options.start || 1;
+  setGameFade(amount);
+
+  var duration = options.duration || 2;
+  var delta = options.delta || 0.005;
+  var timeDelta = 1000*duration*delta;
+
+  var newOptions = {duration:duration,
+                    amount:amount-delta,
+                    delta:delta,
+                    callback:options.callback};
+  if (amount>0) {
+    setTimeout(()=>fadeIn(newOptions), timeDelta)
+  } else  {
+    options.callback();
   }
 }
 
@@ -362,8 +419,10 @@ function setSelector(toolIndex, optionIndex, animated) {
   }
 }
 
-function updateTexture() {
-  $('#canvas-texture').css('top', $('#game')[0].offsetTop);
+function alignGameLayers() {
+  var offsetTop = $('#game')[0].offsetTop;
+  $('#canvas-texture').css('top', offsetTop);
+  $('#game-background').css('top', offsetTop);
 }
 
 function drawPoint(ctx, pt) {
@@ -434,7 +493,7 @@ function updateLevelIcon(level) {
   $levelIcon.html(iconList.join('&nbsp;'));
 }
 
-function updateTimeRing() {
+function setTimer(elapsed, max) {
   var $ring = $('#time-ring');
   var ringSize = $ring.height();
   var ctx = getContext($ring);
@@ -449,14 +508,13 @@ function updateTimeRing() {
   ctx.arc(center, center, radius, 0, 2*Math.PI);
   ctx.stroke();
 
-  var elapsed = (Date.now()-gameState.startTime)/1000;
-  var remaining = gameState.maxTime-elapsed;
+  var remaining = max-elapsed;
 
   var angle, min, sec;
-  if (elapsed > gameState.maxTime) {
+  if (elapsed > max) {
     angle = min = sec = 0;
   } else {
-    angle = (2*Math.PI)*(1-elapsed/gameState.maxTime);
+    angle = (2*Math.PI)*(1-elapsed/max);
     min = Math.floor(remaining/60);
     sec = Math.round(remaining)-60*min;
   }
@@ -473,43 +531,58 @@ function updateTimeRing() {
   ctx.beginPath();
   ctx.arc(center, center, radius, 0, angle);
   ctx.stroke();
+}
 
-  if (angle > 0) {
-    setTimeout(updateTimeRing, 10);
+function updateTimeRing() {
+  var elapsed = (Date.now()-gameState.startTime)/1000;
+  setTimer(elapsed, gameState.maxTime);
+
+  if (elapsed < gameState.maxTime) {
+    var gm = gameState.mode;
+    if (gm==gameMode.playing||gm==gameMode.starting) {
+      setTimeout(updateTimeRing, 10);
+    }
   } else {
+    gameState.mode = gameMode.complete.failure;
     gameState.isDrawing = 0;
-    gameState.levelComplete = 1;
     //setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
   }
 }
 
+function restartTimer() {
+  gameState.startTime = Date.now();
+  if (gameState.mode != gameMode.playing) {
+    updateTimeRing();
+  }
+}
+
 function startGame() {
-  $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
   $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
   $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
 
   gameState.strokes = [];
   gameState.isDrawing = 0;
-  gameState.startTime = Date.now();
   gameState.toolOptions = [1,0,0];
   gameState.toolFocus = gameState.toolOptions.length;
 
-  if (gameState.levelComplete) {
-    updateTimeRing();
-    gameState.levelComplete = 0;
-  }
+  gameState.mode = gameMode.ready;
+
+  // use timeout to ensure any existing
+  // timer loop has stopped executing
+  setTimeout(()=>setTimer(0,gameState.maxTime), 50);
 
   drawReticle();
   drawToolOptions();
   setupLevel(gameState.level);
   updatePercentPainted();
   updateSelectors(0);
+  setGameFade(1);
+  setupButtons();
 }
 
 $(document).ready(function(){
   startGame();
-  setTimeout(updateTexture, 100);
-  updateTimeRing();
+  setTimeout(alignGameLayers, 100);
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
@@ -532,6 +605,8 @@ $(document).ready(function(){
   });
 
   $canvas.on('mousedown', function(e) {
+    if (gameState.mode != gameMode.playing) return;
+
     gameState.isDrawing = 1;
     gameState.buffer = [];
 
@@ -624,8 +699,21 @@ $(document).ready(function(){
     startGame();
   });
 
+  $('#start').click(function() {
+    if (gameState.mode != gameMode.ready) return;
+
+    gameState.mode = gameMode.starting;
+    setupButtons();
+
+    fadeIn({duration:1, callback:function(){
+      restartTimer();
+      gameState.mode = gameMode.playing;
+      setupButtons();
+    }});
+  });
+
   $(window).resize(function() {
-    updateTexture();
+    alignGameLayers();
     updateSelectors(0);
   });
 });

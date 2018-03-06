@@ -111,6 +111,7 @@ body {
   position: relative;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 #canvas-texture {
@@ -124,6 +125,16 @@ body {
   top: 0;
   left: 0;
   opacity: .6;
+  z-index: 2;
+}
+
+#game-background {
+  width: 500px;
+  height: 500px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
 }
 
 #game {
@@ -133,6 +144,7 @@ body {
   margin-right: auto;
   display: block;
   box-shadow: 3px 3px 30px #777;
+  z-index: 1;
 }
 
 #reticle {
@@ -143,8 +155,8 @@ body {
 }
 
 .bottom-btn {
-  display: inline-block;
-  margin: 15px 7px 0 7px;
+  display: none;
+  margin: 15px 8px 0 8px;
   width: 115px;
   height: 32px;
   line-height: 32px;
@@ -162,6 +174,12 @@ body {
 .bottom-btn:hover {
   background-color: white;
   color: purple;
+}
+
+.bottom-btn.inactive {
+  background-color:rgba(138,31,141, 0.3);
+  color: white;
+  cursor: default;
 }
 
 #stats {
