@@ -157,7 +157,7 @@ function updatePercentAsync() {
 function setupLevel(level) {
   var ctx = getContext();
   ctx.save();
-  ctx.globalCompositeOperation = 'normal';
+  ctx.globalCompositeOperation = 'source-over';
   switch(level) {
     case 1:
       ctx.fillStyle = rgbToStr(colors.canvas);
@@ -528,6 +528,7 @@ $(document).ready(function(){
     gameState.toolOptions[toolIndex] = optionIndex;
     setSelector(toolIndex, optionIndex, false);
     drawReticle();
+    drawToolOptions();
   });
 
   $canvas.on('mousedown', function(e) {
