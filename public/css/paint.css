@@ -204,7 +204,7 @@ body {
   transform: translate(-50%,-50%);
   z-index: 3;
   color: white;
-  text-shadow: 0 0 8px black;
+  text-shadow: 0 0 6px #333;
 }
 
 #stats {

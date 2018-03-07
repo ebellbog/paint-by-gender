@@ -153,20 +153,25 @@ function updatePercentAsync() {
 
 /* Setup functions */
 
-function setupButtons() {
+function setupButtons(atStart) {
   switch(gameState.mode) {
     case gameMode.ready:
-      $('#start').removeClass('inactive');
-      $('#start').css('display','inline-block');
-      $('#restart, #eraser').css('display','none');
+      if (atStart) {
+        $('#start').css('display','inline-block');
+        $('#retry, #restart, #eraser').css('display','none');
+      }
       break;
     case gameMode.starting:
-      $('#start').addClass('inactive');
+      $('.bottom-btn').addClass('inactive');
       break;
     case gameMode.playing:
-      $('#start').css('display','none');
-      $('#restart, #eraser').css('display', 'inline-block');
+      $('#start, #retry').css('display','none');
+      $('#restart, #eraser').css('display','inline-block');
+      $('.bottom-btn').removeClass('inactive');
       break;
+    case gameMode.complete.failure:
+      $('#retry').css('display','inline-block');
+      $('#restart, #eraser').css('display','none');
     default:
       break;
   }
@@ -235,6 +240,12 @@ function setGameMode(mode) {
       break;
     case gameMode.starting:
       $('#overlay-text').hide();
+      showCountdown(3, function() {
+        flashStationary('Paint!', 1000, 200);
+        fadeIn({duration:0.5});
+        restartTimer();
+        setGameMode(gameMode.playing);
+      });
       break;
     case gameMode.playing:
       $('#game').css('cursor','none');
@@ -247,8 +258,9 @@ function setGameMode(mode) {
     default:
       break;
   }
+  var atStart = !gameState.mode;
   gameState.mode = mode;
-  setupButtons();
+  setupButtons(atStart);
 }
 
 /* Poly draw functions */
@@ -736,6 +748,7 @@ $(document).ready(function(){
   });
 
   $('#eraser').click(function() {
+    if ($(this).hasClass('inactive')) return;
     gameState.strokes = [];
     gameState.isDrawing = 0;
     setupLevel(gameState.level);
@@ -743,21 +756,14 @@ $(document).ready(function(){
   });
 
   $('#restart,#retry').click(function() {
+    if ($(this).hasClass('inactive')) return;
     setGameMode(gameMode.ready);
+    setGameMode(gameMode.starting);
   });
 
   $('#start').click(function() {
-    if (gameState.mode != gameMode.ready) return;
-
+    if ($(this).hasClass('inactive')) return;
     setGameMode(gameMode.starting);
-
-    showCountdown(3, function() {
-      flashStationary('Paint!', 1000, 200);
-      fadeIn({duration:0.5});
-
-      restartTimer();
-      setGameMode(gameMode.playing);
-    });
   });
 
   $(window).resize(function() {
