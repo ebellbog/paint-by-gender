@@ -229,9 +229,11 @@ function setGameMode(mode) {
     case gameMode.ready:
       $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
       $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
-
-      if (!gameState.mode) $('#overlay-text').show();
       $('#game').css('cursor','default');
+
+      $('#overlay-title').html('Ready?');
+      $('#overlay-body').hide();
+      if (!gameState.mode) $('#overlay-text').show();
 
       initGameState();
       setupGame();
