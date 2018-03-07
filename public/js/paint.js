@@ -25,7 +25,8 @@ gameMode = {
 
 gameState = {
   level: 1,
-  maxTime: 40
+  maxTime: 40,
+  timerRunning: 0
 }
 
 /* Helper functions */
@@ -231,19 +232,19 @@ function setGameMode(mode) {
       $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
       $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
 
-      $('#overlay-text').show();
+      if (!gameState.mode) $('#overlay-text').show();
       $('#game').css('cursor','default');
 
       initGameState();
       setupGame();
-      setGameFade(1);
+      addBlurLayer();
       break;
     case gameMode.starting:
       $('#overlay-text').hide();
       showCountdown(3, function() {
-        flashStationary('Paint!', 1000, 200);
-        fadeIn({duration:0.5});
-        restartTimer();
+        flashStationary('Paint!', 1000, 400);
+        fadeIn({duration:1, delay:0.5});
+        setTimeout(restartTimer, 1000);
         setGameMode(gameMode.playing);
       });
       break;
@@ -253,6 +254,7 @@ function setGameMode(mode) {
     case gameMode.complete.failure:
     case gameMode.complete.success:
       gameState.isDrawing = 0;
+      gameState.timerRunning = 0;
       $('#game').css('cursor','default');
       $('#reticle').hide();
     default:
@@ -353,15 +355,15 @@ function setTimer(elapsed, max) {
 }
 
 function updateTimeRing() {
+  if (!gameState.timerRunning) return;
+
   var elapsed = (Date.now()-gameState.startTime)/1000;
   setTimer(elapsed, gameState.maxTime);
 
   if (elapsed < gameState.maxTime) {
-    var gm = gameState.mode;
-    if (gm==gameMode.playing||gm==gameMode.starting) {
-      setTimeout(updateTimeRing, 10);
-    }
+    setTimeout(updateTimeRing, 10);
   } else {
+    gameState.timerRunning = 0;
     setGameMode(gameMode.complete.failure);
     //setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
   }
@@ -369,7 +371,8 @@ function updateTimeRing() {
 
 function restartTimer() {
   gameState.startTime = Date.now();
-  if (gameState.mode != gameMode.playing) {
+  if (!gameState.timerRunning) {
+    gameState.timerRunning = 1;
     updateTimeRing();
   }
 }
@@ -382,24 +385,42 @@ function setGameFade(amount) {
   $('#game, #canvas-texture').css('filter', filter);
 }
 
-// TODO: investigate performance on non-Chrome browsers
-function fadeIn(options) {
-  var amount = options.amount || options.start || 1;
-  setGameFade(amount);
+function addBlurLayer(hidden) {
+  var $game = $('#game');
+  var $newGame = $(document.createElement('canvas'));
+  $newGame.prop({id:'blurred-game', width:500, height:500});
+  $newGame.css({position:'absolute',
+                top:$game[0].offsetTop,
+                left:0,
+                'z-index':3,
+                opacity: hidden ? 0 : 1,
+                filter:'blur(40px) saturate(50%) brightness(98%)'});
 
-  var duration = options.duration || 2;
-  var delta = options.delta || 0.005;
-  var timeDelta = 1000*duration*delta;
+  var newCtx = getContext($newGame);
+  newCtx.drawImage($game[0], 0, 0);
 
-  var newOptions = {duration:duration,
-                    amount:amount-delta,
-                    delta:delta,
-                    callback:options.callback};
-  if (amount>0) {
-    setTimeout(()=>fadeIn(newOptions), timeDelta)
-  } else if (options.callback) {
-    options.callback();
+  $('#main').append($newGame);
+
+  if(!hidden) {
+    $game.css({opacity:0});
+    $('#canvas-texture').css({opacity:0});
   }
+}
+
+function fadeIn(options) {
+  var duration = options.duration*1000 || 1000;
+  var delay = options.delay*1000 || 0;
+
+  function cb() {
+    $('#blurred-game').remove();
+    if (options.callback) callback();
+  }
+
+  setTimeout(function(){
+    $('#blurred-game').animate({opacity:0}, duration, cb);
+    $('#game').animate({opacity:1}, duration*.4);
+    $('#canvas-texture').animate({opacity:0.6}, duration*.4);
+  }, delay);
 }
 
 function flashExpanding(message, duration, hold) {
@@ -548,8 +569,7 @@ function updateReticle(e) {
 
 function alignGameLayers() {
   var offsetTop = $('#game')[0].offsetTop;
-  $('#canvas-texture').css('top', offsetTop);
-  $('#game-background').css('top', offsetTop);
+  $('#canvas-texture, #game-background, #blurred-game').css('top', offsetTop);
 }
 
 /* Basic drawing */
@@ -627,6 +647,7 @@ function initGameState() {
   gameState.isDrawing = 0;
   gameState.toolOptions = [1,0,0];
   gameState.toolFocus = gameState.toolOptions.length;
+  gameState.timerRunning = 0;
 }
 
 function setupGame() {
@@ -635,10 +656,7 @@ function setupGame() {
   setupLevel(gameState.level);
   updatePercentPainted();
   updateSelectors(0);
-
-  // use timeout to ensure any existing
-  // timer loop has stopped executing
-  setTimeout(()=>setTimer(0,gameState.maxTime), 50);
+  setTimer(0,gameState.maxTime);
 }
 
 $(document).ready(function(){
