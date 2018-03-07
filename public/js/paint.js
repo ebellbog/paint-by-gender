@@ -25,14 +25,7 @@ gameMode = {
 
 gameState = {
   level: 1,
-  mode: gameMode.ready,
-  startTime: 0,
-  maxTime: 30,
-  strokes: [],
-  buffer: [],
-  isDrawing: 0,
-  toolOptions: [1, 0, 0],
-  toolFocus: 3
+  maxTime: 40
 }
 
 /* Helper functions */
@@ -143,15 +136,13 @@ function updatePercentPainted() {
   if (gameState.mode != gameMode.playing) return;
   else if (canvasData.spill >= maxSpill) {
     $spillSlider.css('background-color', 'red');
-    gameState.isDrawing = false;
-    gameState.mode = gameMode.complete.failure;
+    setGameMode(gameMode.complete.failure);
     setTimeout(()=>alert('Oops, you\'ve transgressed too far! Polite society won\'t stand for it \:\('), 100);
   }
   else if(percent >= 1 && gameState.mode == gameMode.playing) {
     $fill.css('background-color', '#0f0');
     $fill.css('border-radius', '5px');
-    gameState.isDrawing = false;
-    gameState.mode = gameMode.complete.failure;
+    setGameMode(gameMode.complete.failure);
     setTimeout(()=>alert(`Congrats, you passed Level ${gameState.level}!`), 100);
   }
 }
@@ -227,6 +218,37 @@ function setupContext(ctx, type) {
     ctx.shadowBlur = 10;
     ctx.shadowColor = 'gray';
   }
+}
+
+function setGameMode(mode) {
+  switch(mode){
+    case gameMode.ready:
+      $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
+      $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
+
+      $('#overlay-text').show();
+      $('#game').css('cursor','default');
+
+      initGameState();
+      setupGame();
+      setGameFade(1);
+      break;
+    case gameMode.starting:
+      $('#overlay-text').hide();
+      break;
+    case gameMode.playing:
+      $('#game').css('cursor','none');
+      break;
+    case gameMode.complete.failure:
+    case gameMode.complete.success:
+      gameState.isDrawing = 0;
+      $('#game').css('cursor','default');
+      $('#reticle').hide();
+    default:
+      break;
+  }
+  gameState.mode = mode;
+  setupButtons();
 }
 
 /* Poly draw functions */
@@ -328,8 +350,7 @@ function updateTimeRing() {
       setTimeout(updateTimeRing, 10);
     }
   } else {
-    gameState.mode = gameMode.complete.failure;
-    gameState.isDrawing = 0;
+    setGameMode(gameMode.complete.failure);
     //setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
   }
 }
@@ -589,35 +610,27 @@ function updateLevelIcon(level) {
   $levelIcon.html(iconList.join('&nbsp;'));
 }
 
-function startGame() {
-  $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
-  $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
-
+function initGameState() {
   gameState.strokes = [];
   gameState.isDrawing = 0;
   gameState.toolOptions = [1,0,0];
   gameState.toolFocus = gameState.toolOptions.length;
+}
 
-  gameState.mode = gameMode.ready;
-
-  // use timeout to ensure any existing
-  // timer loop has stopped executing
-  setTimeout(()=>setTimer(0,gameState.maxTime), 50);
-
+function setupGame() {
   drawReticle();
   drawToolOptions();
   setupLevel(gameState.level);
   updatePercentPainted();
   updateSelectors(0);
-  setGameFade(1);
-  setupButtons();
 
-  $('#overlay-text').show();
-  $('#game').css('cursor','default');
+  // use timeout to ensure any existing
+  // timer loop has stopped executing
+  setTimeout(()=>setTimer(0,gameState.maxTime), 50);
 }
 
 $(document).ready(function(){
-  startGame();
+  setGameMode(gameMode.ready);
   setTimeout(alignGameLayers, 100);
 
   var $canvas = $('#game');
@@ -730,24 +743,20 @@ $(document).ready(function(){
   });
 
   $('#restart,#retry').click(function() {
-    startGame();
+    setGameMode(gameMode.ready);
   });
 
   $('#start').click(function() {
     if (gameState.mode != gameMode.ready) return;
 
-    gameState.mode = gameMode.starting;
-    setupButtons();
-    $('#overlay-text').hide();
+    setGameMode(gameMode.starting);
 
     showCountdown(3, function() {
       flashStationary('Paint!', 1000, 200);
       fadeIn({duration:0.5});
 
       restartTimer();
-      gameState.mode = gameMode.playing;
-      $('#game').css('cursor','none');
-      setupButtons();
+      setGameMode(gameMode.playing);
     });
   });
 
