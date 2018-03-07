@@ -138,13 +138,11 @@ function updatePercentPainted() {
   else if (canvasData.spill >= maxSpill) {
     $spillSlider.css('background-color', 'red');
     setGameMode(gameMode.complete.failure);
-    setTimeout(()=>alert('Oops, you\'ve transgressed too far! Polite society won\'t stand for it \:\('), 100);
   }
   else if(percent >= 1 && gameState.mode == gameMode.playing) {
     $fill.css('background-color', '#0f0');
     $fill.css('border-radius', '5px');
     setGameMode(gameMode.complete.failure);
-    setTimeout(()=>alert(`Congrats, you passed Level ${gameState.level}!`), 100);
   }
 }
 
@@ -257,6 +255,8 @@ function setGameMode(mode) {
       gameState.timerRunning = 0;
       $('#game').css('cursor','default');
       $('#reticle').hide();
+      addBlurLayer(1);
+      fadeOut({duration:0.5});
     default:
       break;
   }
@@ -365,7 +365,6 @@ function updateTimeRing() {
   } else {
     gameState.timerRunning = 0;
     setGameMode(gameMode.complete.failure);
-    //setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
   }
 }
 
@@ -377,15 +376,9 @@ function restartTimer() {
   }
 }
 
-function setGameFade(amount) {
-  var blur = 40*amount;
-  var saturate = 100-(50*amount);
-
-  var filter = amount > 0.001 ? `blur(${blur}px) saturate(${saturate}%)` : 'none';
-  $('#game, #canvas-texture').css('filter', filter);
-}
-
 function addBlurLayer(hidden) {
+  $('#blurred-game').remove();
+
   var $game = $('#game');
   var $newGame = $(document.createElement('canvas'));
   $newGame.prop({id:'blurred-game', width:500, height:500});
@@ -394,7 +387,7 @@ function addBlurLayer(hidden) {
                 left:0,
                 'z-index':3,
                 opacity: hidden ? 0 : 1,
-                filter:'blur(40px) saturate(50%) brightness(98%)'});
+                filter:'blur(20px) saturate(65%) brightness(98%)'});
 
   var newCtx = getContext($newGame);
   newCtx.drawImage($game[0], 0, 0);
@@ -421,6 +414,18 @@ function fadeIn(options) {
     $('#game').animate({opacity:1}, duration*.4);
     $('#canvas-texture').animate({opacity:0.6}, duration*.4);
   }, delay);
+}
+
+function fadeOut(options) {
+  var duration = options.duration*1000 || 1000;
+  var delay = options.delay*1000 || 0;
+
+  setTimeout(function(){
+    $('#blurred-game').animate({opacity:1}, duration, options.callback);
+  }, delay);
+  setTimeout(function(){
+    $('#game, #canvas-texture').animate({opacity:0}, duration*.4);
+  }, delay+duration*.6);
 }
 
 function flashExpanding(message, duration, hold) {
