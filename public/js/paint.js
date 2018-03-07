@@ -1,5 +1,7 @@
+/* Models & data */
+
 colors = {
-  paint: [255, 150, 150],//'#bd354d'
+  paint: [255, 150, 150],
   canvas: [132, 189, 250],
   shape: [255, 255, 255],
   spill: [132, 150, 150],
@@ -152,14 +154,13 @@ function updatePercentPainted() {
     gameState.mode = gameMode.complete.failure;
     setTimeout(()=>alert(`Congrats, you passed Level ${gameState.level}!`), 100);
   }
-
 }
 
 function updatePercentAsync() {
   setTimeout(updatePercentPainted, 0);
 }
 
-/* Setup & draw functions */
+/* Setup functions */
 
 function setupButtons() {
   switch(gameState.mode) {
@@ -228,33 +229,7 @@ function setupContext(ctx, type) {
   }
 }
 
-function setGameFade(amount) {
-  var blur = 40*amount;
-  var saturate = 100-(50*amount);
-
-  var filter = amount > 0.001 ? `blur(${blur}px) saturate(${saturate}%)` : 'none';
-  $('#game, #canvas-texture').css('filter', filter);
-}
-
-// TODO: investigate performance on non-Chrome browsers
-function fadeIn(options) {
-  var amount = options.amount || options.start || 1;
-  setGameFade(amount);
-
-  var duration = options.duration || 2;
-  var delta = options.delta || 0.005;
-  var timeDelta = 1000*duration*delta;
-
-  var newOptions = {duration:duration,
-                    amount:amount-delta,
-                    delta:delta,
-                    callback:options.callback};
-  if (amount>0) {
-    setTimeout(()=>fadeIn(newOptions), timeDelta)
-  } else if (options.callback) {
-    options.callback();
-  }
-}
+/* Poly draw functions */
 
 function getPolyPath(x, y, sides, size, rotation) {
   var path = [];
@@ -300,6 +275,124 @@ function joinPolys(ctx, p1, p2) {
     ctx.fill();
   }
 }
+
+/* Timer and time-based animations */
+
+function setTimer(elapsed, max) {
+  var $ring = $('#time-ring');
+  var ringSize = $ring.height();
+  var ctx = getContext($ring);
+  ctx.clearRect(0, 0, ringSize, ringSize);
+  setupContext(ctx, 'timer');
+
+  var radius = 75;
+  var center = ringSize/2;
+
+  ctx.strokeStyle = 'rgba(90, 90, 90, 0.25)';
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, 2*Math.PI);
+  ctx.stroke();
+
+  var remaining = max-elapsed;
+
+  var angle, min, sec;
+  if (elapsed > max) {
+    angle = min = sec = 0;
+  } else {
+    angle = (2*Math.PI)*(1-elapsed/max);
+    min = Math.floor(remaining/60);
+    sec = Math.round(remaining)-60*min;
+  }
+
+  $('#time').html(min.toString()+':'+(sec<10?'0':'')+sec.toString());
+
+  if (remaining > 5) {
+    ctx.strokeStyle = 'white';
+  } else {
+    var greenblue = Math.abs(Math.round(255*Math.cos((remaining-5)*Math.PI)));
+    ctx.strokeStyle = rgbToStr([255, greenblue, greenblue]);
+  }
+
+  ctx.beginPath();
+  ctx.arc(center, center, radius, 0, angle);
+  ctx.stroke();
+}
+
+function updateTimeRing() {
+  var elapsed = (Date.now()-gameState.startTime)/1000;
+  setTimer(elapsed, gameState.maxTime);
+
+  if (elapsed < gameState.maxTime) {
+    var gm = gameState.mode;
+    if (gm==gameMode.playing||gm==gameMode.starting) {
+      setTimeout(updateTimeRing, 10);
+    }
+  } else {
+    gameState.mode = gameMode.complete.failure;
+    gameState.isDrawing = 0;
+    //setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
+  }
+}
+
+function restartTimer() {
+  gameState.startTime = Date.now();
+  if (gameState.mode != gameMode.playing) {
+    updateTimeRing();
+  }
+}
+
+function setGameFade(amount) {
+  var blur = 40*amount;
+  var saturate = 100-(50*amount);
+
+  var filter = amount > 0.001 ? `blur(${blur}px) saturate(${saturate}%)` : 'none';
+  $('#game, #canvas-texture').css('filter', filter);
+}
+
+// TODO: investigate performance on non-Chrome browsers
+function fadeIn(options) {
+  var amount = options.amount || options.start || 1;
+  setGameFade(amount);
+
+  var duration = options.duration || 2;
+  var delta = options.delta || 0.005;
+  var timeDelta = 1000*duration*delta;
+
+  var newOptions = {duration:duration,
+                    amount:amount-delta,
+                    delta:delta,
+                    callback:options.callback};
+  if (amount>0) {
+    setTimeout(()=>fadeIn(newOptions), timeDelta)
+  } else if (options.callback) {
+    options.callback();
+  }
+}
+
+function flashExpanding(message, duration, hold) {
+  var hold = hold || 200;
+  var $gameCell = $('td#main');
+  var $number = $(document.createElement('div')).addClass('flash').html(message);
+  $gameCell.append($number);
+  setTimeout(()=>$number.animate({'font-size':'+=350', opacity:0}, duration-hold, ()=>$number.remove()), hold);
+}
+
+function flashStationary(message, duration, fade) {
+  var fade = fade || 1000;
+  var $gameCell = $('td#main');
+  var $number = $(document.createElement('div')).addClass('flash').html(message);
+  $gameCell.append($number);
+  setTimeout(()=>$number.animate({opacity:0}, fade, ()=>$number.remove()), duration-fade);
+}
+
+function showCountdown(count, cb) {
+  if (count > 0) {
+    flashExpanding(count, 1200);
+    setTimeout(()=>showCountdown(count-1, cb),1000);
+  } else if (cb) cb();
+}
+
+/* Tool options & selectors */
 
 function drawToolOptions() {
   var toolColor = rgbToStr(colors.toolOption);
@@ -360,6 +453,25 @@ function drawToolOptions() {
   });
 }
 
+function updateSelectors(animated) {
+  gameState.toolOptions.map((v,i)=>setSelector(i,v,animated));
+}
+
+function setSelector(toolIndex, optionIndex, animated) {
+  var $tool = $(`#tools .tool-wrapper:eq(${toolIndex})`);
+  var $selector = $tool.find('.option-selector');
+  var $option = $tool.find(`.tool-option:eq(${optionIndex})`);
+
+  $selector.toggleClass('focus', toolIndex == gameState.toolFocus);
+
+  var position = $option.position();
+  if (animated) {
+    $selector.animate({'left':position.left}, 300);
+  } else {
+    $selector.css('left', position.left);
+  }
+}
+
 function drawReticle() {
   var $reticle = $('#reticle');
   var ctx = getContext($reticle);
@@ -401,30 +513,13 @@ function updateReticle(e) {
   $reticle.css('left',e.clientX-rect.left-size/2);
 }
 
-function updateSelectors(animated) {
-  gameState.toolOptions.map((v,i)=>setSelector(i,v,animated));
-}
-
-function setSelector(toolIndex, optionIndex, animated) {
-  var $tool = $(`#tools .tool-wrapper:eq(${toolIndex})`);
-  var $selector = $tool.find('.option-selector');
-  var $option = $tool.find(`.tool-option:eq(${optionIndex})`);
-
-  $selector.toggleClass('focus', toolIndex == gameState.toolFocus);
-
-  var position = $option.position();
-  if (animated) {
-    $selector.animate({'left':position.left}, 300);
-  } else {
-    $selector.css('left', position.left);
-  }
-}
-
 function alignGameLayers() {
   var offsetTop = $('#game')[0].offsetTop;
   $('#canvas-texture').css('top', offsetTop);
   $('#game-background').css('top', offsetTop);
 }
+
+/* Basic drawing */
 
 function drawPoint(ctx, pt) {
   setupContext(ctx,'painting');
@@ -492,92 +587,6 @@ function updateLevelIcon(level) {
     iconList.push(i< level ? closedCircle : openCircle);
   }
   $levelIcon.html(iconList.join('&nbsp;'));
-}
-
-function setTimer(elapsed, max) {
-  var $ring = $('#time-ring');
-  var ringSize = $ring.height();
-  var ctx = getContext($ring);
-  ctx.clearRect(0, 0, ringSize, ringSize);
-  setupContext(ctx, 'timer');
-
-  var radius = 75;
-  var center = ringSize/2;
-
-  ctx.strokeStyle = 'rgba(90, 90, 90, 0.25)';
-  ctx.beginPath();
-  ctx.arc(center, center, radius, 0, 2*Math.PI);
-  ctx.stroke();
-
-  var remaining = max-elapsed;
-
-  var angle, min, sec;
-  if (elapsed > max) {
-    angle = min = sec = 0;
-  } else {
-    angle = (2*Math.PI)*(1-elapsed/max);
-    min = Math.floor(remaining/60);
-    sec = Math.round(remaining)-60*min;
-  }
-
-  $('#time').html(min.toString()+':'+(sec<10?'0':'')+sec.toString());
-
-  if (remaining > 5) {
-    ctx.strokeStyle = 'white';
-  } else {
-    var greenblue = Math.abs(Math.round(255*Math.cos((remaining-5)*Math.PI)));
-    ctx.strokeStyle = rgbToStr([255, greenblue, greenblue]);
-  }
-
-  ctx.beginPath();
-  ctx.arc(center, center, radius, 0, angle);
-  ctx.stroke();
-}
-
-function updateTimeRing() {
-  var elapsed = (Date.now()-gameState.startTime)/1000;
-  setTimer(elapsed, gameState.maxTime);
-
-  if (elapsed < gameState.maxTime) {
-    var gm = gameState.mode;
-    if (gm==gameMode.playing||gm==gameMode.starting) {
-      setTimeout(updateTimeRing, 10);
-    }
-  } else {
-    gameState.mode = gameMode.complete.failure;
-    gameState.isDrawing = 0;
-    //setTimeout(()=>alert('Oh no, you\'re out of time! You got clocked :('), 100);
-  }
-}
-
-function restartTimer() {
-  gameState.startTime = Date.now();
-  if (gameState.mode != gameMode.playing) {
-    updateTimeRing();
-  }
-}
-
-function flashExpanding(message, duration, hold) {
-  var hold = hold || 200;
-  var $gameCell = $('td#main');
-  var $number = $(document.createElement('div')).addClass('flash').html(message);
-  $gameCell.append($number);
-  setTimeout(()=>$number.animate({'font-size':'+=350', opacity:0}, duration-hold, ()=>$number.remove()), hold);
-}
-
-function flashStationary(message, duration, fade) {
-  var fade = fade || 1000;
-  var $gameCell = $('td#main');
-  var $number = $(document.createElement('div')).addClass('flash').html(message);
-  $gameCell.append($number);
-  setTimeout(()=>$number.animate({opacity:0}, fade, ()=>$number.remove()), duration-fade); 
-}
-
-function showCountdown(count, cb) {
-  if (count > 0) {
-    flashExpanding(count, 1200);
-    setTimeout(()=>showCountdown(count-1, cb),1000);
-  } else if (cb) cb();
 }
 
 function startGame() {
