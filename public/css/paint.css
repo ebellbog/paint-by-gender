@@ -1,3 +1,32 @@
+@font-face {
+  font-family: 'Megrim';
+  src: url('../fonts/Megrim.ttf');
+}
+
+@font-face {
+  font-family: 'Amatic SC';
+  src: url('../fonts/AmaticSC-Regular.ttf');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Amatic SC';
+  src: url('../fonts/AmaticSC-Bold.ttf');
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: 'Exo 2';
+  src: url('../fonts/Exo2-Thin.ttf');
+  font-weight: 200;
+}
+
+@font-face {
+  font-family: 'Exo 2';
+  src: url('../fonts/Exo2-Light.ttf');
+  font-weight: 400;
+}
+
 body {
   background: repeating-linear-gradient(
     45deg,
@@ -111,7 +140,6 @@ body {
   position: relative;
   margin: 0;
   padding: 0;
-  overflow: hidden;
 }
 
 #canvas-texture {
@@ -271,7 +299,7 @@ body {
   font-size: 26px;
   color: white;
   margin-top: 5px;
-  text-shadow: 2px 2px 4px #777;
+  text-shadow: 1px 1px 4px #555;
 }
 
 #time-ring {
@@ -316,6 +344,7 @@ body {
   font-family: 'Amatic SC', sans-serif;
   font-size: 34px;
   font-weight: 600;
+  text-shadow: 0 0 5px #999;
 }
 
 .tool-option {

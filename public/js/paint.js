@@ -387,9 +387,11 @@ function addBlurLayer(hidden) {
                 left:0,
                 'z-index':3,
                 opacity: hidden ? 0 : 1,
-                filter:'blur(20px) saturate(65%) brightness(98%)'});
+                'box-shadow': $game.css('box-shadow')
+               });
 
   var newCtx = getContext($newGame);
+  newCtx.filter = 'blur(20px) saturate(65%) brightness(98%)';
   newCtx.drawImage($game[0], 0, 0);
 
   $('#main').append($newGame);
@@ -411,8 +413,8 @@ function fadeIn(options) {
 
   setTimeout(function(){
     $('#blurred-game').animate({opacity:0}, duration, cb);
-    $('#game').animate({opacity:1}, duration*.4);
-    $('#canvas-texture').animate({opacity:0.6}, duration*.4);
+    $('#game').animate({opacity:1}, duration*.5);
+    $('#canvas-texture').animate({opacity:0.6}, duration*.5);
   }, delay);
 }
 
@@ -424,8 +426,8 @@ function fadeOut(options) {
     $('#blurred-game').animate({opacity:1}, duration, options.callback);
   }, delay);
   setTimeout(function(){
-    $('#game, #canvas-texture').animate({opacity:0}, duration*.4);
-  }, delay+duration*.6);
+    $('#game, #canvas-texture').animate({opacity:0}, duration*.5);
+  }, delay+duration*.5);
 }
 
 function flashExpanding(message, duration, hold) {
