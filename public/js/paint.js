@@ -80,7 +80,8 @@ function getPathPoint(canvas, e) {
   return {
     x: e.clientX-rect.left,
     y: e.clientY-rect.top,
-    brushSize: getBrushSize()
+    brushSize: getBrushSize(),
+    brushSides: getBrushSides()
   };
 }
 
@@ -240,16 +241,16 @@ function setOverlayText(outcome, level) {
 
   switch(outcome) {
     case gameOutcome.passed:
-      $title.html('Congrats!');
-      $body.html('You played the game and conformed to expectations beautifully.');
+      $title.html("Congrats!");
+      $body.html("You played the game. You painted inside the lines and feel strangely validated.");
       break;
     case gameOutcome.transgressed:
-      $title.html('Oops...');
-      $body.html('You transgressed too far. You flew your freak flag and lost the game.');
+      $title.html("Oops...");
+      $body.html("You transgressed too far. People noticed, and they care way more than they should.");
       break;
     case gameOutcome.clocked:
-      $title.html('You got clocked');
-      $body.html('Time\'s up for you. Next time try to get with the program a little faster.');
+      $title.html("You got clocked");
+      $body.html("Time's up for you. Norms change fast, and you got left behind.");
       break;
     default:
       break;
@@ -625,21 +626,24 @@ function alignGameLayers() {
 
 function drawPoint(ctx, pt) {
   setupContext(ctx,'painting');
-  if (!getBrushSides()) {
+  if (!pt.brushSides) {
     ctx.beginPath();
     ctx.arc(pt.x, pt.y, pt.brushSize, 0, Math.PI*2);
     ctx.fill();
   } else {
-    drawPolygon(ctx, pt.x, pt.y, getBrushSides(), pt.brushSize, {style:'fill'});
+    drawPolygon(ctx, pt.x, pt.y, pt.brushSides, pt.brushSize, {style:'fill'});
   }
 }
 
 function drawPath(ctx, pts) {
-  if (!getBrushSides()) {
+  var sides = pts[0].brushSides;
+  var size = pts[0].brushSize;
+
+  if (!sides) {
     var p1 = pts[0];
     var p2 = pts[1];
 
-    ctx.lineWidth = p1.brushSize*2;
+    ctx.lineWidth = size*2;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
 
@@ -654,8 +658,8 @@ function drawPath(ctx, pts) {
   } else {
     drawPoint(ctx, pts[0]); // start cap
     for (var i = 0; i < pts.length-1; i++) {
-      var p1 = getPolyPath(pts[i].x, pts[i].y, getBrushSides(), pts[i].brushSize);
-      var p2 = getPolyPath(pts[i+1].x, pts[i+1].y, getBrushSides(), pts[i+1].brushSize);
+      var p1 = getPolyPath(pts[i].x, pts[i].y, sides, size);
+      var p2 = getPolyPath(pts[i+1].x, pts[i+1].y, sides, size);
       joinPolys(ctx, p1, p2);
     }
     drawPoint(ctx, pts[pts.length-1]); // end cap

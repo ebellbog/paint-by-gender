@@ -47,7 +47,6 @@ body {
 
 #header {
   color: white;
-  opacity: .8;
   background-color: purple;
   font-family: 'Megrim', cursive;
 }
@@ -236,7 +235,7 @@ body {
   font-weight: 400;
   color: white;
   text-align: center;
-  text-shadow: 0 0 6px #333;
+  text-shadow: 0 0 6px #222;
 }
 
 .smaller-title {
@@ -249,6 +248,7 @@ body {
   font-family: 'Exo 2', sans-serif;
   font-size:28px;
   font-weight: 600;
+  line-height: 37px;
   padding-left: 20px;
   margin-top: 20px;
   z-index: 4;
@@ -358,7 +358,7 @@ body {
   padding-left: 8px;
   margin-bottom: 12px;
   min-width: 200px;
-  max-width: 350px;
+  max-width: 300px;
   height: 130px;
   text-align: left;
 }
