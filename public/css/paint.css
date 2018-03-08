@@ -230,7 +230,7 @@ body {
   z-index: 4;
 }
 
-#overlay-title {
+.larger-title {
   font-family: 'Amatic SC', cursive;
   font-size: 120px;
   font-weight: 400;
@@ -239,14 +239,21 @@ body {
   text-shadow: 0 0 6px #333;
 }
 
+.smaller-title {
+  font-size: 68px;
+  font-weight: 600;
+  text-shadow: 0 0 6px black;
+}
+
 #overlay-body {
   font-family: 'Exo 2', sans-serif;
-  font-size:36px;
+  font-size:28px;
   font-weight: 600;
   padding-left: 20px;
-  margin-top: 15px;
+  margin-top: 20px;
   z-index: 4;
   color: purple;
+  opacity: 0.9;
   text-shadow: 0 0 10px white;
   width: 400px;
 }

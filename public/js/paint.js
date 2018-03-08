@@ -20,7 +20,13 @@ gameMode = {
   ready: 0,
   starting: 1,
   playing: 2,
-  complete: {success: 3, failure: 4},
+  complete: 3,
+}
+
+gameOutcome = {
+  passed: 0,
+  transgressed: 1,
+  clocked: 2
 }
 
 gameState = {
@@ -137,12 +143,14 @@ function updatePercentPainted() {
   if (gameState.mode != gameMode.playing) return;
   else if (canvasData.spill >= maxSpill) {
     $spillSlider.css('background-color', 'red');
-    setGameMode(gameMode.complete.failure);
+    gameState.outcome = gameOutcome.transgressed;
+    setGameMode(gameMode.complete);
   }
   else if(percent >= 1 && gameState.mode == gameMode.playing) {
     $fill.css('background-color', '#0f0');
     $fill.css('border-radius', '5px');
-    setGameMode(gameMode.complete.failure);
+    gameState.outcome = gameOutcome.passed;
+    setGameMode(gameMode.complete);
   }
 }
 
@@ -157,20 +165,22 @@ function setupButtons(atStart) {
     case gameMode.ready:
       if (atStart) {
         $('#start').css('display','inline-block');
-        $('#retry, #restart, #eraser').css('display','none');
+        $('#retry, #eraser').css('display','none');
       }
       break;
     case gameMode.starting:
       $('.bottom-btn').addClass('inactive');
       break;
     case gameMode.playing:
-      $('#start, #retry').css('display','none');
-      $('#restart, #eraser').css('display','inline-block');
+      $('#start').css('display','none');
+      $('#retry').html('RESTART').css({width: $('#eraser').css('width')});
+      $('#retry, #eraser').css('display','inline-block');
       $('.bottom-btn').removeClass('inactive');
       break;
-    case gameMode.complete.failure:
-      $('#retry').css('display','inline-block');
-      $('#restart, #eraser').css('display','none');
+    case gameMode.complete:
+      var passed = gameState.outcome == gameOutcome.passed;
+      $('#retry').html(passed?'PLAY AGAIN':'RETRY LEVEL').css({width: passed?'150px':'160px'});
+      $('#eraser').css('display','none');
     default:
       break;
   }
@@ -224,6 +234,28 @@ function setupContext(ctx, type) {
   }
 }
 
+function setOverlayText(outcome, level) {
+  var $title = $('#overlay-title');
+  var $body = $('#overlay-body');
+
+  switch(outcome) {
+    case gameOutcome.passed:
+      $title.html('Congrats!');
+      $body.html('You played the game and conformed to expectations beautifully.');
+      break;
+    case gameOutcome.transgressed:
+      $title.html('Oops...');
+      $body.html('You transgressed too far. You flew your freak flag and lost the game.');
+      break;
+    case gameOutcome.clocked:
+      $title.html('You got clocked');
+      $body.html('Time\'s up for you. Next time try to get with the program a little faster.');
+      break;
+    default:
+      break;
+  }
+}
+
 function setGameMode(mode) {
   switch(mode){
     case gameMode.ready:
@@ -231,7 +263,8 @@ function setGameMode(mode) {
       $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
       $('#game').css('cursor','default');
 
-      $('#overlay-title').html('Ready?');
+      //TODO: consider moving into setOverlayText
+      $('#overlay-title').html('Ready?').removeClass('smaller-title');
       $('#overlay-body').hide();
       if (!gameState.mode) $('#overlay-text').show();
 
@@ -251,14 +284,20 @@ function setGameMode(mode) {
     case gameMode.playing:
       $('#game').css('cursor','none');
       break;
-    case gameMode.complete.failure:
-    case gameMode.complete.success:
+    case gameMode.complete:
       gameState.isDrawing = 0;
       gameState.timerRunning = 0;
+
       $('#game').css('cursor','default');
       $('#reticle').hide();
+
       addBlurLayer(1);
       fadeOut({duration:0.5});
+
+      setOverlayText(gameState.outcome, gameState.level);
+      $('#overlay-title').addClass('smaller-title');
+      $('#overlay-body').show();
+      $('#overlay-text').css({opacity:0}).show().animate({opacity:1},1000);
     default:
       break;
   }
@@ -366,7 +405,8 @@ function updateTimeRing() {
     setTimeout(updateTimeRing, 10);
   } else {
     gameState.timerRunning = 0;
-    setGameMode(gameMode.complete.failure);
+    gameState.outcome = gameOutcome.clocked;
+    setGameMode(gameMode.complete);
   }
 }
 
@@ -719,17 +759,22 @@ $(document).ready(function(){
     var buffer = gameState.buffer;
 
     var curPos = getPathPoint($canvas[0], e);
-    buffer.push(curPos);
+    var lastPos = strokes[strokes.length-1].slice(-1)[0];
+
+    if (getDistance(curPos, lastPos) < 10) {
+      buffer.push(curPos);
+    } else {
+      gameState.buffer = [];
+    }
 
     if (buffer.length > 3) {
       var totals = buffer.reduce((a,b) => ({x:a.x+b.x, y:a.y+b.y}));
       var avgPos = {x: totals.x/buffer.length, y: totals.y/buffer.length, brushSize: buffer[0].brushSize};
 
       strokes[strokes.length-1].splice(-(buffer.length-1), buffer.length-1, avgPos);
-      gameState.buffer = [];
-    } else {
-      strokes[strokes.length-1].push(curPos);
+      gameState.buffer = [curPos];
     }
+    strokes[strokes.length-1].push(curPos);
     redrawGame(ctx);
   });
 
@@ -782,7 +827,7 @@ $(document).ready(function(){
     updatePercentPainted();
   });
 
-  $('#restart,#retry').click(function() {
+  $('#retry').click(function() {
     if ($(this).hasClass('inactive')) return;
     setGameMode(gameMode.ready);
     setGameMode(gameMode.starting);
