@@ -424,20 +424,25 @@ function addBlurLayer(hidden) {
 
   var $game = $('#game');
   var $newGame = $(document.createElement('canvas'));
-  $newGame.prop({id:'blurred-game', width:500, height:500});
-  $newGame.css({position:'absolute',
-                top:$game[0].offsetTop,
-                left:0,
-                'z-index':3,
-                opacity: hidden ? 0 : 1,
-                'box-shadow': $game.css('box-shadow')
-               });
+  $newGame.prop({width:500, height:500});
+  $newGame.css({filter: 'blur(20px) saturate(60%) brightness(97%)'});
 
   var newCtx = getContext($newGame);
-  newCtx.filter = 'blur(20px) saturate(65%) brightness(98%)';
   newCtx.drawImage($game[0], 0, 0);
 
-  $('#main').append($newGame);
+  var $wrapper = $(document.createElement('div'));
+  $wrapper.prop({id:'blurred-game'});
+  $wrapper.css({position: 'absolute',
+                top: $game[0].offsetTop,
+                left: 0,
+                width: '500px',
+                height: '500px',
+                'z-index':3,
+                opacity: hidden ? 0 : 1,
+                overflow: 'hidden'});
+
+  $wrapper.append($newGame);
+  $('#main').append($wrapper);
 
   if(!hidden) {
     $game.css({opacity:0});

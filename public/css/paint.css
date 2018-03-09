@@ -162,6 +162,7 @@ body {
   top: 0;
   left: 0;
   z-index: -1;
+  box-shadow: 3px 3px 30px #777;
 }
 
 #game {
@@ -170,7 +171,6 @@ body {
   margin-left: auto;
   margin-right: auto;
   display: block;
-  box-shadow: 3px 3px 30px #777;
   z-index: 1;
 }
 
@@ -364,7 +364,6 @@ body {
   background-color: rgba(255, 255, 255, 0.3);
   border-radius: 10px;
   padding-top: 3px;
-  padding-left: 8px;
   margin-bottom: 12px;
   min-width: 200px;
   max-width: 300px;
@@ -377,6 +376,7 @@ body {
   font-size: 34px;
   font-weight: 600;
   text-shadow: 0 0 5px #999;
+  padding-left: 10px;
 }
 
 .tool-option {
