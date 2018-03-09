@@ -250,7 +250,7 @@ function setOverlayText(outcome, level) {
       break;
     case gameOutcome.clocked:
       $title.html("You got clocked");
-      $body.html("Time's up for you. Norms change fast, and you got left behind.");
+      $body.html("Time's up. Not everyone gets a chance to fulfill their purpose.");
       break;
     default:
       break;

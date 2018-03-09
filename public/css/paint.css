@@ -221,6 +221,15 @@ body {
   text-shadow: 4px 0 5px #f99, -4px 0 5px #99bfe6;
 }
 
+.unselectable {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 #overlay-text {
   position: absolute;
   top: 50%;
@@ -345,8 +354,8 @@ body {
 }
 
 #tools {
-  padding-left: 20px;
-  padding-right: 15px;
+  padding-left: 25px;
+  padding-right: 20px;
   color: white;
   vertical-align: center;
 }
