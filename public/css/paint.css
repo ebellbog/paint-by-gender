@@ -98,7 +98,9 @@ body {
 
 #level-icon-wrapper {
   float: right;
-  font-size: 22px;
+  padding-top: 4px;
+  font-size: 24px;
+  opacity: 0.9;
 }
 
 #help {

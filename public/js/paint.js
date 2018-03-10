@@ -217,7 +217,6 @@ function setupLevel(level) {
       break;
   }
   ctx.restore();
-  updateLevelIcon(level);
 }
 
 function setupContext(ctx, type) {
@@ -690,14 +689,17 @@ function redrawGame(ctx) {
 /* Initialization & event handlers */
 
 function updateLevelIcon(level) {
-  var $levelIcon = $('#level-icon');
-  var iconList = [];
-  var openCircle = '&#9675';
-  var closedCircle = '&#9679';
+  var $iconWrapper = $('#level-icon-wrapper');
+  var faClasses = 'fa-xs fa-fw fa-circle';
+
+  var $circle = $(document.createElement('i')).addClass(faClasses);
+  var $openCircle = $circle.clone().addClass('far');
+  var $closedCircle = $circle.clone().addClass('fas');
+
+  $iconWrapper.empty();
   for (var i = 0; i < 6; i++) {
-    iconList.push(i< level ? closedCircle : openCircle);
+    $iconWrapper.append(i< level ? $closedCircle.clone() : $openCircle.clone());
   }
-  $levelIcon.html(iconList.join('&nbsp;'));
 }
 
 function initGameState() {
@@ -714,6 +716,7 @@ function setupGame() {
   setupLevel(gameState.level);
   updatePercentPainted();
   updateSelectors(0);
+  updateLevelIcon(gameState.level);
   setTimer(0,gameState.maxTime);
 }
 
