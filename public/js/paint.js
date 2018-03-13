@@ -32,7 +32,9 @@ gameOutcome = {
 gameState = {
   level: 1,
   maxTime: 40,
-  timerRunning: 0
+  timerRunning: 0,
+  toolOptions: [1,0,0],
+  enabledTools: [1,1,1]
 }
 
 /* Helper functions */
@@ -187,11 +189,18 @@ function setupButtons(atStart) {
   }
 }
 
+
 function setupLevel(level) {
   // configure level-specific colors
   $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
   $('#game-background').css('background-color', rgbToStr(colors.canvas));
 
+  drawLevel(level)
+  setupTools(level);
+  updateLevelIcon(level);
+}
+
+function drawLevel(level) {
   var ctx = getContext();
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
@@ -217,6 +226,25 @@ function setupLevel(level) {
       break;
   }
   ctx.restore();
+}
+
+function setupTools(level) {
+  switch(level) {
+    case 1:
+      var notReady = "You're not ready for this yet";
+      $('#lipstick, #pill-wrapper').parents('.tool-option').prop('title', notReady);
+      break;
+    default:
+      break;
+  }
+
+  tippy('.tool-option[title]', {
+    placement: 'bottom',
+    maxWidth: '150px',
+    theme: 'purple',
+    arrow: true,
+    dynamicTitle: true
+  });
 }
 
 function setupContext(ctx, type) {
@@ -270,6 +298,8 @@ function setGameMode(mode) {
 
       initGameState();
       setupGame();
+      setupLevel(gameState.level);
+      updatePercentPainted();
       addBlurLayer();
       break;
     case gameMode.starting:
@@ -671,7 +701,7 @@ function drawPath(ctx, pts) {
 }
 
 function redrawGame(ctx) {
-  setupLevel(gameState.level);
+  drawLevel(gameState.level);
   setupContext(ctx,'painting');
 
   var total = 0;
@@ -705,7 +735,6 @@ function updateLevelIcon(level) {
 function initGameState() {
   gameState.strokes = [];
   gameState.isDrawing = 0;
-  gameState.toolOptions = [1,0,0];
   gameState.toolFocus = gameState.toolOptions.length;
   gameState.timerRunning = 0;
 }
@@ -713,10 +742,7 @@ function initGameState() {
 function setupGame() {
   drawReticle();
   drawToolOptions();
-  setupLevel(gameState.level);
-  updatePercentPainted();
   updateSelectors(0);
-  updateLevelIcon(gameState.level);
   setTimer(0,gameState.maxTime);
 }
 
@@ -835,7 +861,7 @@ $(document).ready(function(){
     if ($(this).hasClass('inactive')) return;
     gameState.strokes = [];
     gameState.isDrawing = 0;
-    setupLevel(gameState.level);
+    drawLevel(gameState.level);
     updatePercentPainted();
   });
 

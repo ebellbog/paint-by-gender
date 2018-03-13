@@ -436,3 +436,13 @@ body {
   left: 2px;
   pointer-events: none;
 }
+
+.tippy-tooltip.purple-theme {
+  background-color: rgba(128, 0, 128, 0.6);
+}
+
+.tippy-popper[x-placement^=bottom] .tippy-tooltip.purple-theme .tippy-arrow {
+  border-bottom: 7px solid rgba(128, 0, 128, 0.6);
+  border-right: 7px solid transparent;
+  border-left: 7px solid transparent;
+}
