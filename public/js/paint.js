@@ -1,5 +1,33 @@
 /* Models & data */
 
+levelData = {
+  1: {
+    name: 'The Cistem',
+    description: 'Welcome to life on easy mode. The Cistem was built for you!',
+    enabledTools: [1,0,0]
+  },
+  2: {
+    name: 'Cistem Error',
+    enabledTools: [1,0,0]
+  },
+  3: {
+    name: 'Red Pill',
+    enabledTools: [1,0,1]
+  },
+  4: {
+    name: 'Antisocial Media',
+    enabledTools: [1,0,1]
+  },
+  5: {
+    name: 'Darker Times',
+    enabledTools: [1,0,1]
+  },
+  6: {
+    name: 'Trans-cendence',
+    enabledTools: [1,1,1]
+  }
+}
+
 colors = {
   paint: [255, 150, 150],
   canvas: [132, 189, 250],
@@ -17,10 +45,11 @@ brushTypes = [
 ];
 
 gameMode = {
-  ready: 0,
-  starting: 1,
-  playing: 2,
-  complete: 3,
+  newLevel: 0,
+  ready: 1,
+  starting: 2,
+  playing: 3,
+  complete: 4,
 }
 
 gameOutcome = {
@@ -34,7 +63,6 @@ gameState = {
   maxTime: 40,
   timerRunning: 0,
   toolOptions: [1,0,0],
-  enabledTools: [1,1,1]
 }
 
 /* Helper functions */
@@ -163,13 +191,13 @@ function updatePercentAsync() {
 
 /* Setup functions */
 
-function setupButtons(atStart) {
+function setupButtons() {
   switch(gameState.mode) {
+    case gameMode.newLevel:
+      $('#start').html(`START LEVEL ${gameState.level}`).css('display','inline-block');
+      $('#retry, #eraser').css('display','none');
+      break;
     case gameMode.ready:
-      if (atStart) {
-        $('#start').css('display','inline-block');
-        $('#retry, #eraser').css('display','none');
-      }
       break;
     case gameMode.starting:
       $('.bottom-btn').addClass('inactive');
@@ -182,22 +210,23 @@ function setupButtons(atStart) {
       break;
     case gameMode.complete:
       var passed = gameState.outcome == gameOutcome.passed;
-      $('#retry').html(passed?'PLAY AGAIN':'RETRY LEVEL').css({width: passed?'150px':'160px'});
+      $('#retry').html(passed?'PLAY AGAIN':`RETRY LEVEL ${gameState.level}`).css({width: passed?'150px':'180px'});
       $('#eraser').css('display','none');
     default:
       break;
   }
 }
 
-
-function setupLevel(level) {
-  // configure level-specific colors
-  $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
+function initLevel(level) {
   $('#game-background').css('background-color', rgbToStr(colors.canvas));
-
-  drawLevel(level)
   setupTools(level);
+  setLevelTitle(level)
   updateLevelIcon(level);
+}
+
+function resetLevel(level) {
+  $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
+  drawLevel(level)
 }
 
 function drawLevel(level) {
@@ -229,6 +258,12 @@ function drawLevel(level) {
 }
 
 function setupTools(level) {
+  var enabled = levelData[level].enabledTools;
+  $('.option-selector').each(function(index) {
+    if (enabled[index]) $(this).show();
+    else $(this).hide();
+  });
+
   switch(level) {
     case 1:
       var notReady = "You're not ready for this yet";
@@ -262,9 +297,28 @@ function setupContext(ctx, type) {
   }
 }
 
-function setOverlayText(outcome, level) {
+function setLevelTitle(level) {
+  $('#level-number').html(`Level ${level}`);
+  $('#level-name').html(levelData[level].name);
+}
+
+function setStartText(level) {
   var $title = $('#overlay-title');
   var $body = $('#overlay-body');
+
+  $title.addClass('start-title').removeClass('end-title');
+  $body.addClass('start-text').removeClass('end-text');
+
+  $title.html(`${levelData[level].name}`);
+  $body.html(levelData[level].description);
+}
+
+function setEndText(outcome, level) {
+  var $title = $('#overlay-title');
+  var $body = $('#overlay-body');
+
+  $title.addClass('end-title').removeClass('start-title');
+  $body.addClass('end-text').removeClass('start-text');
 
   switch(outcome) {
     case gameOutcome.passed:
@@ -286,21 +340,20 @@ function setOverlayText(outcome, level) {
 
 function setGameMode(mode) {
   switch(mode){
+    case gameMode.newLevel:
+        initLevel(gameState.level);
+        setStartText(gameState.level);
+        $('#overlay-text').show();
     case gameMode.ready:
       $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
       $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
       $('#game').css('cursor','default');
 
-      //TODO: consider moving into setOverlayText
-      $('#overlay-title').html('Ready?').removeClass('smaller-title');
-      $('#overlay-body').hide();
-      if (!gameState.mode) $('#overlay-text').show();
-
-      initGameState();
-      setupGame();
-      setupLevel(gameState.level);
+      resetGameState();
+      resetLevel(gameState.level);
       updatePercentPainted();
       addBlurLayer();
+      setTimer(0,gameState.maxTime);
       break;
     case gameMode.starting:
       $('#overlay-text').hide();
@@ -324,16 +377,15 @@ function setGameMode(mode) {
       addBlurLayer(1);
       fadeOut({duration:0.5});
 
-      setOverlayText(gameState.outcome, gameState.level);
+      setEndText(gameState.outcome, gameState.level);
       $('#overlay-title').addClass('smaller-title');
       $('#overlay-body').show();
       $('#overlay-text').css({opacity:0}).show().animate({opacity:1},1000);
     default:
       break;
   }
-  var atStart = !gameState.mode;
   gameState.mode = mode;
-  setupButtons(atStart);
+  setupButtons();
 }
 
 /* Poly draw functions */
@@ -732,23 +784,23 @@ function updateLevelIcon(level) {
   }
 }
 
-function initGameState() {
+function resetGameState() {
   gameState.strokes = [];
   gameState.isDrawing = 0;
   gameState.toolFocus = gameState.toolOptions.length;
   gameState.timerRunning = 0;
 }
 
-function setupGame() {
+function initGame() {
   drawReticle();
   drawToolOptions();
   updateSelectors(0);
-  setTimer(0,gameState.maxTime);
+  setTimeout(alignGameLayers, 100);
 }
 
 $(document).ready(function(){
-  setGameMode(gameMode.ready);
-  setTimeout(alignGameLayers, 100);
+  initGame();
+  setGameMode(gameMode.newLevel);
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
@@ -847,6 +899,13 @@ $(document).ready(function(){
           getOptionCount()-1,
           gameState.toolOptions[gameState.toolFocus]+1);
         break;
+      case 13: // return key
+        if (gameState.mode == gameMode.newLevel) {
+          $('#start').click();
+        } else if (gameState.mode == gameMode.complete) {
+          $('#retry').click();
+        }
+        pressedArrow = false;
       default:
         pressedArrow = false;
         break;

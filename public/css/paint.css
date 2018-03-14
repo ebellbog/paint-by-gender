@@ -210,6 +210,10 @@ body {
   cursor: default;
 }
 
+.bottom-btn#start {
+  width: 180px;
+}
+
 .flash {
   font-family: 'Amatic SC', cursive;
   font-size: 150px;
@@ -240,33 +244,52 @@ body {
   z-index: 4;
 }
 
-.larger-title {
-  font-family: 'Amatic SC', cursive;
-  font-size: 120px;
-  font-weight: 400;
-  color: white;
+#overlay-title {
+  width: 450px;
   text-align: center;
-  text-shadow: 0 0 6px #222;
+  font-family: 'Amatic SC', cursive;
+  font-weight: 600;
 }
 
-.smaller-title {
-  font-size: 68px;
-  font-weight: 600;
+#overlay-title.start-title {
+  font-size: 100px;
+  color: purple;
+}
+
+#overlay-title.end-title {
+  font-size: 70px;
+  color: white;
   text-shadow: 0 0 6px black;
 }
 
 #overlay-body {
   font-family: 'Exo 2', sans-serif;
-  font-size:28px;
-  font-weight: 600;
-  line-height: 37px;
   padding-left: 20px;
-  margin-top: 20px;
+  margin-left: auto;
+  margin-right: auto;
   z-index: 4;
+  width: 400px;
+}
+
+#overlay-body.start-text {
+  color: white;
+  opacity: 1;
+  text-shadow: 0 0 15px #555, 1px 1px 3px black;
+  letter-spacing: -1px;
+  margin-top: 20px;
+  font-weight: 400;
+  font-size:28px;
+  line-height: 37px;
+}
+
+#overlay-body.end-text {
   color: purple;
   opacity: 0.9;
   text-shadow: 0 0 10px white;
-  width: 400px;
+  margin-top: 10px;
+  font-weight: 600;
+  font-size:26px;
+  line-height: 35px;
 }
 
 #stats {
@@ -390,7 +413,7 @@ body {
   margin-left: 7px;
   margin-right: 7px;
   cursor: pointer;
-  background-color: rgba(80, 80, 80, 0.25);
+  background-color: rgba(80, 80, 80, 0.2);
   border-radius: 3px;
 }
 
@@ -410,6 +433,14 @@ body {
   height: 48px;
   border: 3px solid white;
   border-radius: 4px;
+}
+
+.option-active {
+  color: purple;
+}
+
+.option-inactive {
+
 }
 
 .focus, .option-selector.focus {
