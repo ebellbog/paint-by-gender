@@ -35,7 +35,8 @@ colors = {
   spill: [132, 150, 150],
   innerReticle: [153, 153, 153],
   outerReticle: [221, 221, 221],
-  toolOption: [255, 255, 255]
+  enabledOption: [255, 255, 255],
+  disabledOption: [128, 0, 128]
 };
 
 brushTypes = [
@@ -63,6 +64,7 @@ gameState = {
   maxTime: 40,
   timerRunning: 0,
   toolOptions: [1,0,0],
+  enabledOptions: [[1,1,1],[1,0,0],[1,0,0]]
 }
 
 /* Helper functions */
@@ -218,8 +220,13 @@ function setupButtons() {
 }
 
 function initLevel(level) {
+  var enabled = levelData[level].enabledTools;
+  $('.option-selector').each(function(index) {
+    $(this).toggleClass('disabled',!enabled[index]);
+  });
   $('#game-background').css('background-color', rgbToStr(colors.canvas));
-  setupTools(level);
+
+  setTooltips(level);
   setLevelTitle(level)
   updateLevelIcon(level);
 }
@@ -257,13 +264,7 @@ function drawLevel(level) {
   ctx.restore();
 }
 
-function setupTools(level) {
-  var enabled = levelData[level].enabledTools;
-  $('.option-selector').each(function(index) {
-    if (enabled[index]) $(this).show();
-    else $(this).hide();
-  });
-
+function setTooltips(level) {
   switch(level) {
     case 1:
       var notReady = "You're not ready for this yet";
@@ -585,14 +586,15 @@ function showCountdown(count, cb) {
 /* Tool options & selectors */
 
 function drawToolOptions() {
-  var toolColor = rgbToStr(colors.toolOption);
+  var enabledColor = rgbToStr(colors.enabledOption);
+  var disabledColor = rgbToStr(colors.disabledOption);
 
   // draw brush size
 
   var sides = getBrushSides();
   var size = sides ? 5 : 4;
 
-  $('#brush-size canvas').each(function() {
+  $('#brush-size canvas').each(function(index) {
     var $canvas = $(this);
     var ctx = getContext($canvas);
     ctx.clearRect(0, 0, $canvas.width(), $canvas.height());
@@ -601,7 +603,7 @@ function drawToolOptions() {
     var centerY = centerX;
 
     if (!sides) {
-      ctx.fillStyle = toolColor;
+      ctx.fillStyle = enabledColor;
       ctx.beginPath();
       ctx.arc(centerX, centerY, size, 0, Math.PI*2);
       ctx.fill();
@@ -610,7 +612,7 @@ function drawToolOptions() {
       var centerX = $canvas.width()/2;
       var centerY = centerX;
       if (sides == 3) centerY += 4;
-      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: toolColor});
+      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: enabledColor});
       size += 7;
     }
   });
@@ -620,6 +622,7 @@ function drawToolOptions() {
   var sideValues = brushTypes.map(v => v.sides);
 
   $('#brush-shape canvas').each(function(index) {
+    var optionColor = gameState.enabledOptions[1][index] ? enabledColor : disabledColor;
     var $canvas = $(this);
     var ctx = getContext($canvas);
     ctx.clearRect(0, 0, $canvas.width(), $canvas.height());
@@ -630,7 +633,7 @@ function drawToolOptions() {
 
     sides = sideValues[index];
     if (!sides) {
-      ctx.fillStyle = toolColor;
+      ctx.fillStyle = optionColor;
       ctx.beginPath();
       ctx.arc(centerX, centerY, size-1, 0, Math.PI*2);
       ctx.fill();
@@ -638,7 +641,19 @@ function drawToolOptions() {
       var centerX = $canvas.width()/2;
       var centerY = centerX;
       if (sides == 3) centerY += 4;
-      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: toolColor});
+      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: optionColor});
+    }
+  });
+
+  // set tool type color
+
+  $('#tool-type .tool-option').each(function(index) {
+    var enabled = gameState.enabledOptions[2][index];
+    if (index == 1) {
+      var $img = $(this).find('img');
+      $img.prop('src', enabled ? './img/lipstick.svg' : './img/lipstick_purple.svg');
+    } else {
+      $(this).css('color', enabled ? enabledColor : disabledColor);
     }
   });
 }
