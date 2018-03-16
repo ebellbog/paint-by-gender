@@ -42,7 +42,8 @@ colors = {
   innerReticle: [153, 153, 153],
   outerReticle: [221, 221, 221],
   enabledOption: [255, 255, 255],
-  disabledOption: [110, 110, 110]
+  disabledOption: [110, 110, 110],
+  purple: [128, 0, 128]
 };
 
 brushTypes = [
@@ -298,17 +299,27 @@ function setTooltips(level) {
 }
 
 function setupContext(ctx, type) {
-  if (type=='painting') {
-    ctx.lineJoin = ctx.lineCap = 'round';
-    ctx.strokeStyle = ctx.fillStyle = rgbToStr(colors.paint);
-    ctx.globalCompositeOperation = 'darken';
-  } else if (type=='timer') {
-    ctx.lineWidth = 8;
-    ctx.lineCap = 'butt';
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY= 2;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = 'gray';
+  switch(type) {
+    case 'painting':
+      ctx.lineJoin = ctx.lineCap = 'round';
+      ctx.strokeStyle = ctx.fillStyle = rgbToStr(colors.paint);
+      ctx.globalCompositeOperation = 'darken';
+      break;
+    case 'timer':
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'butt';
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY= 2;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = 'gray';
+      break;
+    case 'transition':
+      ctx.lineJoin = ctx.lineCap = 'round';
+      ctx.lineWidth = 100;
+      ctx.strokeStyle = ctx.fillStyle = rgbToStr(colors.purple);
+      ctx.globalCompositeOperation = 'source-over';
+    default:
+      break;
   }
 }
 
@@ -575,6 +586,38 @@ function fadeOut(options) {
   setTimeout(function(){
     $('#game, #canvas-texture').animate({opacity:0}, duration*.5);
   }, delay+duration*.5);
+}
+
+function wipeOut(x,y,dir,ctx) {
+  if (y > 450) {console.log('done'); return;}
+
+  if (!ctx) {
+    ctx = getContext();
+  }
+  setupContext(ctx, 'transition');
+
+  if (!(x || y || dir)) {
+    x = 0;
+    y = 50;
+    dir = 1;
+  }
+
+  var newX = x, newY = y;
+  if (x >= 500 && dir == 1) {
+    dir = -1;
+    newY += 100;
+  } else if (x <= 0 && dir == -1) {
+    dir = 1;
+    newY += 100;
+  }
+  newX += dir*4;
+
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  ctx.lineTo(newX, newY);
+  ctx.stroke();
+
+  setTimeout(()=>wipeOut(newX, newY, dir, ctx), 1);
 }
 
 function flashExpanding(message, duration, hold) {
@@ -948,6 +991,9 @@ $(document).ready(function(){
           $('#retry').click();
         }
         pressedArrow = false;
+      case 32: // test with spacebar
+        wipeOut();
+        break;
       default:
         pressedArrow = false;
         break;
