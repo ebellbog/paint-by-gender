@@ -404,7 +404,7 @@ body {
   padding-left: 10px;
 }
 
-.tool-option {
+.tool-option, .tool-option.disabled:hover {
   position: relative;
   display: inline-block;
   width: 40px;
@@ -416,6 +416,11 @@ body {
   background-color: rgba(80, 80, 80, 0.2);
   border-radius: 3px;
 }
+
+.tool-option:hover {
+  background-color: rgb(128,0,128);
+}
+
 
 .option-wrapper {
   position: relative;
@@ -465,12 +470,12 @@ body {
   pointer-events: none;
 }
 
-.tippy-tooltip.purple-theme {
-  background-color: rgba(128, 0, 128, 0.6);
+.tippy-tooltip.gray-theme {
+  background-color: rgba(90, 90, 90, 0.75);
 }
 
-.tippy-popper[x-placement^=bottom] .tippy-tooltip.purple-theme .tippy-arrow {
-  border-bottom: 7px solid rgba(128, 0, 128, 0.6);
+.tippy-popper[x-placement^=bottom] .tippy-tooltip.gray-theme .tippy-arrow {
+  border-bottom: 7px solid rgba(90, 90, 90, 0.75);
   border-right: 7px solid transparent;
   border-left: 7px solid transparent;
 }

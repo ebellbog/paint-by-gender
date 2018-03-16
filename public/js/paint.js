@@ -4,7 +4,13 @@ levelData = {
   1: {
     name: 'The Cistem',
     description: 'Welcome to life on easy mode. The Cistem was built for you!',
-    enabledTools: [1,0,0]
+    enabledTools: [1,0,0],
+    tooltips: [[],
+               ["Why? Your brush is perfect the way it is!",
+                "Why? Your brush is perfect the way it is!",
+                "What the heck even is this??"],
+               ['', 'Too expensive!', "You're not ready for this yet..."],
+              ]
   },
   2: {
     name: 'Cistem Error',
@@ -36,7 +42,7 @@ colors = {
   innerReticle: [153, 153, 153],
   outerReticle: [221, 221, 221],
   enabledOption: [255, 255, 255],
-  disabledOption: [128, 0, 128]
+  disabledOption: [110, 110, 110]
 };
 
 brushTypes = [
@@ -269,19 +275,18 @@ function drawLevel(level) {
 }
 
 function setTooltips(level) {
-  switch(level) {
-    case 1:
-      var notReady = "You're not ready for this yet";
-      $('#lipstick, #pill-wrapper').parents('.tool-option').prop('title', notReady);
-      break;
-    default:
-      break;
-  }
+  $('.tool-wrapper').each(function(toolIndex) {
+    $(this).find('.tool-option').each(function(optionIndex) {
+      var enabled = gameState.enabledOptions[toolIndex][optionIndex];
+      $(this).toggleClass('disabled', !enabled);
+      $(this).prop('title', enabled ? '' : levelData[gameState.level].tooltips[toolIndex][optionIndex]);
+    });
+  });
 
   tippy('.tool-option[title]', {
     placement: 'bottom',
     maxWidth: '150px',
-    theme: 'purple',
+    theme: 'gray',
     arrow: true,
     dynamicTitle: true
   });
@@ -655,7 +660,7 @@ function drawToolOptions() {
     var enabled = gameState.enabledOptions[2][index];
     if (index == 1) {
       var $img = $(this).find('img');
-      $img.prop('src', enabled ? './img/lipstick.svg' : './img/lipstick_purple.svg');
+      $img.prop('src', enabled ? './img/lipstick.svg' : './img/lipstick_gray.svg');
     } else {
       $(this).css('color', enabled ? enabledColor : disabledColor);
     }
