@@ -9,7 +9,7 @@ levelData = {
                ["Why? Your brush is perfect the way it is!",
                 "Why? Your brush is perfect the way it is!",
                 "What the heck even is this??"],
-               ['', 'Too expensive!', "You're not ready for this yet..."],
+               ['', 'Too expensive!', "Too risky! You're not ready yet."],
               ]
   },
   2: {
@@ -48,7 +48,7 @@ colors = {
 brushTypes = [
   {sides: 0, sizes:[8, 20, 28]},
   {sides: 4, sizes:[8, 20, 28]},
-  {sides: 3, sizes:[12, 24, 36]}
+  {sides: 5, sizes:[12, 24, 36], starred:1}
 ];
 
 gameMode = {
@@ -87,6 +87,10 @@ function getBrushSides() {
   return getBrushType().sides;
 }
 
+function isStarred() {
+  return getBrushType().starred;
+}
+
 function getOptionCount() {
   var $tool = $(`#tools .tool-wrapper:eq(${gameState.toolFocus})`);
   return $tool.find('.tool-option').length;
@@ -119,7 +123,8 @@ function getPathPoint(canvas, e) {
     x: e.clientX-rect.left,
     y: e.clientY-rect.top,
     brushSize: getBrushSize(),
-    brushSides: getBrushSides()
+    brushSides: getBrushSides(),
+    starred: isStarred()
   };
 }
 
@@ -400,13 +405,16 @@ function setGameMode(mode) {
 
 /* Poly draw functions */
 
-function getPolyPath(x, y, sides, size, rotation) {
-  var path = [];
+function getPolyPath(x, y, sides, size, rotation, starred) {
   var rotation = rotation || (Math.PI-(Math.PI*2/sides))/2;
+  var path = [];
+
+  if (starred) sides = sides*2;
   for (var i = 0; i < sides; i++) {
+    var dist = starred ? (i%2 ? size/2 : size) : size;
     var angle = (Math.PI*2/sides)*i + rotation;
-    var ptX = x+size*Math.cos(angle);
-    var ptY = y+size*Math.sin(angle);
+    var ptX = x+dist*Math.cos(angle);
+    var ptY = y+dist*Math.sin(angle);
     path.push({x: ptX, y:ptY});
   }
   return path;
@@ -415,7 +423,7 @@ function getPolyPath(x, y, sides, size, rotation) {
 function drawPolygon(ctx, x, y, sides, size, options) {
   options = options || {};
 
-  var path = getPolyPath(x, y, sides, size, options.rotation);
+  var path = getPolyPath(x, y, sides, size, options.rotation, options.starred);
   var start = path.shift();
 
   ctx.beginPath();
@@ -602,6 +610,7 @@ function drawToolOptions() {
 
   var sides = getBrushSides();
   var size = sides ? 5 : 4;
+  var starred = isStarred();
 
   $('#brush-size canvas').each(function(index) {
     var $canvas = $(this);
@@ -620,8 +629,8 @@ function drawToolOptions() {
     } else {
       var centerX = $canvas.width()/2;
       var centerY = centerX;
-      if (sides == 3) centerY += 4;
-      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: enabledColor});
+      if (sides == 5) centerY += 1;
+      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color:enabledColor, starred:starred});
       size += 7;
     }
   });
@@ -638,19 +647,21 @@ function drawToolOptions() {
 
     var centerX = $canvas.width()/2;
     var centerY = centerX;
-    size = 12;
+    size = 13;
 
     sides = sideValues[index];
+    starred = brushTypes[index].starred;
+
     if (!sides) {
       ctx.fillStyle = optionColor;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, size-1, 0, Math.PI*2);
+      ctx.arc(centerX, centerY, size-2, 0, Math.PI*2);
       ctx.fill();
     } else {
       var centerX = $canvas.width()/2;
       var centerY = centerX;
-      if (sides == 3) centerY += 4;
-      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: optionColor});
+      if (sides == 5) centerY += 1;
+      drawPolygon(ctx, centerX, centerY, sides, size, {style:'fill', color: optionColor, starred:starred});
     }
   });
 
@@ -710,9 +721,9 @@ function drawReticle() {
     ctx.stroke();
   } else {
     drawPolygon(ctx, centerX, centerY, getBrushSides(), getBrushSize(),
-                {style:'stroke', color: innerColor});
+                {style:'stroke', color: innerColor, starred:isStarred()});
     drawPolygon(ctx, centerX, centerY, getBrushSides(), getBrushSize()+1,
-                {style:'stroke', color: outerColor});
+                {style:'stroke', color: outerColor, starred:isStarred()});
   }
 }
 
@@ -741,13 +752,14 @@ function drawPoint(ctx, pt) {
     ctx.arc(pt.x, pt.y, pt.brushSize, 0, Math.PI*2);
     ctx.fill();
   } else {
-    drawPolygon(ctx, pt.x, pt.y, pt.brushSides, pt.brushSize, {style:'fill'});
+    drawPolygon(ctx, pt.x, pt.y, pt.brushSides, pt.brushSize, {style:'fill', starred:pt.starred});
   }
 }
 
 function drawPath(ctx, pts) {
   var sides = pts[0].brushSides;
   var size = pts[0].brushSize;
+  var starred = pts[0].starred;
 
   if (!sides) {
     var p1 = pts[0];
@@ -768,8 +780,8 @@ function drawPath(ctx, pts) {
   } else {
     drawPoint(ctx, pts[0]); // start cap
     for (var i = 0; i < pts.length-1; i++) {
-      var p1 = getPolyPath(pts[i].x, pts[i].y, sides, size);
-      var p2 = getPolyPath(pts[i+1].x, pts[i+1].y, sides, size);
+      var p1 = getPolyPath(pts[i].x, pts[i].y, sides, size, 0, starred);
+      var p2 = getPolyPath(pts[i+1].x, pts[i+1].y, sides, size, 0, starred);
       joinPolys(ctx, p1, p2);
     }
     drawPoint(ctx, pts[pts.length-1]); // end cap
