@@ -123,6 +123,10 @@ function getContext($canvas) {
   return ctx;
 }
 
+function isToolEnabled(index) {
+  return levelData[gameState.level].enabledTools[index];
+}
+
 /* Logic functions */
 
 function analyzeCanvas() {
@@ -831,6 +835,8 @@ $(document).ready(function(){
   $('.tool-option').click(function(e) {
     var optionIndex = $(e.target).index();
     var toolIndex = $(e.target).parents('.tool-wrapper').first().index();
+    if (!isToolEnabled(toolIndex)) return;
+
     gameState.toolOptions[toolIndex] = optionIndex;
     setSelector(toolIndex, optionIndex, false);
     drawReticle();
@@ -898,11 +904,15 @@ $(document).ready(function(){
     var pressedArrow = true;
     switch(e.which) {
       case 38: // up arrow
-        var n = gameState.toolOptions.length+1; // fix mod for negatives
-        gameState.toolFocus = (gameState.toolFocus-1+n)%n;
+        var n = gameState.toolOptions.length+1;
+        var newFocus = (gameState.toolFocus-1+n)%n; // fix mod for negatives
+        while (newFocus < n-1 && !isToolEnabled(newFocus)) newFocus = (newFocus-1+n)%n;
+        gameState.toolFocus = newFocus;
         break;
       case 40: // down arrow
-        gameState.toolFocus = (gameState.toolFocus+1)%(gameState.toolOptions.length+1);
+        var newFocus  = (gameState.toolFocus+1)%(gameState.toolOptions.length+1);
+        while (newFocus < gameState.toolOptions.length && !isToolEnabled(newFocus)) newFocus+=1;
+        gameState.toolFocus = newFocus;
         break;
       case 37: // left arrow
         if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
