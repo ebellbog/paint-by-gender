@@ -1,5 +1,17 @@
 /* Models & data */
 
+colors = {
+  innerReticle: [153, 153, 153],
+  outerReticle: [221, 221, 221],
+  enabledOption: [255, 255, 255],
+  disabledOption: [110, 110, 110],
+  white: [255, 255, 255],
+  purple: [128, 0, 128],
+  pink: [255, 150, 150],
+  blue: [132, 189, 250],
+  pinkblue: [132, 150, 150]
+};
+
 levelData = {
   1: {
     name: 'The Cistem',
@@ -10,7 +22,8 @@ levelData = {
                 "Why? Your brush is perfect the way it is!",
                 "What the heck even is this??"],
                ['', 'Too expensive!', "Too risky! You're not ready yet."],
-              ]
+              ],
+    challenges: [1,2,3,4]
   },
   2: {
     name: 'Cistem Error',
@@ -34,17 +47,16 @@ levelData = {
   }
 }
 
-colors = {
-  paint: [255, 150, 150],
-  canvas: [132, 189, 250],
-  shape: [255, 255, 255],
-  spill: [132, 150, 150],
-  innerReticle: [153, 153, 153],
-  outerReticle: [221, 221, 221],
-  enabledOption: [255, 255, 255],
-  disabledOption: [110, 110, 110],
-  purple: [128, 0, 128]
-};
+challengeData = {
+  1: {
+    paintColor: colors.pink,
+    canvasColor: colors.blue,
+    spillColor: colors.pinkblue,
+    shapeColor: colors.white,
+    maxTime: 40,
+    enabledOptions: [[1,1,1],[1,0,0],[1,0,0]]
+  }
+}
 
 brushTypes = [
   {sides: 0, sizes:[8, 20, 28]},
@@ -54,10 +66,12 @@ brushTypes = [
 
 gameMode = {
   newLevel: 0,
-  ready: 1,
-  starting: 2,
-  playing: 3,
-  complete: 4,
+  newChallenge: 1,
+  ready: 2,
+  starting: 3,
+  playing: 4,
+  transitioning: 5,
+  complete: 6,
 }
 
 gameOutcome = {
@@ -68,10 +82,9 @@ gameOutcome = {
 
 gameState = {
   level: 1,
-  maxTime: 40,
+  challengeIndex: 0,
   timerRunning: 0,
   toolOptions: [1,0,0],
-  enabledOptions: [[1,1,1],[1,0,0],[1,0,0]]
 }
 
 /* Helper functions */
@@ -95,6 +108,10 @@ function isStarred() {
 function getOptionCount() {
   var $tool = $(`#tools .tool-wrapper:eq(${gameState.toolFocus})`);
   return $tool.find('.tool-option').length;
+}
+
+function getChallengeData(level, challengeIndex) {
+  return challengeData[levelData[level].challenges[challengeIndex]];
 }
 
 function rgbToStr(rgbList) {
@@ -240,23 +257,42 @@ function initLevel(level) {
   $('.option-selector').each(function(index) {
     $(this).toggleClass('disabled',!enabled[index]);
   });
-  $('#game-background').css('background-color', rgbToStr(colors.canvas));
 
-  setTooltips(level);
   setLevelTitle(level)
-  updateLevelIcon(level);
 }
 
 function resetLevel(level) {
-  $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
-  drawLevel(level)
+  gameState.challengeIndex = 0;
+  initChallenge(level, 0);
 }
 
-function drawLevel(level) {
+function initChallenge(level, challengeIndex) {
+  var challengeData = getChallengeData(level, challengeIndex);
+  colors.paint = challengeData.paintColor;
+  colors.canvas = challengeData.canvasColor;
+  colors.spill = challengeData.spillColor;
+  colors.shape = challengeData.shapeColor;
+
+  $('#game-background').css('background-color', rgbToStr(colors.canvas));
+  $('#percent-painted .slider-fill').css('background-color', rgbToStr(colors.paint));
+
+  gameState.maxTime = challengeData.maxTime;
+  gameState.enabledOptions = challengeData.enabledOptions;
+
+  drawToolOptions();
+  setTooltips(level);
+
+  updateLevelIcon(level, challengeIndex);
+  drawChallenge(level, challengeIndex);
+}
+
+function drawChallenge(level, challengeIndex) {
+  var challenge = levelData[level].challenges[challengeIndex];
+
   var ctx = getContext();
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
-  switch(level) {
+  switch(challenge) {
     case 1:
       ctx.fillStyle = rgbToStr(colors.canvas);
       ctx.fillRect(0, 0, 500, 500);
@@ -366,6 +402,14 @@ function setEndText(outcome, level) {
 
 function setGameMode(mode) {
   switch(mode){
+    case gameMode.newChallenge:
+      resetGameState();
+      updatePercentPainted();
+      initChallenge(gameState.level, gameState.challengeIndex);
+      restartTimer();
+      $('#reticle').show();
+      setTimeout(()=>setGameMode(gameMode.playing), 10);
+      break;
     case gameMode.newLevel:
         initLevel(gameState.level);
         setStartText(gameState.level);
@@ -392,6 +436,15 @@ function setGameMode(mode) {
       break;
     case gameMode.playing:
       $('#game').css('cursor','none');
+      break;
+    case gameMode.transitioning:
+      gameState.isDrawing = 0;
+      gameState.timerRunning = 0;
+
+      $('#game').css('cursor','default');
+      $('#reticle').hide();
+
+      wipeOut(()=>wipeIn(()=>setGameMode(gameMode.newChallenge)));
       break;
     case gameMode.complete:
       gameState.isDrawing = 0;
@@ -643,7 +696,7 @@ function wipeIn(cb,y,time,ctx) {
   var newY = y+timeCoefficient*speedCoefficient;
 
   ctx.clearRect(0,0,500,500);
-  drawLevel(gameState.level);
+  drawChallenge(gameState.level, gameState.challengeIndex);
   setupContext(ctx, 'transition');
   ctx.fillRect(0,0,500,500-newY);
   setTimeout(()=>wipeIn(cb,newY,newTime,ctx), 0);
@@ -861,7 +914,7 @@ function drawPath(ctx, pts) {
 }
 
 function redrawGame(ctx) {
-  drawLevel(gameState.level);
+  drawChallenge(gameState.level, gameState.challengeIndex);
   setupContext(ctx,'painting');
 
   var total = 0;
@@ -878,7 +931,9 @@ function redrawGame(ctx) {
 
 /* Initialization & event handlers */
 
-function updateLevelIcon(level) {
+function updateLevelIcon(level, challengeIndex) {
+  var challenge = levelData[level].challenges[challengeIndex];
+
   var $iconWrapper = $('#level-icon-wrapper');
   var faClasses = 'fa-xs fa-fw fa-circle';
 
@@ -887,8 +942,8 @@ function updateLevelIcon(level) {
   var $closedCircle = $circle.clone().addClass('fas');
 
   $iconWrapper.empty();
-  for (var i = 0; i < 6; i++) {
-    $iconWrapper.append(i< level ? $closedCircle.clone() : $openCircle.clone());
+  for (var i = 0; i < levelData[level].challenges.length; i++) {
+    $iconWrapper.append(i < challenge ? $closedCircle.clone() : $openCircle.clone());
   }
 }
 
@@ -901,7 +956,6 @@ function resetGameState() {
 
 function initGame() {
   drawReticle();
-  drawToolOptions();
   updateSelectors(0);
   setTimeout(alignGameLayers, 100);
 }
@@ -984,6 +1038,8 @@ $(document).ready(function(){
 
   $(document).on('mouseup', function() {
     gameState.isDrawing = false;
+    if (gameState.mode != gameMode.playing) return;
+
     var strokes = gameState.strokes;
     if (strokes.length && strokes[strokes.length-1].length > 0) strokes.push([]);
     updatePercentPainted();
@@ -1021,7 +1077,7 @@ $(document).ready(function(){
         }
         pressedArrow = false;
       case 32: // test with spacebar
-        wipeOut(wipeIn);
+        setGameMode(gameMode.transitioning);
         break;
       default:
         pressedArrow = false;
@@ -1037,7 +1093,7 @@ $(document).ready(function(){
     if ($(this).hasClass('inactive')) return;
     gameState.strokes = [];
     gameState.isDrawing = 0;
-    drawLevel(gameState.level);
+    drawChallenge(gameState.level, gameState.challengeIndex);
     updatePercentPainted();
   });
 
