@@ -588,36 +588,65 @@ function fadeOut(options) {
   }, delay+duration*.5);
 }
 
-function wipeOut(x,y,dir,ctx) {
-  if (y > 450) {console.log('done'); return;}
-
-  if (!ctx) {
-    ctx = getContext();
-  }
-  setupContext(ctx, 'transition');
-
-  if (!(x || y || dir)) {
+function wipeOut(cb,x,y,dir,time,ctx) {
+  if (y > 450) {if (cb) cb(); return;}
+  if (!(x || y || dir || time)) {
     x = 0;
     y = 50;
     dir = 1;
+    time = Date.now();
+  }
+  if (!ctx) {
+    ctx = getContext();
   }
 
   var newX = x, newY = y;
-  if (x >= 500 && dir == 1) {
+  if (x >= 550 && dir == 1) {
     dir = -1;
     newY += 100;
-  } else if (x <= 0 && dir == -1) {
+  } else if (x <= -50 && dir == -1) {
     dir = 1;
     newY += 100;
   }
-  newX += dir*4;
 
+  // using a time coefficient removes duration variability
+  // arising from browser speed, hardware, etc.
+  var newTime = Date.now();
+  var timeCoefficient = Math.max((newTime-time)/10, 0.1);
+  var speedCoefficient = 10;
+  newX += dir*timeCoefficient*speedCoefficient;
+
+  setupContext(ctx, 'transition');
   ctx.beginPath();
   ctx.moveTo(x,y);
   ctx.lineTo(newX, newY);
   ctx.stroke();
 
-  setTimeout(()=>wipeOut(newX, newY, dir, ctx), 1);
+  setTimeout(()=>wipeOut(cb,newX, newY, dir, newTime, ctx), 0);
+}
+
+function wipeIn(cb,y,time,ctx) {
+  if (y > 500) {if (cb) cb(); return;}
+  if (!(y || time)) {
+    y = 0;
+    time = Date.now();
+  }
+  if (!ctx) {
+    ctx = getContext();
+  }
+
+  // using a time coefficient removes duration variability
+  // arising from browser speed, hardware, etc.
+  var newTime = Date.now();
+  var timeCoefficient = Math.max((newTime-time)/10, 0.1);
+  var speedCoefficient = 3;
+  var newY = y+timeCoefficient*speedCoefficient;
+
+  ctx.clearRect(0,0,500,500);
+  drawLevel(gameState.level);
+  setupContext(ctx, 'transition');
+  ctx.fillRect(0,0,500,500-newY);
+  setTimeout(()=>wipeIn(cb,newY,newTime,ctx), 0);
 }
 
 function flashExpanding(message, duration, hold) {
@@ -992,7 +1021,7 @@ $(document).ready(function(){
         }
         pressedArrow = false;
       case 32: // test with spacebar
-        wipeOut();
+        wipeOut(wipeIn);
         break;
       default:
         pressedArrow = false;
