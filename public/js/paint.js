@@ -25,7 +25,7 @@ levelData = {
                 "What the heck even is this??"],
                ['', 'Too expensive!', "Too risky! You're not ready yet."],
               ],
-    challenges: [1,2,3,4]
+    challenges: [1,2]
   },
   2: {
     name: 'Cistem Error',
@@ -51,11 +51,19 @@ levelData = {
 
 challengeData = {
   1: {
-    paintColor: colors.darkblue,
     canvasColor: colors.blue,
+    paintColor: colors.darkblue,
     shapeColor: colors.white,
-    maxTime: 40,
+    maxTime: 30,
     enabledOptions: [[1,1,1],[1,0,0],[1,0,0]]
+  },
+  2: {
+    canvasColor: colors.blue,
+    paintColor: colors.pink,
+    shapeColor: colors.white,
+    spillColor: colors.pinkBlue,
+    maxTime: 50,
+    enabledOptions: [[1,1,1],[0,1,0],[1,0,0]]
   }
 }
 
@@ -67,12 +75,11 @@ brushTypes = [
 
 gameMode = {
   newLevel: 0,
-  newChallenge: 1,
-  ready: 2,
-  starting: 3,
-  playing: 4,
-  transitioning: 5,
-  complete: 6,
+  ready: 1,
+  starting: 2,
+  playing: 3,
+  transitioning: 4,
+  complete: 5,
 }
 
 gameOutcome = {
@@ -230,8 +237,14 @@ function updatePercentPainted() {
   else if(percent >= 1 && gameState.mode == gameMode.playing) {
     $fill.css('background-color', '#0f0');
     $fill.css('border-radius', '5px');
-    gameState.outcome = gameOutcome.passed;
-    setGameMode(gameMode.complete);
+
+    gameState.challengeIndex += 1;
+    if (gameState.challengeIndex == levelData[gameState.level].challenges.length) {
+      gameState.outcome = gameOutcome.passed;
+      setGameMode(gameMode.complete);
+    } else {
+      setGameMode(gameMode.transitioning);
+    }
   }
 }
 
@@ -294,6 +307,8 @@ function initChallenge(level, challengeIndex) {
   gameState.maxTime = challengeData.maxTime;
   gameState.enabledOptions = challengeData.enabledOptions;
 
+  updateSelectors(0);
+  drawReticle();
   drawToolOptions();
   setTooltips(level);
 
@@ -313,6 +328,7 @@ function drawChallenge(level, challengeIndex) {
   ctx.globalCompositeOperation = 'source-over';
   switch(challenge) {
     case 1:
+    case 2:
       ctx.fillStyle = rgbToStr(colors.canvas);
       ctx.fillRect(0, 0, 500, 500);
       ctx.fillStyle = rgbToStr(colors.shape);
@@ -421,14 +437,6 @@ function setEndText(outcome, level) {
 
 function setGameMode(mode) {
   switch(mode){
-    case gameMode.newChallenge:
-      resetGameState();
-      updatePercentPainted();
-      initChallenge(gameState.level, gameState.challengeIndex);
-      restartTimer();
-      $('#reticle').show();
-      setTimeout(()=>setGameMode(gameMode.playing), 10);
-      break;
     case gameMode.newLevel:
         initLevel(gameState.level);
         setStartText(gameState.level);
@@ -463,7 +471,19 @@ function setGameMode(mode) {
       $('#game').css('cursor','default');
       $('#reticle').hide();
 
-      wipeOut(()=>wipeIn(()=>setGameMode(gameMode.newChallenge)));
+      wipeOut(()=>{
+        resetGameState();
+        $('#percent-painted .slider-fill').animate({height: 0});
+        $('#spill-warning .slider-mark').animate({bottom: 2});
+        $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
+        initChallenge(gameState.level, gameState.challengeIndex);
+        setTimer(0, gameState.maxTime);
+
+        wipeIn(()=>{
+          restartTimer();
+          setGameMode(gameMode.playing);
+        });
+      });
       break;
     case gameMode.complete:
       gameState.isDrawing = 0;
@@ -823,7 +843,14 @@ function drawToolOptions() {
 }
 
 function updateSelectors(animated) {
-  gameState.toolOptions.map((v,i)=>setSelector(i,v,animated));
+  var enabled = gameState.enabledOptions;
+  gameState.toolOptions.map((v,i)=>{
+    while (enabled && !enabled[i][v]) {
+      v = (v+1)%enabled[i].length;
+    }
+    gameState.toolOptions[i] = v;
+    setSelector(i,v,animated);
+  });
 }
 
 function setSelector(toolIndex, optionIndex, animated) {
@@ -974,14 +1001,12 @@ function resetGameState() {
 }
 
 function initGame() {
-  drawReticle();
-  updateSelectors(0);
   setTimeout(alignGameLayers, 100);
+  setGameMode(gameMode.newLevel);
 }
 
 $(document).ready(function(){
   initGame();
-  setGameMode(gameMode.newLevel);
 
   var $canvas = $('#game');
   var ctx = getContext($canvas);
@@ -1089,15 +1114,12 @@ $(document).ready(function(){
           gameState.toolOptions[gameState.toolFocus]+1);
         break;
       case 13: // return key
+      case 32: // spacebar
         if (gameState.mode == gameMode.newLevel) {
           $('#start').click();
         } else if (gameState.mode == gameMode.complete) {
           $('#retry').click();
         }
-        pressedArrow = false;
-        break;
-      case 32: // test with spacebar
-        setGameMode(gameMode.transitioning);
         pressedArrow = false;
         break;
       default:
