@@ -8,7 +8,9 @@ colors = {
   white: [255, 255, 255],
   purple: [128, 0, 128],
   pink: [255, 150, 150],
+  darkpink: [198, 83, 83],
   blue: [132, 189, 250],
+  darkblue: [31, 100, 173],
   pinkblue: [132, 150, 150]
 };
 
@@ -49,9 +51,8 @@ levelData = {
 
 challengeData = {
   1: {
-    paintColor: colors.pink,
+    paintColor: colors.darkblue,
     canvasColor: colors.blue,
-    spillColor: colors.pinkblue,
     shapeColor: colors.white,
     maxTime: 40,
     enabledOptions: [[1,1,1],[1,0,0],[1,0,0]]
@@ -120,6 +121,7 @@ function rgbToStr(rgbList) {
 
 // significantly faster than reduce
 function rgbSum(pixelData, start) {
+  if (!pixelData) return;
   if (!start) start = 0;
   return pixelData[start]+pixelData[start+1]+pixelData[start+2];
 }
@@ -165,7 +167,8 @@ function analyzeCanvas() {
   var totals = {
     unpainted: 0,
     painted: 0,
-    spill: 0
+    spill: 0,
+    canvas: 0
   }
 
   for (var i = 0; i < imageData.length; i+=4) {
@@ -179,6 +182,9 @@ function analyzeCanvas() {
       case rgbSum(colors.spill):
         totals.spill++;
         break;
+      case rgbSum(colors.canvas):
+        totals.canvas++;
+        break;
     }
   }
 
@@ -188,26 +194,35 @@ function analyzeCanvas() {
 function updatePercentPainted() {
   var ctx = getContext();
   var canvasData = analyzeCanvas();
-  var percent = canvasData.painted/(canvasData.painted+canvasData.unpainted);
+
+  var percent, spill, maxSpill;
+  if (colors.spill) {
+    percent = canvasData.painted/(canvasData.painted+canvasData.unpainted);
+    spill = canvasData.spill;
+    maxSpill = 12000;
+  } else {
+    percent = (gameState.maxShape-canvasData.unpainted)/gameState.maxShape;
+    spill = gameState.maxCanvas-canvasData.canvas;
+    maxSpill = 18000;
+  }
 
   var $slider = $('#percent-painted .slider-outline');
   var height = $slider.height();
   var $fill = $('#percent-painted .slider-fill');
   $fill.animate({height: height*percent}, 60, 'linear');
 
-  var bottom, maxSpill = 12000;
-
-  if (canvasData.spill >= maxSpill) {
+  var bottom;
+  if (spill >= maxSpill) {
     bottom = height-10;
   } else {
-    bottom = (height-10)*canvasData.spill/maxSpill+2;
+    bottom = (height-10)*spill/maxSpill+2;
   }
 
   var $spillSlider = $('#spill-warning .slider-mark');
   $spillSlider.animate({bottom:bottom}, 80, 'linear');
 
   if (gameState.mode != gameMode.playing) return;
-  else if (canvasData.spill >= maxSpill) {
+  else if (spill >= maxSpill) {
     $spillSlider.css('background-color', 'red');
     gameState.outcome = gameOutcome.transgressed;
     setGameMode(gameMode.complete);
@@ -284,6 +299,10 @@ function initChallenge(level, challengeIndex) {
 
   updateLevelIcon(level, challengeIndex);
   drawChallenge(level, challengeIndex);
+
+  var canvasData = analyzeCanvas();
+  gameState.maxShape = canvasData.unpainted;
+  gameState.maxCanvas = canvasData.canvas;
 }
 
 function drawChallenge(level, challengeIndex) {
@@ -1076,8 +1095,10 @@ $(document).ready(function(){
           $('#retry').click();
         }
         pressedArrow = false;
+        break;
       case 32: // test with spacebar
         setGameMode(gameMode.transitioning);
+        pressedArrow = false;
         break;
       default:
         pressedArrow = false;

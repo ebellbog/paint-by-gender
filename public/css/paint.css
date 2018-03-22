@@ -274,7 +274,7 @@ body {
 #overlay-body.start-text {
   color: white;
   opacity: 1;
-  text-shadow: 0 0 15px #555, 1px 1px 3px black;
+  text-shadow: 0 0 15px #555, 1px 1px 2px black;
   letter-spacing: -1px;
   margin-top: 20px;
   font-weight: 400;
@@ -285,7 +285,7 @@ body {
 #overlay-body.end-text {
   color: purple;
   opacity: 0.9;
-  text-shadow: 0 0 10px white;
+  text-shadow: 0 0 10px white, 0 0 1px white;
   margin-top: 10px;
   font-weight: 600;
   font-size:26px;
