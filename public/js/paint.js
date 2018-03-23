@@ -25,7 +25,12 @@ levelData = {
                 "What?? This isn't even a real thing..."],
                ['', 'Too expensive!', "Too risky! You're not ready yet."],
               ],
-    challenges: [1,2]
+    endMessages: {
+      0: ["Congrats!", "You played the game. You painted inside the lines and feel strangely validated."],
+      1: ["Oops...", "You transgressed too far. People noticed, and they care way more than they should."],
+      2: ["You got clocked", "Time's up. Not everyone gets a chance to fulfill their purpose."]
+    },
+    challenges: [1,3]
   },
   2: {
     name: 'Cistem Error',
@@ -51,26 +56,33 @@ levelData = {
 
 challengeData = {
   1: {
-    canvasColor: colors.blue,
-    paintColor: colors.darkblue,
+    canvasColor: colors.pink,
+    paintColor: colors.darkpink,
     shapeColor: colors.white,
     maxTime: 30,
     enabledOptions: [[1,1,1],[1,0,0],[1,0,0]]
   },
   2: {
-    canvasColor: colors.blue,
-    paintColor: colors.pink,
+    canvasColor: colors.pink,
+    paintColor: colors.blue,
     shapeColor: colors.white,
     spillColor: colors.pinkBlue,
-    maxTime: 50,
+    maxTime: 45,
+    enabledOptions: [[1,1,1],[0,1,0],[1,0,0]]
+  },
+  3: {
+    canvasColor: colors.blue,
+    paintColor: colors.darkblue,
+    shapeColor: colors.white,
+    maxTime: 60,
     enabledOptions: [[1,1,1],[0,1,0],[1,0,0]]
   }
 }
 
 brushTypes = [
-  {sides: 0, sizes:[8, 20, 28]},
-  {sides: 4, sizes:[8, 20, 28]},
-  {sides: 5, sizes:[12, 24, 36], starred:1}
+  {sides: 0, sizes:[8, 25, 50]},
+  {sides: 4, sizes:[10, 32, 63]},
+  {sides: 5, sizes:[10, 28, 57], starred:1}
 ];
 
 gameMode = {
@@ -331,12 +343,14 @@ function drawChallenge(level, challengeIndex) {
   var ctx = getContext();
   ctx.save();
   ctx.globalCompositeOperation = 'source-over';
+
+  ctx.fillStyle = rgbToStr(colors.canvas);
+  ctx.fillRect(0, 0, 500, 500);
+  ctx.fillStyle = rgbToStr(colors.shape);
+
   switch(challenge) {
     case 1:
     case 2:
-      ctx.fillStyle = rgbToStr(colors.canvas);
-      ctx.fillRect(0, 0, 500, 500);
-      ctx.fillStyle = rgbToStr(colors.shape);
       ctx.beginPath();
 
       // generated at http://www.victoriakirst.com/beziertool/
@@ -349,6 +363,23 @@ function drawChallenge(level, challengeIndex) {
       ctx.bezierCurveTo(516 + xoff, 135 + yoff, 500 + xoff, 219 + yoff, 469 + xoff, 248 + yoff);
 
       ctx.fill();
+      break;
+    case 3:
+    case 4:
+      var ms = brushTypes[1].sizes[1]*2/Math.pow(2, .5);
+      var ls = brushTypes[1].sizes[2]*2/Math.pow(2, .5);
+
+      ctx.fillRect(50, 50, ls, ls);
+      ctx.fillRect(50, 450-ls, ls, ls);
+      ctx.fillRect(450-ls, 50, ls, ls);
+      ctx.fillRect(450-ls, 450-ls, ls, ls);
+
+      ctx.fillRect(160, 160, 180, 180);
+
+      ctx.fillRect(50+ls, 50+(ls-ms)/2, 400-2*ls, ms);
+      ctx.fillRect(50+ls, 450-(ls+ms)/2, 400-2*ls, ms);
+      ctx.fillRect(50+(ls-ms)/2, 50+ls, ms, 400-2*ls);
+      ctx.fillRect(450-(ls+ms)/2, 50+ls, ms, 400-2*ls);
       break;
     default:
       break;
@@ -422,22 +453,9 @@ function setEndText(outcome, level) {
   $title.addClass('end-title').removeClass('start-title');
   $body.addClass('end-text').removeClass('start-text');
 
-  switch(outcome) {
-    case gameOutcome.passed:
-      $title.html("Congrats!");
-      $body.html("You played the game. You painted inside the lines and feel strangely validated.");
-      break;
-    case gameOutcome.transgressed:
-      $title.html("Oops...");
-      $body.html("You transgressed too far. People noticed, and they care way more than they should.");
-      break;
-    case gameOutcome.clocked:
-      $title.html("You got clocked");
-      $body.html("Time's up. Not everyone gets a chance to fulfill their purpose.");
-      break;
-    default:
-      break;
-  }
+  var endMessages = levelData[level].endMessages[outcome];
+  $title.html(endMessages[0]);
+  $body.html(endMessages[1]);
 }
 
 function setGameMode(mode) {
@@ -712,7 +730,7 @@ function wipeOut(cb,x,y,dir,time,ctx) {
   // arising from browser speed, hardware, etc.
   var newTime = Date.now();
   var timeCoefficient = Math.max((newTime-time)/10, 0.1);
-  var speedCoefficient = 10;
+  var speedCoefficient = 12;
   newX += dir*timeCoefficient*speedCoefficient;
 
   setupContext(ctx, 'transition');
@@ -989,8 +1007,6 @@ function redrawGame(ctx) {
 /* Initialization & event handlers */
 
 function updateLevelIcon(level, challengeIndex) {
-  var challenge = levelData[level].challenges[challengeIndex];
-
   var $iconWrapper = $('#level-icon-wrapper');
   var faClasses = 'fa-xs fa-fw fa-circle';
 
@@ -1000,7 +1016,7 @@ function updateLevelIcon(level, challengeIndex) {
 
   $iconWrapper.empty();
   for (var i = 0; i < levelData[level].challenges.length; i++) {
-    $iconWrapper.append(i < challenge ? $closedCircle.clone() : $openCircle.clone());
+    $iconWrapper.append(i <= challengeIndex ? $closedCircle.clone() : $openCircle.clone());
   }
 }
 
