@@ -17,12 +17,12 @@ colors = {
 levelData = {
   1: {
     name: 'The Cistem',
-    description: 'Welcome to life on easy mode. The Cistem was built for you!',
+    description: 'Round pegs in round holes. Everything in its place. The Cistem was built for you!',
     enabledTools: [1,0,0],
     tooltips: [[],
                ["Why? Your brush is perfect the way it is!",
                 "Why? Your brush is perfect the way it is!",
-                "What the heck even is this??"],
+                "What?? This isn't even a real thing..."],
                ['', 'Too expensive!', "Too risky! You're not ready yet."],
               ],
     challenges: [1,2]
@@ -120,6 +120,11 @@ function getOptionCount() {
 
 function getChallengeData(level, challengeIndex) {
   return challengeData[levelData[level].challenges[challengeIndex]];
+}
+
+function randomAffirmation() {
+  var affirmations = ['Nice job!', 'Awesome!', '100%', 'Nailed it!'];
+  return affirmations[Math.floor(Math.random()*affirmations.length)];
 }
 
 function rgbToStr(rgbList) {
@@ -471,7 +476,7 @@ function setGameMode(mode) {
       $('#game').css('cursor','default');
       $('#reticle').hide();
 
-      wipeOut(()=>{
+      setTimeout(()=>wipeOut(()=>{
         resetGameState();
         $('#percent-painted .slider-fill').animate({height: 0});
         $('#spill-warning .slider-mark').animate({bottom: 2});
@@ -483,7 +488,9 @@ function setGameMode(mode) {
           restartTimer();
           setGameMode(gameMode.playing);
         });
-      });
+      }), 1000);
+
+      flashExpanding(randomAffirmation(), 800, {hold:400, styling:'small', expand:200});
       break;
     case gameMode.complete:
       gameState.isDrawing = 0;
@@ -741,12 +748,16 @@ function wipeIn(cb,y,time,ctx) {
   setTimeout(()=>wipeIn(cb,newY,newTime,ctx), 0);
 }
 
-function flashExpanding(message, duration, hold) {
-  var hold = hold || 200;
+function flashExpanding(message, duration, options) {
+  var options = options || {};
+  var hold = options.hold || 200;
+  var className = 'flash '+options.styling;
+  var expand = options.expand || 350;
+
   var $gameCell = $('td#main');
-  var $number = $(document.createElement('div')).addClass('flash').html(message);
+  var $number = $(document.createElement('div')).addClass(className).html(message);
   $gameCell.append($number);
-  setTimeout(()=>$number.animate({'font-size':'+=350', opacity:0}, duration-hold, ()=>$number.remove()), hold);
+  setTimeout(()=>$number.animate({'font-size':`+=${expand}`, opacity:0}, duration-hold, ()=>$number.remove()), hold);
 }
 
 function flashStationary(message, duration, fade) {
