@@ -1,15 +1,25 @@
 {
-  "name": "paint_by_gender",
-  "version": "0.0.1",
-  "description": "",
-  "main": "app.js",
   "scripts": {
-    "test": "test"
+    "start": "webpack serve --mode=development",
+    "build": "./node_modules/.bin/webpack --mode=production",
+    "ngrok": "ngrok http 9000 -host-header='localhost:9000'"
   },
-  "author": "ebellbog",
-  "license": "ISC",
+  "devDependencies": {
+    "file-loader": "^6.2.0",
+    "webpack-dev-server": "^3.2.1"
+  },
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "express": "^4.16.2"
+    "css-loader": "^5.2.4",
+    "handlebars": "^4.7.7",
+    "handlebars-loader": "^1.7.1",
+    "html-webpack-plugin": "^5.3.1",
+    "jquery": "^3.3.1",
+    "less": "^4.1.1",
+    "less-loader": "^8.1.1",
+    "mini-css-extract-plugin": "^1.6.0",
+    "style-loader": "^2.0.0",
+    "tippy.js": "^6.3.7",
+    "webpack": "^5",
+    "webpack-cli": "^4.6.0"
   }
 }
