@@ -3,8 +3,8 @@ import 'tippy.js/dist/tippy.css';
 
 import '../less/index.less';
 
-import '../img/lipstick.svg';
-import '../img/lipstick_gray.svg';
+import '../../img/lipstick.svg';
+import '../../img/lipstick_gray.svg';
 
 import {COLORS, BRUSH_TYPES,
     LEVEL_DATA, CHALLENGE_DATA,
@@ -17,7 +17,8 @@ const gameState = {
     challengeIndex: 0,
     timerRunning: 0,
     toolOptions: [1, 0, 0],
-}
+};
+let tooltips;
 
 /* Helper functions */
 
@@ -300,6 +301,8 @@ function drawChallenge(level, challengeIndex) {
 }
 
 function setTooltips(level) {
+    tooltips?.forEach((tooltip) => tooltip.destroy());
+
     $('.tool-wrapper').each(function (toolIndex) {
         $(this).find('.tool-option').each(function (optionIndex) {
             var enabled = gameState.enabledOptions[toolIndex][optionIndex];
@@ -312,7 +315,7 @@ function setTooltips(level) {
         });
     });
 
-    tippy('.tool-option[data-tippy-content]', {
+    tooltips = tippy('.tool-option[data-tippy-content]', {
         placement: 'bottom',
         maxWidth: '150px',
         theme: 'gray',
@@ -950,6 +953,13 @@ function initGame() {
 
 $(document).ready(function () {
     initGame();
+
+    tippy('#help-icon', {
+        allowHTML: true,
+        maxWidth: 425,
+        offset: [0, 15],
+        theme: 'purple',
+    });
 
     var $canvas = $('#game');
     var ctx = getContext($canvas);
