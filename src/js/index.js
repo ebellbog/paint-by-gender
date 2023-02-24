@@ -18,7 +18,8 @@ const gameState = {
     timerRunning: 0,
     toolOptions: [1, 0, 0],
 };
-let tooltips;
+
+let tooltips, canvasScale, canvasSize;
 
 /* Helper functions */
 
@@ -76,9 +77,10 @@ function getDistance(p1, p2) {
 
 function getPathPoint(canvas, e) {
     var rect = canvas.getBoundingClientRect();
+
     return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: (e.clientX - rect.left) / canvasScale,
+        y: (e.clientY - rect.top) / canvasScale,
         brushSize: getBrushSize(),
         brushSides: getBrushSides(),
         starred: isStarred()
@@ -258,7 +260,7 @@ function drawChallenge(level, challengeIndex) {
     ctx.globalCompositeOperation = 'source-over';
 
     ctx.fillStyle = rgbToStr(COLORS.canvas);
-    ctx.fillRect(0, 0, 500, 500);
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
     ctx.fillStyle = rgbToStr(COLORS.shape);
 
     switch (challenge) {
@@ -568,24 +570,18 @@ function addBlurLayer(hidden) {
 
     var $game = $('#game');
     var $newGame = $(document.createElement('canvas'));
-    $newGame.prop({ width: 500, height: 500 });
+    $newGame.prop({ width: canvasSize, height: canvasSize });
     $newGame.css({ filter: 'blur(20px) saturate(60%) brightness(97%)' });
 
     var newCtx = getContext($newGame);
     newCtx.drawImage($game[0], 0, 0);
 
-    var $wrapper = $(document.createElement('div'));
-    $wrapper.prop({ id: 'blurred-game' });
-    $wrapper.css({
-        position: 'absolute',
-        top: $game[0].offsetTop,
-        left: 0,
-        width: '500px',
-        height: '500px',
-        'z-index': 3,
-        opacity: hidden ? 0 : 1,
-        overflow: 'hidden'
-    });
+    var $wrapper = $('<div>')
+        .prop({ id: 'blurred-game' })
+        .css({
+            top: $game[0].offsetTop,
+            opacity: hidden ? 0 : 1,
+        });
 
     $wrapper.append($newGame);
     $('#main').append($wrapper);
@@ -662,7 +658,7 @@ function wipeOut(cb, x, y, dir, time, ctx) {
 }
 
 function wipeIn(cb, y, time, ctx) {
-    if (y > 500) { if (cb) cb(); return; }
+    if (y > canvasSize) { if (cb) cb(); return; }
     if (!(y || time)) {
         y = 0;
         time = Date.now();
@@ -678,10 +674,10 @@ function wipeIn(cb, y, time, ctx) {
     var speedCoefficient = 3;
     var newY = y + timeCoefficient * speedCoefficient;
 
-    ctx.clearRect(0, 0, 500, 500);
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
     drawChallenge(gameState.level, gameState.challengeIndex);
     setupContext(ctx, 'transition');
-    ctx.fillRect(0, 0, 500, 500 - newY);
+    ctx.fillRect(0, 0, canvasSize, canvasSize - newY);
     setTimeout(() => wipeIn(cb, newY, newTime, ctx), 0);
 }
 
@@ -851,7 +847,7 @@ function updateReticle(e) {
     var rect = canvas.getBoundingClientRect();
 
     var $reticle = $('#reticle');
-    var size = $reticle.height();
+    var size = $reticle.height() * canvasScale;
 
     $reticle.css('top', e.clientY - rect.top + canvas.offsetTop - size / 2);
     $reticle.css('left', e.clientX - rect.left - size / 2);
@@ -952,8 +948,6 @@ function initGame() {
 }
 
 $(document).ready(function () {
-    initGame();
-
     tippy('#help-icon', {
         allowHTML: true,
         maxWidth: 425,
@@ -963,6 +957,11 @@ $(document).ready(function () {
 
     var $canvas = $('#game');
     var ctx = getContext($canvas);
+
+    canvasSize = parseInt($canvas.attr('height'));
+    canvasScale = $canvas.height() / canvasSize;
+
+    initGame();
 
     $(document).on('mousedown', function (e) {
         //only respond to clicks outside the game space

@@ -3,10 +3,12 @@
 @headerColor: purple;
 @tooltipBg: rgba(61, 0, 81, 0.74);
 
+@canvasSize: 500px; // Must match width & height attributes of #game canvas
+@canvasScale: 1.15;
+
 html {
     background-color: @bgColorDark;
 }
-
 
 body {
     background: repeating-linear-gradient(
@@ -21,7 +23,7 @@ body {
     padding: 0;
 
     height: 100vh;
-    min-width: 1030px;
+    min-width: 1150px;
     max-width: 2200px;
 }
 
@@ -124,13 +126,17 @@ body {
     padding: 0;
 }
 
+.scaledSize(@size: @canvasSize) {
+    width: @size * @canvasScale;
+    height: @size * @canvasScale;
+}
+
 #canvas-texture {
+    .scaledSize();
     pointer-events: none;
     background-image: url('../../img/canvas_texture.png');
     background-size: 250px;
     mix-blend-mode: multiply;
-    width: 500px;
-    height: 500px;
     position: absolute;
     top: 0;
     left: 0;
@@ -139,17 +145,15 @@ body {
 }
 
 #game-background {
+    .scaledSize();
     position: absolute;
     top: 0;
     left: 0;
-
-    width: 500px;
-    height: 500px;
-
     box-shadow: 3px 3px 30px #777;
 }
 
 #game {
+    .scaledSize();
     z-index: 1;
     position: relative;
     cursor: none;
@@ -159,7 +163,19 @@ body {
     display: block;
 }
 
+#blurred-game {
+    z-index: 3;
+    position: absolute;
+    left: 0;
+    overflow: hidden;
+
+    &, canvas {
+        .scaledSize();
+    }
+}
+
 #reticle {
+    .scaledSize(120px);
     position: absolute;
     pointer-events: none;
     display: none;
@@ -311,14 +327,14 @@ body {
 
 .slider-wrapper {
     position: relative;
-    height: 250px;
+    height: 260px * @canvasScale;
     width: 12px;
     margin: 0 auto;
 }
 
 .slider-outline {
     width: 12px;
-    height: 250px;
+    height: 260px * @canvasScale;
     border-radius: 7px;
     border: 2px solid #888;
     background-color: white;
@@ -384,8 +400,7 @@ body {
     border-radius: 10px;
     padding-top: 3px;
     margin-bottom: 12px;
-    min-width: 200px;
-    max-width: 300px;
+    width: 240px;
     height: 130px;
     text-align: left;
 }
