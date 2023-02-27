@@ -148,7 +148,7 @@ function updatePercentPainted() {
     var $slider = $('#percent-painted .slider-outline');
     var height = $slider.height();
     var $fill = $('#percent-painted .slider-fill');
-    $fill.animate({ height: height * percent }, 60, 'linear');
+    $fill.css('height', height * percent);
 
     var bottom;
     if (spill >= maxSpill) {
@@ -158,7 +158,7 @@ function updatePercentPainted() {
     }
 
     var $spillSlider = $('#spill-warning .slider-mark');
-    $spillSlider.animate({ bottom: bottom }, 80, 'linear');
+    $spillSlider.css({bottom});
 
     if (gameState.mode != GAME_MODE.playing) return;
     else if (spill >= maxSpill) {
