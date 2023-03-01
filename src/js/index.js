@@ -213,23 +213,26 @@ function setupButtons() {
     switch (gameState.mode) {
         case GAME_MODE.newLevel:
             $('#start').html(`START LEVEL ${gameState.level}`).css('display', 'inline-block');
-            $('#retry, #eraser').css('display', 'none');
+            $('#retry, #undo').css('display', 'none');
             break;
         case GAME_MODE.ready:
             break;
+        case GAME_MODE.transitioning:
         case GAME_MODE.starting:
             $('.bottom-btn').addClass('inactive');
             break;
         case GAME_MODE.playing:
             $('#start').css('display', 'none');
-            $('#retry').html('RESTART').css({ width: $('#eraser').css('width') });
-            $('#retry, #eraser').css('display', 'inline-block');
-            $('.bottom-btn').removeClass('inactive');
+            $('#retry')
+                .html('RESTART')
+                .css({ width: $('#undo').css('width') })
+                .removeClass('inactive');
+            $('#retry, #undo').css('display', 'inline-block')
             break;
         case GAME_MODE.complete:
             var passed = gameState.outcome == GAME_OUTCOME.passed;
             $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameState.level}`).css({ width: passed ? '150px' : '180px' });
-            $('#eraser').css('display', 'none');
+            $('#undo').css('display', 'none');
         default:
             break;
     }
@@ -1134,7 +1137,11 @@ $(document).ready(function () {
         if (gameState.mode != GAME_MODE.playing) return;
 
         var strokes = gameState.strokes;
-        if (strokes.length && strokes[strokes.length - 1].length > 0) strokes.push([]);
+        if (strokes.length && strokes[strokes.length - 1].length > 0) {
+            strokes.push([]);
+            $('#undo').removeClass('inactive');
+        }
+
         updatePercentPainted();
     });
 
@@ -1183,11 +1190,16 @@ $(document).ready(function () {
         setTimeout(drawToolOptions, 200);
     });
 
-    $('#eraser').click(function () {
-        if ($(this).hasClass('inactive')) return;
-        gameState.strokes = [];
-        gameState.isDrawing = 0;
-        drawChallenge(gameState.level, gameState.challengeIndex);
+    $('#undo').click(function () {
+        const $this = $(this);
+        if ($this.hasClass('inactive')) return;
+
+        const {strokes} = gameState;
+        strokes.splice(strokes.length - 2, 1);
+
+        if (strokes.length <= 1) $this.addClass('inactive');
+
+        redrawGame(ctx);
         updatePercentPainted();
     });
 
@@ -1202,7 +1214,6 @@ $(document).ready(function () {
         setGameMode(GAME_MODE.starting);
     });
 
-    // TODO: last stroke undo button?
     // TODO: pause or quit button?
 
     $(window).resize(function () {

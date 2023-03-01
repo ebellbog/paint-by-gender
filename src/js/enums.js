@@ -23,7 +23,7 @@ const CHALLENGE_DATA = {
         canvasColor: COLORS.pink,
         paintColor: COLORS.darkpink,
         shapeColor: COLORS.white,
-        maxTime: 30,
+        maxTime: 25,
         enabledOptions: [[1, 1, 1], [1, 0, 0], [1, 0, 0]]
     },
     2: {
