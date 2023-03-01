@@ -20,6 +20,7 @@ const gameState = {
 };
 
 let tooltips, canvasScale, canvasSize;
+let _$reticle, _$gameCanvas;
 
 /* Helper functions */
 
@@ -27,8 +28,13 @@ function getBrushType() {
     return BRUSH_TYPES[gameState.toolOptions[1]];
 }
 
-function getBrushSize() {
-    return getBrushType().sizes[gameState.toolOptions[0]];
+function getBrushSize(asDiameter) {
+    const brushType = getBrushType();
+    const {sizes, sides, isQuantized} = brushType;
+    let size = sizes[gameState.toolOptions[0]];
+
+    if (isQuantized && !asDiameter) size = size / (Math.cos(Math.PI / sides) * 2);
+    return size;
 }
 
 function getBrushSides() {
@@ -58,6 +64,7 @@ function rgbToStr(rgbList) {
 }
 
 // significantly faster than reduce
+// format: R, G, B, A
 function rgbSum(pixelData, start) {
     if (!pixelData) return;
     if (!start) start = 0;
@@ -76,20 +83,28 @@ function getDistance(p1, p2) {
 }
 
 function getPathPoint(canvas, e) {
-    var rect = canvas.getBoundingClientRect();
+    const rect = canvas.getBoundingClientRect();
+    let x = (e.clientX - rect.left) / canvasScale;
+    let y =(e.clientY - rect.top) / canvasScale;
+    let brushSize = getBrushSize();
+
+    if (getBrushType().isQuantized) {
+        const diameter = getBrushSize(true);
+        x = (Math.floor(x / diameter) + .5) * diameter;
+        y = (Math.floor(y / diameter) + .5) * diameter;
+        // brushSize *= 1.01; // Prevent thin blank borders between quantized strokes
+    }
 
     return {
-        x: (e.clientX - rect.left) / canvasScale,
-        y: (e.clientY - rect.top) / canvasScale,
-        brushSize: getBrushSize(),
+        x, y,
+        brushSize,
         brushSides: getBrushSides(),
         starred: isStarred()
     };
 }
 
 function getContext($canvas) {
-    if (!$canvas) $canvas = $('#game');
-    var ctx = $canvas[0].getContext('2d');
+    var ctx = ($canvas || getCanvas())[0].getContext('2d');
     return ctx;
 }
 
@@ -99,9 +114,15 @@ function isToolEnabled(index) {
 
 /* Logic functions */
 
+function getCanvas() {
+    if (!_$gameCanvas) _$gameCanvas = $('#game');
+    return _$gameCanvas;
+}
+
 function analyzeCanvas() {
+    // TODO: only 1/4 canvas at a time? either by region or modulus?
     var ctx = getContext();
-    var imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height).data;
+    var imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height).data; // R, G, B, A, R, G, B, etc.
 
     var totals = {
         unpainted: 0,
@@ -131,7 +152,6 @@ function analyzeCanvas() {
 }
 
 function updatePercentPainted() {
-    var ctx = getContext();
     var canvasData = analyzeCanvas();
 
     var percent, spill, maxSpill;
@@ -142,7 +162,7 @@ function updatePercentPainted() {
     } else {
         percent = (gameState.maxShape - canvasData.unpainted) / gameState.maxShape;
         spill = gameState.maxCanvas - canvasData.canvas;
-        maxSpill = 18000;
+        maxSpill = 8000; // TODO: this number should be level- AND challenge-dependent
     }
 
     var $slider = $('#percent-painted .slider-outline');
@@ -168,15 +188,18 @@ function updatePercentPainted() {
     }
     else if (percent >= 1 && gameState.mode == GAME_MODE.playing) {
         $fill.css('background-color', '#0f0');
-        $fill.css('border-radius', '5px');
+        $fill.css('border-radius', '6px');
+        nextChallenge();
+    }
+}
 
-        gameState.challengeIndex += 1;
-        if (gameState.challengeIndex == LEVEL_DATA[gameState.level].challenges.length) {
-            gameState.outcome = GAME_OUTCOME.passed;
-            setGameMode(GAME_MODE.complete);
-        } else {
-            setGameMode(GAME_MODE.transitioning);
-        }
+function nextChallenge() {
+    gameState.challengeIndex += 1;
+    if (gameState.challengeIndex == LEVEL_DATA[gameState.level].challenges.length) {
+        gameState.outcome = GAME_OUTCOME.passed;
+        setGameMode(GAME_MODE.complete);
+    } else {
+        setGameMode(GAME_MODE.transitioning);
     }
 }
 
@@ -222,8 +245,12 @@ function initLevel(level) {
 }
 
 function resetLevel(level) {
-    gameState.challengeIndex = 0;
-    initChallenge(level, 0);
+    // Facilitate testing specific challenges via query param
+    const searchParams = new URLSearchParams(location.search);
+    const startingChallenge = parseInt(searchParams.get('c') || 0);
+
+    gameState.challengeIndex = startingChallenge;
+    initChallenge(level, startingChallenge);
 }
 
 function initChallenge(level, challengeIndex) {
@@ -263,13 +290,43 @@ function drawChallenge(level, challengeIndex) {
     ctx.fillRect(0, 0, canvasSize, canvasSize);
     ctx.fillStyle = rgbToStr(COLORS.shape);
 
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 3.5;
+
+    let xoff, yoff;
+
     switch (challenge) {
-        case 1:
-        case 2:
+        case 1: // Design: Body/toy curves
+            xoff = -100;
+            yoff = -20;
+
+            ctx.scale(1.35, 1.22);
+            ctx.beginPath();
+
+            ctx.moveTo(304 + xoff, 57 + yoff);
+            ctx.bezierCurveTo(326 + xoff, 57 + yoff, 335 + xoff, 77 + yoff, 338 + xoff, 91 + yoff);
+            ctx.bezierCurveTo(342 + xoff, 113 + yoff, 325 + xoff, 118 + yoff, 328 + xoff, 133 + yoff);
+            ctx.bezierCurveTo(331 + xoff, 149 + yoff, 362 + xoff, 160 + yoff, 364 + xoff, 193 + yoff);
+            ctx.bezierCurveTo(366 + xoff, 229 + yoff, 341 + xoff, 236 + yoff, 350 + xoff, 259 + yoff);
+            ctx.bezierCurveTo(358 + xoff, 279 + yoff, 383 + xoff, 278 + yoff, 385 + xoff, 331 + yoff);
+            ctx.bezierCurveTo(386 + xoff, 353 + yoff, 362 + xoff, 417 + yoff, 297 + xoff, 417 + yoff);
+            ctx.bezierCurveTo(238 + xoff, 417 + yoff, 207 + xoff, 364 + yoff, 212 + xoff, 324 + yoff);
+            ctx.bezierCurveTo(219 + xoff, 272 + yoff, 247 + xoff, 271 + yoff, 250 + xoff, 251 + yoff);
+            ctx.bezierCurveTo(253 + xoff, 234 + yoff, 235 + xoff, 223 + yoff, 238 + xoff, 196 + yoff);
+            ctx.bezierCurveTo(242 + xoff, 158 + yoff, 279 + xoff, 149 + yoff, 278 + xoff, 131 + yoff);
+            ctx.bezierCurveTo(277 + xoff, 119 + yoff, 264 + xoff, 109 + yoff, 267 + xoff, 90 + yoff);
+            ctx.bezierCurveTo(269 + xoff, 75 + yoff, 279 + xoff, 58 + yoff, 302 + xoff, 57 + yoff);
+
+            ctx.closePath();
+
+            break;
+        case 2: // Design: Heart
+            xoff = -15;
+            yoff = 5;
+
             ctx.beginPath();
 
             // generated at http://www.victoriakirst.com/beziertool/
-            var xoff = -35, yoff = -10;
             ctx.moveTo(289 + xoff, 446 + yoff);
             ctx.bezierCurveTo(197 + xoff, 355 + yoff, 150 + xoff, 316 + yoff, 89 + xoff, 236 + yoff);
             ctx.bezierCurveTo(67 + xoff, 207 + yoff, 77 + xoff, 124 + yoff, 144 + xoff, 100 + yoff);
@@ -277,28 +334,35 @@ function drawChallenge(level, challengeIndex) {
             ctx.bezierCurveTo(296 + xoff, 171 + yoff, 347 + xoff, 60 + yoff, 440 + xoff, 101 + yoff);
             ctx.bezierCurveTo(516 + xoff, 135 + yoff, 500 + xoff, 219 + yoff, 469 + xoff, 248 + yoff);
 
-            ctx.fill();
             break;
         case 3:
-        case 4:
-            var ms = BRUSH_TYPES[1].sizes[1] * 2 / Math.pow(2, .5);
-            var ls = BRUSH_TYPES[1].sizes[2] * 2 / Math.pow(2, .5);
+        case 4: // Design: "QR code" squares
+            const ss = BRUSH_TYPES[1].sizes[0];
+            const ms = BRUSH_TYPES[1].sizes[1];
+            const ls = BRUSH_TYPES[1].sizes[2];
 
-            ctx.fillRect(50, 50, ls, ls);
-            ctx.fillRect(50, 450 - ls, ls, ls);
-            ctx.fillRect(450 - ls, 50, ls, ls);
-            ctx.fillRect(450 - ls, 450 - ls, ls, ls);
+            ctx.beginPath();
 
-            ctx.fillRect(160, 160, 180, 180);
+            ctx.rect(0, 0, ls, ls);
+            ctx.rect(ls, canvasSize - 2 * ls, ls, ls);
+            ctx.rect(canvasSize - ls * 2, ls, ls, ls);
+            ctx.rect(canvasSize - ls, canvasSize - ls, ls, ls);
 
-            ctx.fillRect(50 + ls, 50 + (ls - ms) / 2, 400 - 2 * ls, ms);
-            ctx.fillRect(50 + ls, 450 - (ls + ms) / 2, 400 - 2 * ls, ms);
-            ctx.fillRect(50 + (ls - ms) / 2, 50 + ls, ms, 400 - 2 * ls);
-            ctx.fillRect(450 - (ls + ms) / 2, 50 + ls, ms, 400 - 2 * ls);
+            ctx.rect(2 * ls - ss, 2 * ls - ss, ls + 2 * ss, ls + 2 * ss);
+
+            ctx.rect(ms, ms, canvasSize - ms * 2, ms);
+            ctx.rect(ms, canvasSize - ms * 2, canvasSize - ms * 2, ms);
+            ctx.rect(ms, ms * 2, ms, canvasSize - ms * 4);
+            ctx.rect(canvasSize - ms * 2, ms * 2, ms, canvasSize - ms * 4);
+
             break;
         default:
             break;
     }
+
+    ctx.stroke();
+    ctx.fill();
+
     ctx.restore();
 }
 
@@ -384,7 +448,7 @@ function setGameMode(mode) {
             setStartText(gameState.level);
             $('#overlay-text').show();
         case GAME_MODE.ready:
-            $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
+            $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
             $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
             $('#game').css('cursor', 'default');
 
@@ -404,7 +468,7 @@ function setGameMode(mode) {
             });
             break;
         case GAME_MODE.playing:
-            $('#game').css('cursor', 'none');
+            $('#game').css('cursor', 'crosshair');
             break;
         case GAME_MODE.transitioning:
             gameState.isDrawing = 0;
@@ -417,7 +481,7 @@ function setGameMode(mode) {
                 resetGameState();
                 $('#percent-painted .slider-fill').animate({ height: 0 });
                 $('#spill-warning .slider-mark').animate({ bottom: 2 });
-                $('#percent-painted .slider-fill').css('border-radius', '0px 0px 5px 5px');
+                $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
                 initChallenge(gameState.level, gameState.challengeIndex);
                 setTimer(0, gameState.maxTime);
 
@@ -813,49 +877,79 @@ function setSelector(toolIndex, optionIndex, animated) {
 }
 
 function drawReticle() {
-    var $reticle = $('#reticle');
-    var ctx = getContext($reticle);
-    ctx.clearRect(0, 0, $reticle.width(), $reticle.height());
+    const $reticle = $('#reticle');
+    const ctx = getContext($reticle);
+
+    const rWidth = parseInt($reticle.attr('width'));
+    const rHeight = parseInt($reticle.attr('height'));
+
+    ctx.clearRect(0, 0, rWidth, rHeight);
     ctx.lineWidth = 1;
 
-    var centerX = $reticle.width() / 2;
-    var centerY = $reticle.height() / 2;
+    const centerX = rWidth / 2;
+    const centerY = rHeight / 2;
 
-    var innerColor = rgbToStr(COLORS.innerReticle);
-    var outerColor = rgbToStr(COLORS.outerReticle);
+    const brushSize = getBrushSize() * canvasScale;
+
+    const innerColor = rgbToStr(COLORS.innerReticle);
+    const outerColor = rgbToStr(COLORS.outerReticle);
 
     if (!getBrushSides()) {
         ctx.strokeStyle = innerColor;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, getBrushSize(), 0, 2 * Math.PI);
+        ctx.arc(centerX, centerY, brushSize, 0, 2 * Math.PI);
         ctx.stroke();
 
         ctx.strokeStyle = outerColor;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, getBrushSize() + 1, 0, 2 * Math.PI);
+        ctx.arc(centerX, centerY, brushSize + 1, 0, 2 * Math.PI);
         ctx.stroke();
     } else {
-        drawPolygon(ctx, centerX, centerY, getBrushSides(), getBrushSize(),
+        drawPolygon(ctx, centerX, centerY, getBrushSides(), brushSize,
             { style: 'stroke', color: innerColor, starred: isStarred() });
-        drawPolygon(ctx, centerX, centerY, getBrushSides(), getBrushSize() + 1,
+        drawPolygon(ctx, centerX, centerY, getBrushSides(), brushSize + 1,
             { style: 'stroke', color: outerColor, starred: isStarred() });
     }
 }
 
 function updateReticle(e) {
-    var canvas = $('#canvas-texture')[0];
-    var rect = canvas.getBoundingClientRect();
+    const $reticle = getReticle();
+    const reticleSize = $reticle.height();
 
-    var $reticle = $('#reticle');
-    var size = $reticle.height() * canvasScale;
+    const {x, y} = globalToGameCoords(e);
+    let top, left;
 
-    $reticle.css('top', e.clientY - rect.top + canvas.offsetTop - size / 2);
-    $reticle.css('left', e.clientX - rect.left - size / 2);
+    if (getBrushType().isQuantized) {
+        const brushSize = getBrushSize(true) * canvasScale;
+        const reticleBorder = (reticleSize - brushSize) / 2;
+
+        top = Math.floor(y / brushSize) * brushSize - reticleBorder;
+        left = Math.floor(x / brushSize) * brushSize - reticleBorder;
+    } else {
+        top = y - reticleSize / 2;
+        left = x - reticleSize / 2;
+    }
+
+    $reticle.css({top, left});
+}
+
+function globalToGameCoords(e) {
+    const gameCanvas = getCanvas()[0];
+    const gameRect = gameCanvas.getBoundingClientRect();
+    return {
+        x: e.clientX - gameRect.left,
+        y: e.clientY - gameRect.top + gameCanvas.offsetTop,
+    };
 }
 
 function alignGameLayers() {
     var offsetTop = $('#game')[0].offsetTop;
     $('#canvas-texture, #game-background, #blurred-game').css('top', offsetTop);
+}
+
+function getReticle() {
+    if (!_$reticle) _$reticle = $('#reticle');
+    return _$reticle;
 }
 
 /* Basic drawing */
@@ -1011,10 +1105,12 @@ $(document).ready(function () {
         var curPos = getPathPoint($canvas[0], e);
         var lastPos = strokes[strokes.length - 1].slice(-1)[0];
 
-        if (getDistance(curPos, lastPos) < 10) {
-            buffer.push(curPos);
-        } else {
-            gameState.buffer = [];
+        if (!getBrushType().isQuantized) {
+            if (getDistance(curPos, lastPos) < 10) {
+                buffer.push(curPos);
+            } else {
+                gameState.buffer = [];
+            }
         }
 
         if (buffer.length > 3) {
@@ -1024,6 +1120,7 @@ $(document).ready(function () {
             strokes[strokes.length - 1].splice(-(buffer.length - 1), buffer.length - 1, avgPos);
             gameState.buffer = [curPos];
         }
+
         strokes[strokes.length - 1].push(curPos);
         redrawGame(ctx);
     });
@@ -1071,6 +1168,8 @@ $(document).ready(function () {
                     $('#start').click();
                 } else if (gameState.mode == GAME_MODE.complete) {
                     $('#retry').click();
+                } else if (gameState.mode == GAME_MODE.playing) {
+                    nextChallenge();
                 }
                 pressedArrow = false;
                 break;
@@ -1102,6 +1201,9 @@ $(document).ready(function () {
         if ($(this).hasClass('inactive')) return;
         setGameMode(GAME_MODE.starting);
     });
+
+    // TODO: last stroke undo button?
+    // TODO: pause or quit button?
 
     $(window).resize(function () {
         alignGameLayers();

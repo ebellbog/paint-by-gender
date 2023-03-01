@@ -1,6 +1,6 @@
 const BRUSH_TYPES = [
     { sides: 0, sizes: [8, 25, 50] },
-    { sides: 4, sizes: [10, 32, 63] },
+    { sides: 4, sizes: [27, 54, 108], isQuantized: true },
     { sides: 5, sizes: [10, 28, 57], starred: 1 }
 ];
 
@@ -38,7 +38,7 @@ const CHALLENGE_DATA = {
         canvasColor: COLORS.blue,
         paintColor: COLORS.darkblue,
         shapeColor: COLORS.white,
-        maxTime: 60,
+        maxTime: 30,
         enabledOptions: [[1, 1, 1], [0, 1, 0], [1, 0, 0]]
     }
 };

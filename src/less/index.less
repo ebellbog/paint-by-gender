@@ -3,7 +3,7 @@
 @headerColor: purple;
 @tooltipBg: rgba(61, 0, 81, 0.74);
 
-@canvasSize: 500px; // Must match width & height attributes of #game canvas
+@canvasSize: 540px; // Must match width & height attributes of #game canvas
 @canvasScale: 1.15;
 
 html {
@@ -18,6 +18,8 @@ body {
         @bgColorDark 26px,
         @bgColorDark 50px,
     );
+    // background-image: url('../../img/kidpix_bg.png');
+    // background-size: 11px;
 
     margin: 0 auto;
     padding: 0;
@@ -35,7 +37,6 @@ body {
 #header {
     color: white;
     background-color: @headerColor;
-    font-family: 'Megrim', cursive;
 
     span {
         vertical-align: middle;
@@ -52,22 +53,29 @@ body {
 }
 
 #title {
-    padding-left: 5px;
+    padding-left: 7px;
+
+    font-family: 'Rubik Iso', cursive;
     font-size: 30px;
     font-weight: 600;
+    letter-spacing: 1px;
+
     background: linear-gradient(
         90deg,
         #85bdfa,
         #ffb3b3 160px
     );
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+
+    filter: drop-shadow(1px 1px 1px fade(black, 60%));
 }
 
 #status {
     font-family: 'Exo 2', sans-serif;
     font-size: 26px;
-    padding-bottom: 8px;
+    padding-bottom: 7px;
 }
 
 #level-number {
@@ -92,7 +100,7 @@ body {
 
 #help {
     text-align: right;
-    padding-right: 8px;
+    padding-right: 9px;
 }
 
 #help-icon {
@@ -175,7 +183,6 @@ body {
 }
 
 #reticle {
-    .scaledSize(120px);
     position: absolute;
     pointer-events: none;
     display: none;
@@ -327,15 +334,15 @@ body {
 
 .slider-wrapper {
     position: relative;
-    height: 260px * @canvasScale;
-    width: 12px;
+    height: 290px * @canvasScale;
+    width: 14px;
     margin: 0 auto;
 }
 
 .slider-outline {
-    width: 12px;
-    height: 260px * @canvasScale;
-    border-radius: 7px;
+    width: 14px;
+    height: 290px * @canvasScale;
+    border-radius: 8px;
     border: 2px solid #888;
     background-color: white;
     position: absolute;
@@ -343,18 +350,18 @@ body {
 }
 
 .slider-fill {
-    width: 12px;
+    width: 14px;
     height: 0;
-    border-radius: 0 0 5px 5px;
+    border-radius: 0 0 7px 7px;
     position: absolute;
     bottom: 2px;
     left: 2px;
 }
 
 .slider-mark {
-    width: 12px;
-    height: 12px;
-    border-radius: 6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 8px;
     position: absolute;
     left: 2px;
     bottom: 2px;
@@ -369,7 +376,7 @@ body {
     font-weight: 600;
     font-size: 26px;
     color: white;
-    margin-top: 5px;
+    margin-top: 7px;
     text-shadow: 1px 1px 4px #555;
 }
 
@@ -396,16 +403,15 @@ body {
     padding-left: 25px;
     padding-right: 20px;
     color: white;
-    vertical-align: center;
 }
 
 .tool-wrapper {
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 10px;
     padding-top: 3px;
-    margin-bottom: 12px;
     width: 240px;
     height: 130px;
+    margin: 8% auto;
     text-align: left;
 }
 
