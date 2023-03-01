@@ -215,6 +215,19 @@ body {
         width: 180px;
     }
 
+    &#undo {
+        position: relative;
+        &::after {
+            display: block;
+            position: absolute;
+            width: 100%;
+            color: white;
+            font-size: 36px;
+            top: 23px;
+            content: attr(data-status);
+        }
+    }
+
     &:not(.inactive):hover {
         background-color: white;
         color: @headerColor;

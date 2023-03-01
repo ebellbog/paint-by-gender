@@ -22,6 +22,189 @@ const gameState = {
 let tooltips, canvasScale, canvasSize;
 let _$reticle, _$gameCanvas;
 
+
+/* Initialization & event handlers */
+
+$(document).ready(function () {
+    tippy('#help-icon', {
+        allowHTML: true,
+        maxWidth: 425,
+        offset: [0, 15],
+        theme: 'purple',
+    });
+
+    var $canvas = $('#game');
+    var ctx = getContext($canvas);
+
+    canvasSize = parseInt($canvas.attr('height'));
+    canvasScale = $canvas.height() / canvasSize;
+
+    initGame();
+
+    $(document).on('mousedown', function (e) {
+        //only respond to clicks outside the game space
+        if ($(e.target).closest('#game').length) return;
+
+        gameState.toolFocus = gameState.toolOptions.length;
+        updateSelectors(0);
+    });
+
+    $('.tool-option').click(function (e) {
+        var optionIndex = $(e.target).index();
+        var toolIndex = $(e.target).parents('.tool-wrapper').first().index();
+        if (!isToolEnabled(toolIndex)) return;
+
+        gameState.toolOptions[toolIndex] = optionIndex;
+        setSelector(toolIndex, optionIndex, false);
+        drawReticle();
+        drawToolOptions();
+    });
+
+    $canvas.on('mousedown', function (e) {
+        if (gameState.mode != GAME_MODE.playing) return;
+
+        gameState.isDrawing = 1;
+        gameState.buffer = [];
+
+        var strokes = gameState.strokes;
+        if (!strokes.length) strokes.push([]);
+
+        var pt = getPathPoint($canvas[0], e);
+        strokes[strokes.length - 1].push(pt);
+
+        drawPoint(ctx, pt);
+        updatePercentAsync();
+        $('#strokes').html(strokes.length);
+    });
+
+    $canvas.on('mousemove', function (e) {
+        if (gameState.mode == GAME_MODE.playing) $('#reticle').show();
+        updateReticle(e);
+
+        if (!gameState.isDrawing) return;
+
+        var strokes = gameState.strokes;
+        var buffer = gameState.buffer;
+
+        var curPos = getPathPoint($canvas[0], e);
+        var lastPos = strokes[strokes.length - 1].slice(-1)[0];
+
+        if (!getBrushType().isQuantized) {
+            if (getDistance(curPos, lastPos) < 10) {
+                buffer.push(curPos);
+            } else {
+                gameState.buffer = [];
+            }
+        }
+
+        if (buffer.length > 3) {
+            var totals = buffer.reduce((a, b) => ({ x: a.x + b.x, y: a.y + b.y }));
+            var avgPos = { x: totals.x / buffer.length, y: totals.y / buffer.length, brushSize: buffer[0].brushSize };
+
+            strokes[strokes.length - 1].splice(-(buffer.length - 1), buffer.length - 1, avgPos);
+            gameState.buffer = [curPos];
+        }
+
+        strokes[strokes.length - 1].push(curPos);
+        redrawGame(ctx);
+    });
+
+    $canvas.on('mouseout', function (e) {
+        $('#reticle').hide();
+    });
+
+    $(document).on('mouseup', function () {
+        gameState.isDrawing = false;
+        if (gameState.mode != GAME_MODE.playing) return;
+
+        var strokes = gameState.strokes;
+        if (strokes.length && strokes[strokes.length - 1].length > 0) {
+            strokes.push([]);
+            updateUndoStatus();
+        }
+
+        updatePercentPainted();
+    });
+
+    $(document).keydown(function (e) {
+        var pressedArrow = true;
+        switch (e.which) {
+            case 38: // up arrow
+                var n = gameState.toolOptions.length + 1;
+                var newFocus = (gameState.toolFocus - 1 + n) % n; // fix mod for negatives
+                while (newFocus < n - 1 && !isToolEnabled(newFocus)) newFocus = (newFocus - 1 + n) % n;
+                gameState.toolFocus = newFocus;
+                break;
+            case 40: // down arrow
+                var newFocus = (gameState.toolFocus + 1) % (gameState.toolOptions.length + 1);
+                while (newFocus < gameState.toolOptions.length && !isToolEnabled(newFocus)) newFocus += 1;
+                gameState.toolFocus = newFocus;
+                break;
+            case 37: // left arrow
+                if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
+                gameState.toolOptions[gameState.toolFocus] = Math.max(0, gameState.toolOptions[gameState.toolFocus] - 1);
+                break;
+            case 39: // right arrow
+                if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
+                gameState.toolOptions[gameState.toolFocus] = Math.min(
+                    getOptionCount() - 1,
+                    gameState.toolOptions[gameState.toolFocus] + 1);
+                break;
+            case 13: // return key
+            case 32: // spacebar
+                if (gameState.mode == GAME_MODE.newLevel) {
+                    $('#start').click();
+                } else if (gameState.mode == GAME_MODE.complete) {
+                    $('#retry').click();
+                } else if (gameState.mode == GAME_MODE.playing) {
+                    nextChallenge();
+                }
+                pressedArrow = false;
+                break;
+            default:
+                pressedArrow = false;
+                break;
+        }
+        if (pressedArrow) e.preventDefault();
+        updateSelectors(1);
+        setTimeout(drawReticle, 200);
+        setTimeout(drawToolOptions, 200);
+    });
+
+    $('#undo').click(function () {
+        const $this = $(this);
+        if ($this.hasClass('inactive')) return;
+
+        const {strokes} = gameState;
+        strokes.splice(strokes.length - 2, 1);
+
+        gameState.undosRemaining--;
+        updateUndoStatus();
+
+        redrawGame(ctx);
+        updatePercentPainted();
+    });
+
+    $('#retry').click(function () {
+        if ($(this).hasClass('inactive')) return;
+        setGameMode(GAME_MODE.ready);
+        setGameMode(GAME_MODE.starting);
+    });
+
+    $('#start').click(function () {
+        if ($(this).hasClass('inactive')) return;
+        setGameMode(GAME_MODE.starting);
+    });
+
+    // TODO: pause or quit button?
+
+    $(window).resize(function () {
+        alignGameLayers();
+        updateSelectors(0);
+    });
+});
+
+
 /* Helper functions */
 
 function getBrushType() {
@@ -110,6 +293,14 @@ function getContext($canvas) {
 
 function isToolEnabled(index) {
     return LEVEL_DATA[gameState.level].enabledTools[index];
+}
+
+function updateUndoStatus() {
+    const {strokes, undosRemaining} = gameState;
+    const maxUndos = Math.min(undosRemaining, strokes.length - 1);
+    $('#undo')
+        .attr('data-status', '•'.repeat(undosRemaining))
+        .toggleClass('inactive', maxUndos < 1);
 }
 
 /* Logic functions */
@@ -209,33 +400,9 @@ function updatePercentAsync() {
 
 /* Setup functions */
 
-function setupButtons() {
-    switch (gameState.mode) {
-        case GAME_MODE.newLevel:
-            $('#start').html(`START LEVEL ${gameState.level}`).css('display', 'inline-block');
-            $('#retry, #undo').css('display', 'none');
-            break;
-        case GAME_MODE.ready:
-            break;
-        case GAME_MODE.transitioning:
-        case GAME_MODE.starting:
-            $('.bottom-btn').addClass('inactive');
-            break;
-        case GAME_MODE.playing:
-            $('#start').css('display', 'none');
-            $('#retry')
-                .html('RESTART')
-                .css({ width: $('#undo').css('width') })
-                .removeClass('inactive');
-            $('#retry, #undo').css('display', 'inline-block')
-            break;
-        case GAME_MODE.complete:
-            var passed = gameState.outcome == GAME_OUTCOME.passed;
-            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameState.level}`).css({ width: passed ? '150px' : '180px' });
-            $('#undo').css('display', 'none');
-        default:
-            break;
-    }
+function initGame() {
+    setTimeout(alignGameLayers, 100);
+    setGameMode(GAME_MODE.newLevel);
 }
 
 function initLevel(level) {
@@ -254,6 +421,28 @@ function resetLevel(level) {
 
     gameState.challengeIndex = startingChallenge;
     initChallenge(level, startingChallenge);
+}
+
+function updateLevelIcon(level, challengeIndex) {
+    var $iconWrapper = $('#level-icon-wrapper');
+    var faClasses = 'fa-xs fa-fw fa-circle';
+
+    var $circle = $(document.createElement('i')).addClass(faClasses);
+    var $openCircle = $circle.clone().addClass('far');
+    var $closedCircle = $circle.clone().addClass('fas');
+
+    $iconWrapper.empty();
+    for (var i = 0; i < LEVEL_DATA[level].challenges.length; i++) {
+        $iconWrapper.append(i <= challengeIndex ? $closedCircle.clone() : $openCircle.clone());
+    }
+}
+
+function resetGameState() {
+    gameState.strokes = [];
+    gameState.isDrawing = 0;
+    gameState.toolFocus = gameState.toolOptions.length;
+    gameState.timerRunning = 0;
+    gameState.undosRemaining = 3;
 }
 
 function initChallenge(level, challengeIndex) {
@@ -369,6 +558,35 @@ function drawChallenge(level, challengeIndex) {
     ctx.restore();
 }
 
+function setupButtons() {
+    switch (gameState.mode) {
+        case GAME_MODE.newLevel:
+            $('#start').html(`START LEVEL ${gameState.level}`).css('display', 'inline-block');
+            $('#retry, #undo').css('display', 'none');
+            break;
+        case GAME_MODE.ready:
+            break;
+        case GAME_MODE.transitioning:
+        case GAME_MODE.starting:
+            $('.bottom-btn').addClass('inactive');
+            break;
+        case GAME_MODE.playing:
+            $('#start').css('display', 'none');
+            $('#retry')
+                .html('RESTART')
+                .css({ width: $('#undo').css('width') })
+                .removeClass('inactive');
+            $('#retry, #undo').css('display', 'inline-block')
+            break;
+        case GAME_MODE.complete:
+            var passed = gameState.outcome == GAME_OUTCOME.passed;
+            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameState.level}`).css({ width: passed ? '150px' : '180px' });
+            $('#undo').css('display', 'none');
+        default:
+            break;
+    }
+}
+
 function setTooltips(level) {
     tooltips?.forEach((tooltip) => tooltip.destroy());
 
@@ -458,6 +676,7 @@ function setGameMode(mode) {
             resetGameState();
             resetLevel(gameState.level);
             updatePercentPainted();
+            updateUndoStatus();
             addBlurLayer();
             setTimer(0, gameState.maxTime);
             break;
@@ -491,6 +710,7 @@ function setGameMode(mode) {
                 wipeIn(() => {
                     restartTimer();
                     setGameMode(GAME_MODE.playing);
+                    updateUndoStatus();
                 });
             }), 1000);
 
@@ -1015,209 +1235,3 @@ function redrawGame(ctx) {
     }
     if (total % 10 === 0) updatePercentAsync();
 }
-
-/* Initialization & event handlers */
-
-function updateLevelIcon(level, challengeIndex) {
-    var $iconWrapper = $('#level-icon-wrapper');
-    var faClasses = 'fa-xs fa-fw fa-circle';
-
-    var $circle = $(document.createElement('i')).addClass(faClasses);
-    var $openCircle = $circle.clone().addClass('far');
-    var $closedCircle = $circle.clone().addClass('fas');
-
-    $iconWrapper.empty();
-    for (var i = 0; i < LEVEL_DATA[level].challenges.length; i++) {
-        $iconWrapper.append(i <= challengeIndex ? $closedCircle.clone() : $openCircle.clone());
-    }
-}
-
-function resetGameState() {
-    gameState.strokes = [];
-    gameState.isDrawing = 0;
-    gameState.toolFocus = gameState.toolOptions.length;
-    gameState.timerRunning = 0;
-}
-
-function initGame() {
-    setTimeout(alignGameLayers, 100);
-    setGameMode(GAME_MODE.newLevel);
-}
-
-$(document).ready(function () {
-    tippy('#help-icon', {
-        allowHTML: true,
-        maxWidth: 425,
-        offset: [0, 15],
-        theme: 'purple',
-    });
-
-    var $canvas = $('#game');
-    var ctx = getContext($canvas);
-
-    canvasSize = parseInt($canvas.attr('height'));
-    canvasScale = $canvas.height() / canvasSize;
-
-    initGame();
-
-    $(document).on('mousedown', function (e) {
-        //only respond to clicks outside the game space
-        if ($(e.target).closest('#game').length) return;
-
-        gameState.toolFocus = gameState.toolOptions.length;
-        updateSelectors(0);
-    });
-
-    $('.tool-option').click(function (e) {
-        var optionIndex = $(e.target).index();
-        var toolIndex = $(e.target).parents('.tool-wrapper').first().index();
-        if (!isToolEnabled(toolIndex)) return;
-
-        gameState.toolOptions[toolIndex] = optionIndex;
-        setSelector(toolIndex, optionIndex, false);
-        drawReticle();
-        drawToolOptions();
-    });
-
-    $canvas.on('mousedown', function (e) {
-        if (gameState.mode != GAME_MODE.playing) return;
-
-        gameState.isDrawing = 1;
-        gameState.buffer = [];
-
-        var strokes = gameState.strokes;
-        if (!strokes.length) strokes.push([]);
-
-        var pt = getPathPoint($canvas[0], e);
-        strokes[strokes.length - 1].push(pt);
-
-        drawPoint(ctx, pt);
-        updatePercentAsync();
-        $('#strokes').html(strokes.length);
-    });
-
-    $canvas.on('mousemove', function (e) {
-        if (gameState.mode == GAME_MODE.playing) $('#reticle').show();
-        updateReticle(e);
-
-        if (!gameState.isDrawing) return;
-
-        var strokes = gameState.strokes;
-        var buffer = gameState.buffer;
-
-        var curPos = getPathPoint($canvas[0], e);
-        var lastPos = strokes[strokes.length - 1].slice(-1)[0];
-
-        if (!getBrushType().isQuantized) {
-            if (getDistance(curPos, lastPos) < 10) {
-                buffer.push(curPos);
-            } else {
-                gameState.buffer = [];
-            }
-        }
-
-        if (buffer.length > 3) {
-            var totals = buffer.reduce((a, b) => ({ x: a.x + b.x, y: a.y + b.y }));
-            var avgPos = { x: totals.x / buffer.length, y: totals.y / buffer.length, brushSize: buffer[0].brushSize };
-
-            strokes[strokes.length - 1].splice(-(buffer.length - 1), buffer.length - 1, avgPos);
-            gameState.buffer = [curPos];
-        }
-
-        strokes[strokes.length - 1].push(curPos);
-        redrawGame(ctx);
-    });
-
-    $canvas.on('mouseout', function (e) {
-        $('#reticle').hide();
-    });
-
-    $(document).on('mouseup', function () {
-        gameState.isDrawing = false;
-        if (gameState.mode != GAME_MODE.playing) return;
-
-        var strokes = gameState.strokes;
-        if (strokes.length && strokes[strokes.length - 1].length > 0) {
-            strokes.push([]);
-            $('#undo').removeClass('inactive');
-        }
-
-        updatePercentPainted();
-    });
-
-    $(document).keydown(function (e) {
-        var pressedArrow = true;
-        switch (e.which) {
-            case 38: // up arrow
-                var n = gameState.toolOptions.length + 1;
-                var newFocus = (gameState.toolFocus - 1 + n) % n; // fix mod for negatives
-                while (newFocus < n - 1 && !isToolEnabled(newFocus)) newFocus = (newFocus - 1 + n) % n;
-                gameState.toolFocus = newFocus;
-                break;
-            case 40: // down arrow
-                var newFocus = (gameState.toolFocus + 1) % (gameState.toolOptions.length + 1);
-                while (newFocus < gameState.toolOptions.length && !isToolEnabled(newFocus)) newFocus += 1;
-                gameState.toolFocus = newFocus;
-                break;
-            case 37: // left arrow
-                if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
-                gameState.toolOptions[gameState.toolFocus] = Math.max(0, gameState.toolOptions[gameState.toolFocus] - 1);
-                break;
-            case 39: // right arrow
-                if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
-                gameState.toolOptions[gameState.toolFocus] = Math.min(
-                    getOptionCount() - 1,
-                    gameState.toolOptions[gameState.toolFocus] + 1);
-                break;
-            case 13: // return key
-            case 32: // spacebar
-                if (gameState.mode == GAME_MODE.newLevel) {
-                    $('#start').click();
-                } else if (gameState.mode == GAME_MODE.complete) {
-                    $('#retry').click();
-                } else if (gameState.mode == GAME_MODE.playing) {
-                    nextChallenge();
-                }
-                pressedArrow = false;
-                break;
-            default:
-                pressedArrow = false;
-                break;
-        }
-        if (pressedArrow) e.preventDefault();
-        updateSelectors(1);
-        setTimeout(drawReticle, 200);
-        setTimeout(drawToolOptions, 200);
-    });
-
-    $('#undo').click(function () {
-        const $this = $(this);
-        if ($this.hasClass('inactive')) return;
-
-        const {strokes} = gameState;
-        strokes.splice(strokes.length - 2, 1);
-
-        if (strokes.length <= 1) $this.addClass('inactive');
-
-        redrawGame(ctx);
-        updatePercentPainted();
-    });
-
-    $('#retry').click(function () {
-        if ($(this).hasClass('inactive')) return;
-        setGameMode(GAME_MODE.ready);
-        setGameMode(GAME_MODE.starting);
-    });
-
-    $('#start').click(function () {
-        if ($(this).hasClass('inactive')) return;
-        setGameMode(GAME_MODE.starting);
-    });
-
-    // TODO: pause or quit button?
-
-    $(window).resize(function () {
-        alignGameLayers();
-        updateSelectors(0);
-    });
-});
