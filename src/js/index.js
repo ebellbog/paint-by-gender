@@ -353,7 +353,7 @@ function updatePercentPainted() {
     } else {
         percent = (gameState.maxShape - canvasData.unpainted) / gameState.maxShape;
         spill = gameState.maxCanvas - canvasData.canvas;
-        maxSpill = 8000; // TODO: this number should be level- AND challenge-dependent
+        maxSpill = 7000; // TODO: this number should be level- AND challenge-dependent
     }
 
     var $slider = $('#percent-painted .slider-outline');
