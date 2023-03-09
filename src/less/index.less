@@ -139,47 +139,43 @@ body {
     height: @size * @canvasScale;
 }
 
-#canvas-texture {
+.fullSize() {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#game-wrapper {
     .scaledSize();
+    position: relative;
+    overflow: hidden;
+
+    box-shadow: 3px 3px 30px #777;
+
+    #game, #canvas-texture, #blurred-game canvas {
+        .fullSize();
+    }
+}
+
+#game {
+    z-index: 1;
+    cursor: none;
+    background-color: white;
+}
+
+#canvas-texture {
+    z-index: 2;
     pointer-events: none;
     background-image: url('../../img/canvas_texture.png');
     background-size: 250px;
     mix-blend-mode: multiply;
-    position: absolute;
-    top: 0;
-    left: 0;
     opacity: .6;
-    z-index: 2;
-}
-
-#game-background {
-    .scaledSize();
-    position: absolute;
-    top: 0;
-    left: 0;
-    box-shadow: 3px 3px 30px #777;
-}
-
-#game {
-    .scaledSize();
-    z-index: 1;
-    position: relative;
-    cursor: none;
-    background-color: white;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
 }
 
 #blurred-game {
     z-index: 3;
-    position: absolute;
-    left: 0;
-    overflow: hidden;
-
-    &, canvas {
-        .scaledSize();
-    }
 }
 
 #reticle {

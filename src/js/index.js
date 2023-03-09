@@ -199,7 +199,6 @@ $(document).ready(function () {
     // TODO: pause or quit button?
 
     $(window).resize(function () {
-        alignGameLayers();
         updateSelectors(0);
     });
 });
@@ -401,7 +400,6 @@ function updatePercentAsync() {
 /* Setup functions */
 
 function initGame() {
-    setTimeout(alignGameLayers, 100);
     setGameMode(GAME_MODE.newLevel);
 }
 
@@ -452,7 +450,7 @@ function initChallenge(level, challengeIndex) {
     COLORS.spill = CHALLENGE_DATA.spillColor;
     COLORS.shape = CHALLENGE_DATA.shapeColor;
 
-    $('#game-background').css('background-color', rgbToStr(COLORS.canvas));
+    $('#game-wrapper').css('background-color', rgbToStr(COLORS.canvas));
     $('#percent-painted .slider-fill').css('background-color', rgbToStr(COLORS.paint));
 
     gameState.maxTime = CHALLENGE_DATA.maxTime;
@@ -865,13 +863,10 @@ function addBlurLayer(hidden) {
 
     var $wrapper = $('<div>')
         .prop({ id: 'blurred-game' })
-        .css({
-            top: $game[0].offsetTop,
-            opacity: hidden ? 0 : 1,
-        });
+        .css({opacity: hidden ? 0 : 1});
 
     $wrapper.append($newGame);
-    $('#main').append($wrapper);
+    $('#game-wrapper').append($wrapper);
 
     if (!hidden) {
         $game.css({ opacity: 0 });
@@ -1163,11 +1158,6 @@ function globalToGameCoords(e) {
         x: e.clientX - gameRect.left,
         y: e.clientY - gameRect.top + gameCanvas.offsetTop,
     };
-}
-
-function alignGameLayers() {
-    var offsetTop = $('#game')[0].offsetTop;
-    $('#canvas-texture, #game-background, #blurred-game').css('top', offsetTop);
 }
 
 function getReticle() {
