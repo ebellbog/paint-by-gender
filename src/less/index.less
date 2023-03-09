@@ -6,20 +6,16 @@
 @canvasSize: 540px; // Must match width & height attributes of #game canvas
 @canvasScale: 1.15;
 
+@borderRadius: 11px;
+
 html {
     background-color: @bgColorDark;
 }
 
 body {
-    background: repeating-linear-gradient(
-        45deg,
-        @bgColorLight,
-        @bgColorLight 25px,
-        @bgColorDark 26px,
-        @bgColorDark 50px,
-    );
-    // background-image: url('../../img/kidpix_bg.png');
-    // background-size: 11px;
+    background-image: url('../../img/kidpix_bg.png');
+    background-size: 16px;
+    image-rendering: pixelated;
 
     margin: 0 auto;
     padding: 0;
@@ -27,6 +23,10 @@ body {
     height: 100vh;
     min-width: 1240px;
     max-width: 2200px;
+
+    * {
+        image-rendering: auto;
+    }
 }
 
 #layout {
@@ -49,7 +49,7 @@ body {
 }
 
 .spacer {
-    height: 20px;
+    height: 8vh;
 }
 
 #title {
@@ -152,7 +152,8 @@ body {
     position: relative;
     overflow: hidden;
 
-    box-shadow: 3px 3px 30px #777;
+    border: 6px solid @headerColor;
+    border-radius: @borderRadius;
 
     #game, #canvas-texture, #blurred-game canvas {
         .fullSize();
@@ -282,7 +283,7 @@ body {
     &.end-title {
         font-size: 70px;
         color: white;
-        text-shadow: 0 0 6px black;
+        text-shadow: 3px 2px 1px black;
     }
 }
 
@@ -309,7 +310,7 @@ body {
     &.end-text {
         color: @headerColor;
         opacity: 0.9;
-        text-shadow: 0 0 10px white, 0 0 1px white;
+        text-shadow: 2px 1px 0 white;
         margin-top: 10px;
         font-weight: 600;
         font-size:26px;
@@ -352,7 +353,7 @@ body {
     width: 14px;
     height: 290px * @canvasScale;
     border-radius: 8px;
-    border: 2px solid #888;
+    border: 2px solid lighten(desaturate(@headerColor, 60%), 00%);
     background-color: white;
     position: absolute;
     bottom: 0px;
@@ -386,7 +387,7 @@ body {
     font-size: 26px;
     color: white;
     margin-top: 7px;
-    text-shadow: 1px 1px 4px #555;
+    text-shadow: 1px 1px 3px #333;
 }
 
 #time-ring {
@@ -394,6 +395,8 @@ body {
     top: 5px;
     left: 50%;
     transform: translate(-50%, 0);
+    border-radius: 50%;
+    // backdrop-filter: blur(1px);
 }
 
 #time {
@@ -416,11 +419,12 @@ body {
 
 .tool-wrapper {
     background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 10px;
+    backdrop-filter: blur(1px);
+    border-radius: @borderRadius;
     padding-top: 3px;
     width: 240px;
     height: 130px;
-    margin: 8% auto;
+    margin: 3vh auto;
     text-align: left;
 }
 
@@ -428,7 +432,7 @@ body {
     font-family: 'Amatic SC', sans-serif;
     font-size: 34px;
     font-weight: 600;
-    text-shadow: 0 0 5px #999;
+    text-shadow: 1px 1px 4px #777;
     padding-left: 10px;
 }
 
@@ -526,6 +530,7 @@ body {
         font-weight: 200;
         backdrop-filter: blur(2px);
         padding: 4px;
+        border-radius: @borderRadius;
 
         &[data-placement^='bottom']>.tippy-arrow {
             &::before {

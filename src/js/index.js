@@ -617,10 +617,11 @@ function setupContext(ctx, type) {
         case 'timer':
             ctx.lineWidth = 8;
             ctx.lineCap = 'butt';
+            ctx.fillStyle = 'rgba(100, 0, 100, .2)';
             ctx.shadowOffsetX = 2;
             ctx.shadowOffsetY = 2;
             ctx.shadowBlur = 10;
-            ctx.shadowColor = 'gray';
+            ctx.shadowColor = '#3f163fb5';
             break;
         case 'transition':
             ctx.lineJoin = ctx.lineCap = 'round';
@@ -798,9 +799,11 @@ function setTimer(elapsed, max) {
     var center = ringSize / 2;
 
     ctx.strokeStyle = 'rgba(90, 90, 90, 0.25)';
+
     ctx.beginPath();
     ctx.arc(center, center, radius, 0, 2 * Math.PI);
     ctx.stroke();
+    ctx.fill();
 
     var remaining = max - elapsed;
 
