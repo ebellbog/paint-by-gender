@@ -1,6 +1,6 @@
 @bgColorLight: #b59cc4;
 @bgColorDark: #ac8fbc;
-@headerColor: purple;
+@purple: purple;
 @tooltipBg: rgba(61, 0, 81, 0.74);
 
 @canvasSize: 540px; // Must match width & height attributes of #game canvas
@@ -36,7 +36,7 @@ body {
 
 #header {
     color: white;
-    background-color: @headerColor;
+    background-color: @purple;
 
     span {
         vertical-align: middle;
@@ -108,7 +108,7 @@ body {
     cursor: pointer;
     width: 32px;
     height: 32px;
-    color: @headerColor;
+    color: @purple;
     background: white;
     border-radius: 16px;
     line-height: 30px;
@@ -118,7 +118,7 @@ body {
     font-size: 28px;
 
     &:hover {
-        background: @headerColor;
+        background: @purple;
         color: white;
         border: 3px solid white;
         border-radius: 26px;
@@ -152,8 +152,8 @@ body {
     position: relative;
     overflow: hidden;
 
-    border: 6px solid @headerColor;
-    border-radius: @borderRadius;
+    border: 2px solid @purple;
+    box-shadow: 4px 4px 0 fade(darken(@purple, 15%), 60%);
 
     #game, #canvas-texture, #blurred-game canvas {
         .fullSize();
@@ -194,7 +194,7 @@ body {
     line-height: 32px;
     border-radius: 5px;
     color: white;
-    background-color: @headerColor;
+    background-color: @purple;
     text-align: center;
     font-size: 19px;
     font-weight: 600;
@@ -227,7 +227,7 @@ body {
 
     &:not(.inactive):hover {
         background-color: white;
-        color: @headerColor;
+        color: @purple;
     }
 }
 
@@ -246,7 +246,7 @@ body {
 
     &.small {
         font-weight: 600;
-        color: @headerColor;
+        color: @purple;
         font-size: 80px;
         text-shadow: 5px 5px 0 white;
     }
@@ -277,7 +277,7 @@ body {
 
     &.start-title {
         font-size: 100px;
-        color: @headerColor;
+        color: @purple;
     }
 
     &.end-title {
@@ -298,7 +298,7 @@ body {
     &.start-text {
         color: white;
         opacity: 1;
-        text-shadow: 0 0 1px @headerColor, 2px 2px 0 @headerColor;
+        text-shadow: 0 0 1px @purple, 2px 2px 0 @purple;
         margin-top: 20px;
         font-weight: 600;
         font-size:28px;
@@ -308,7 +308,7 @@ body {
     }
 
     &.end-text {
-        color: @headerColor;
+        color: @purple;
         opacity: 0.9;
         text-shadow: 2px 1px 0 white;
         margin-top: 10px;
@@ -353,7 +353,7 @@ body {
     width: 14px;
     height: 290px * @canvasScale;
     border-radius: 8px;
-    border: 2px solid lighten(desaturate(@headerColor, 60%), 00%);
+    border: 2px solid lighten(desaturate(@purple, 60%), 00%);
     background-color: white;
     position: absolute;
     bottom: 0px;
