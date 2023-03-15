@@ -7,13 +7,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Exo+2:wght@200;400&family=Rubik+Iso&display=swap" rel="stylesheet">
-    <script defer src="https://use.fontawesome.com/releases/v5.0.7/js/all.js"></script>
+    <script defer src="https://use.fontawesome.com/releases/v6.3.0/js/all.js"></script>
 </head>
 
 <body>
     <table id="layout" class="unselectable">
         <colgroup>
             <col>
+            <col width="140px">
             <col width="500px">
             <col>
         </colgroup>
@@ -21,6 +22,7 @@
             <td id="title">
                 <a href="https://belladonnagable.itch.io/paint-by-gender">Paint By Gender</a>
             </td>
+            <td hidden />
             <td id="status">
                 <span id="level-number">Level 1</span>
                 <span id="level-separator">|</span>
@@ -40,37 +42,7 @@
         </tr>
         <tr class="spacer"></tr>
         <tr id="body">
-            <td id="stats" align="center">
-                <canvas height=180px width=180px id="time-ring"></canvas>
-                <div id="time">0:00</div>
-                <div class="slider" id="percent-painted">
-                    <div class="slider-wrapper">
-                        <div class="slider-outline"></div>
-                        <div class="slider-fill"></div>
-                    </div>
-                    <div class="slider-label">% Painted</div>
-                </div>
-                <div class="slider" id="spill-warning">
-                    <div class="slider-wrapper">
-                        <div class="slider-outline"></div>
-                        <div class="slider-fill"></div>
-                        <div class="slider-mark"></div>
-                    </div>
-                    <div class="slider-label">Transgression</div>
-                </div>
-            </td>
-            <td id="main">
-                <div id="game-wrapper">
-                    <div id="overlay-text">
-                        <div id="overlay-title"></div>
-                        <div id="overlay-body"></div>
-                    </div>
-                    <div id="canvas-texture"></div>
-                    <canvas id="game" width=540px height=540px></canvas>
-                    <canvas id="reticle" width=240px height=240px></canvas>
-                </div>
-            </td>
-            <td id="tools" align="center">
+            <td id="tools" align="center" hidden>
                 <div class="tool-wrapper" id="brush-size">
                     <div class="tool-title">Brush size:</div>
                     <div class="option-wrapper">
@@ -109,8 +81,76 @@
                     </div>
                 </div>
             </td>
+            <td id="new-tools" align="right">
+                <div class="new-tool-group group-vertical radio-group">
+                    <div class="new-tool active">
+                        <img src="../../img/galbrush.png" width="38" height="38">
+                    </div>
+                    <div class="new-tool">
+                        <img src="../../img/guybrush.png" width="38" height="38">
+                    </div>
+                    <div class="new-tool">
+                        <img id="magic-wand-tool" src="../../img/magicwand.png" width="38" height="44">
+                    </div>
+                </div>
+                <div class="new-tool-group group-vertical">
+                    <div class="new-tool">🫢</div>
+                    <div class="new-tool">
+                        <img src="../../img/pause.png" width="22" height="28">
+                    </div>
+                </div>
+            </td>
+            <td id="main">
+                <div id="game-wrapper">
+                    <div id="overlay-text">
+                        <div id="overlay-title"></div>
+                        <div id="overlay-body"></div>
+                    </div>
+                    <div id="canvas-texture"></div>
+                    <canvas id="game" width=540px height=540px></canvas>
+                    <canvas id="reticle" width=240px height=240px></canvas>
+                </div>
+            </td>
+            <td id="stats" align="center">
+                <canvas height=180px width=180px id="time-ring"></canvas>
+                <div id="time">0:00</div>
+                <div class="slider" id="percent-painted">
+                    <div class="slider-wrapper">
+                        <div class="slider-outline"></div>
+                        <div class="slider-fill"></div>
+                    </div>
+                    <div class="slider-label">% Painted</div>
+                </div>
+                <div class="slider" id="spill-warning">
+                    <div class="slider-wrapper">
+                        <div class="slider-outline"></div>
+                        <div class="slider-fill"></div>
+                        <div class="slider-mark"></div>
+                    </div>
+                    <div class="slider-label">Transgression</div>
+                </div>
+            </td>
+        </tr>
+        <tr id="new-footer">
+            <td hidden />
+            <td />
+            <td align="center">
+                <div class="new-tool-group group-horizontal radio-group">
+                    <div class="new-tool">
+                        <canvas width="40px" height="40px"></canvas>
+                    </div>
+                    <div class="new-tool active">
+                        <canvas width="40px" height="40px"></canvas>
+                    </div>
+                    <div class="new-tool">
+                        <canvas width="40px" height="40px"></canvas>
+                    </div>
+                </div>
+            </td>
+            <td />
         </tr>
         <tr id="footer">
+            <td hidden />
             <td />
             <td align="center">
                 <div id="start" class="bottom-btn">START LEVEL</div>

@@ -196,6 +196,27 @@ $(document).ready(function () {
         setGameMode(GAME_MODE.starting);
     });
 
+    $('.new-tool')
+        .on('mousedown', ({currentTarget}) => {
+            const $target = $(currentTarget);
+            const $group = $target.closest('.new-tool-group');
+
+            const isRadio = $group.hasClass('radio-group');
+            if (isRadio) {
+                $group.find('.active').removeClass('active');
+            }
+            $target.addClass('active');
+        })
+        .on('mouseup', ({currentTarget}) => {
+            const $target = $(currentTarget);
+            const $group = $target.closest('.new-tool-group');
+
+            const isRadio = $group.hasClass('radio-group');
+            if (!isRadio) {
+                $target.removeClass('active');
+            }
+        });
+
     // TODO: pause or quit button?
 
     $(window).resize(function () {
@@ -1005,7 +1026,7 @@ function drawToolOptions() {
     var size = sides ? 5 : 4;
     var starred = isStarred();
 
-    $('#brush-size canvas').each(function (index) {
+    $('#new-footer canvas').each(function (index) {
         var $canvas = $(this);
         var ctx = getContext($canvas);
         ctx.clearRect(0, 0, $canvas.width(), $canvas.height());

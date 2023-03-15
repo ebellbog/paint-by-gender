@@ -153,7 +153,7 @@ body {
     overflow: hidden;
 
     border: 2px solid @purple;
-    box-shadow: 4px 4px 0 fade(darken(@purple, 15%), 60%);
+    box-shadow: 4px 4px 0 darken(@purple, 5%);
 
     #game, #canvas-texture, #blurred-game canvas {
         .fullSize();
@@ -409,6 +409,99 @@ body {
     font-family: 'Amatic SC', cursive;
     color: white;
     text-shadow: 0 0 6px #777;
+}
+
+#new-tools {
+    padding-right: 30px;
+}
+#new-footer {
+    .new-tool-group {
+        padding-top: 30px;
+        padding-bottom: 8px;
+    }
+}
+
+.new-tool-group {
+    filter: drop-shadow(2px 2px 1px fade(darken(@purple, 15%), 40%));
+
+    .new-tool {
+        position: relative;
+        width: 60px;
+        height: 60px;
+
+        line-height: 60px;
+        text-align: center;
+        font-size: 32px;
+
+        color: white;
+
+        @borderWidth: 3px;
+        @btnColor: desaturate(lighten(@purple, 18%), 45%);
+
+        border-top: @borderWidth solid lighten(@btnColor, 15%);
+        border-left: @borderWidth solid lighten(@btnColor, 15%);
+        border-bottom: @borderWidth solid darken(@btnColor, 15%);
+        border-right: @borderWidth solid darken(@btnColor, 15%);
+        background-color: @btnColor;
+
+        cursor: pointer;
+
+        &.active {
+            background-color: @purple;
+            border-bottom: @borderWidth solid lighten(@purple, 5%);
+            border-right: @borderWidth solid lighten(@purple, 5%);
+            border-top: @borderWidth solid darken(@purple, 10%);
+            border-left: @borderWidth solid darken(@purple, 10%);
+        }
+        &:hover:not(.active) {
+            background-color: lighten(@btnColor, 12%);
+        }
+
+        canvas, img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        img {
+            image-rendering: pixelated;
+        }
+        #magic-wand-tool {
+            transform:translate(-50%, -50%)  rotateZ(-45deg);
+        }
+    }
+
+    &.group-vertical {
+        margin: 28px 0;
+
+        .new-tool {
+            &:first-child {
+                border-top-right-radius: @borderRadius;
+                border-top-left-radius: @borderRadius;
+            }
+            &:last-child {
+                border-bottom-left-radius: @borderRadius;
+                border-bottom-right-radius: @borderRadius;
+            }
+        }
+    }
+    &.group-horizontal {
+        margin: 0 28px;
+        font-size: 0;
+
+        .new-tool {
+            display: inline-block;
+
+            &:first-child {
+                border-top-left-radius: @borderRadius;
+                border-bottom-left-radius: @borderRadius;
+            }
+            &:last-child {
+                border-top-right-radius: @borderRadius;
+                border-bottom-right-radius: @borderRadius;
+            }
+        }
+    }
 }
 
 #tools {
