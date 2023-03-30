@@ -3,12 +3,10 @@ import 'tippy.js/dist/tippy.css';
 
 import '../less/index.less';
 
-import '../../img/lipstick.svg';
-import '../../img/lipstick_gray.svg';
-
 import {COLORS, BRUSH_TYPES,
     LEVEL_DATA, CHALLENGE_DATA,
     GAME_MODE, GAME_OUTCOME} from './enums';
+
 
 /* Global state */
 
@@ -16,7 +14,8 @@ const gameState = {
     level: 1,
     challengeIndex: 0,
     timerRunning: 0,
-    toolOptions: [1, 0, 0],
+    toolTypeIdx: 0,
+    toolOptionIdx: 1,
 };
 
 let tooltips, canvasScale, canvasSize;
@@ -33,32 +32,13 @@ $(document).ready(function () {
         theme: 'purple',
     });
 
-    var $canvas = $('#game');
-    var ctx = getContext($canvas);
+    const $canvas = $('#game');
+    const ctx = getContext($canvas);
 
     canvasSize = parseInt($canvas.attr('height'));
     canvasScale = $canvas.height() / canvasSize;
 
     initGame();
-
-    $(document).on('mousedown', function (e) {
-        //only respond to clicks outside the game space
-        if ($(e.target).closest('#game').length) return;
-
-        gameState.toolFocus = gameState.toolOptions.length;
-        updateSelectors(0);
-    });
-
-    $('.tool-option').click(function (e) {
-        var optionIndex = $(e.target).index();
-        var toolIndex = $(e.target).parents('.tool-wrapper').first().index();
-        if (!isToolEnabled(toolIndex)) return;
-
-        gameState.toolOptions[toolIndex] = optionIndex;
-        setSelector(toolIndex, optionIndex, false);
-        drawReticle();
-        drawToolOptions();
-    });
 
     $canvas.on('mousedown', function (e) {
         if (gameState.mode != GAME_MODE.playing) return;
@@ -126,29 +106,23 @@ $(document).ready(function () {
         updatePercentPainted();
     });
 
-    $(document).keydown(function (e) {
-        var pressedArrow = true;
+    $(document).keydown((e) => {
+        let pressedArrow = true;
+
         switch (e.which) {
             case 38: // up arrow
-                var n = gameState.toolOptions.length + 1;
-                var newFocus = (gameState.toolFocus - 1 + n) % n; // fix mod for negatives
-                while (newFocus < n - 1 && !isToolEnabled(newFocus)) newFocus = (newFocus - 1 + n) % n;
-                gameState.toolFocus = newFocus;
-                break;
+                gameState.toolTypeIdx -= 2;
             case 40: // down arrow
-                var newFocus = (gameState.toolFocus + 1) % (gameState.toolOptions.length + 1);
-                while (newFocus < gameState.toolOptions.length && !isToolEnabled(newFocus)) newFocus += 1;
-                gameState.toolFocus = newFocus;
+                gameState.toolTypeIdx++;
+                validateToolType();
+                drawToolOptions();
                 break;
             case 37: // left arrow
-                if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
-                gameState.toolOptions[gameState.toolFocus] = Math.max(0, gameState.toolOptions[gameState.toolFocus] - 1);
-                break;
+                gameState.toolOptionIdx -= 2;
             case 39: // right arrow
-                if (gameState.toolFocus === gameState.toolOptions.length) gameState.toolFocus = 0;
-                gameState.toolOptions[gameState.toolFocus] = Math.min(
-                    getOptionCount() - 1,
-                    gameState.toolOptions[gameState.toolFocus] + 1);
+                const sizes = getBrushType().sizes.length;
+                gameState.toolOptionIdx = (gameState.toolOptionIdx + 1 + sizes) % sizes;
+                updateRadioGroup('toolOption', gameState.toolOptionIdx);
                 break;
             case 13: // return key
             case 32: // spacebar
@@ -165,17 +139,15 @@ $(document).ready(function () {
                 pressedArrow = false;
                 break;
         }
+
         if (pressedArrow) e.preventDefault();
-        updateSelectors(1);
-        setTimeout(drawReticle, 200);
-        setTimeout(drawToolOptions, 200);
+        drawReticle();
     });
 
-    $('#undo').click(function () {
-        const $this = $(this);
-        if ($this.hasClass('inactive')) return;
+    $('#btn-undo').on('click', () => {
+        const {mode, strokes, undosRemaining} = gameState;
+        if (mode !== GAME_MODE.playing || !undosRemaining || strokes.length < 2) return;
 
-        const {strokes} = gameState;
         strokes.splice(strokes.length - 2, 1);
 
         gameState.undosRemaining--;
@@ -196,45 +168,55 @@ $(document).ready(function () {
         setGameMode(GAME_MODE.starting);
     });
 
-    $('.new-tool')
+    $('.tool')
         .on('mousedown', ({currentTarget}) => {
-            const $target = $(currentTarget);
-            const $group = $target.closest('.new-tool-group');
+            const $input = $(currentTarget);
+            const inputIdx = $input.index();
+
+            const $group = $input.closest('.tool-group');
+            if (!$group.length) return;
 
             const isRadio = $group.hasClass('radio-group');
             if (isRadio) {
+                const groupType = $group.data('group');
+                if (groupType === 'toolType') {
+                    if (!isToolEnabled(inputIdx)) return;
+                    gameState.toolTypeIdx = inputIdx;
+                } else {
+                    gameState.toolOptionIdx = inputIdx;
+                }
                 $group.find('.active').removeClass('active');
             }
-            $target.addClass('active');
+
+            $input.addClass('active');
+
+            drawReticle();
+            drawToolOptions();
         })
-        .on('mouseup', ({currentTarget}) => {
-            const $target = $(currentTarget);
-            const $group = $target.closest('.new-tool-group');
+        .on('mouseup mouseout', ({currentTarget}) => {
+            const $input = $(currentTarget);
+            const $group = $input.closest('.tool-group');
 
             const isRadio = $group.hasClass('radio-group');
             if (!isRadio) {
-                $target.removeClass('active');
+                $input.removeClass('active');
             }
         });
 
     // TODO: pause or quit button?
-
-    $(window).resize(function () {
-        updateSelectors(0);
-    });
 });
 
 
 /* Helper functions */
 
 function getBrushType() {
-    return BRUSH_TYPES[gameState.toolOptions[1]];
+    return BRUSH_TYPES[gameState.toolTypeIdx];
 }
 
 function getBrushSize(asDiameter) {
     const brushType = getBrushType();
     const {sizes, sides, isQuantized} = brushType;
-    let size = sizes[gameState.toolOptions[0]];
+    let size = sizes[gameState.toolOptionIdx];
 
     if (isQuantized && !asDiameter) size = size / (Math.cos(Math.PI / sides) * 2);
     return size;
@@ -311,17 +293,19 @@ function getContext($canvas) {
     return ctx;
 }
 
-function isToolEnabled(index) {
-    return LEVEL_DATA[gameState.level].enabledTools[index];
+function updateUndoStatus() {
+    const {undosRemaining} = gameState;
+    $('#btn-undo').toggleClass('disabled', undosRemaining < 1);
+
+    const $undoStatus = $('#undo-status');
+    $undoStatus.empty();
+    for (let i = 0; i < 3; i++) { // TOOD: maxUndos
+        $undoStatus.append(
+            $('<div></div>').addClass(`status-icon status-${i < undosRemaining ? 'filled' : 'empty'}`)
+        );
+    }
 }
 
-function updateUndoStatus() {
-    const {strokes, undosRemaining} = gameState;
-    const maxUndos = Math.min(undosRemaining, strokes.length - 1);
-    $('#undo')
-        .attr('data-status', '•'.repeat(undosRemaining))
-        .toggleClass('inactive', maxUndos < 1);
-}
 
 /* Logic functions */
 
@@ -418,6 +402,7 @@ function updatePercentAsync() {
     setTimeout(updatePercentPainted, 0);
 }
 
+
 /* Setup functions */
 
 function initGame() {
@@ -459,7 +444,6 @@ function updateLevelIcon(level, challengeIndex) {
 function resetGameState() {
     gameState.strokes = [];
     gameState.isDrawing = 0;
-    gameState.toolFocus = gameState.toolOptions.length;
     gameState.timerRunning = 0;
     gameState.undosRemaining = 3;
 }
@@ -475,9 +459,9 @@ function initChallenge(level, challengeIndex) {
     $('#percent-painted .slider-fill').css('background-color', rgbToStr(COLORS.paint));
 
     gameState.maxTime = CHALLENGE_DATA.maxTime;
-    gameState.enabledOptions = CHALLENGE_DATA.enabledOptions;
+    gameState.enabledTools = CHALLENGE_DATA.enabledTools;
 
-    updateSelectors(0);
+    validateToolType();
     drawReticle();
     drawToolOptions();
     setTooltips(level);
@@ -577,11 +561,12 @@ function drawChallenge(level, challengeIndex) {
     ctx.restore();
 }
 
+// Updates buttons pertaining to game state (start, retry, etc)
 function setupButtons() {
     switch (gameState.mode) {
         case GAME_MODE.newLevel:
             $('#start').html(`START LEVEL ${gameState.level}`).css('display', 'inline-block');
-            $('#retry, #undo').css('display', 'none');
+            $('#retry').css('display', 'none');
             break;
         case GAME_MODE.ready:
             break;
@@ -593,19 +578,18 @@ function setupButtons() {
             $('#start').css('display', 'none');
             $('#retry')
                 .html('RESTART')
-                .css({ width: $('#undo').css('width') })
                 .removeClass('inactive');
-            $('#retry, #undo').css('display', 'inline-block')
+            $('#retry').css('display', 'inline-block')
             break;
         case GAME_MODE.complete:
             var passed = gameState.outcome == GAME_OUTCOME.passed;
             $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameState.level}`).css({ width: passed ? '150px' : '180px' });
-            $('#undo').css('display', 'none');
         default:
             break;
     }
 }
 
+// TODO: update for Kidpix UI
 function setTooltips(level) {
     tooltips?.forEach((tooltip) => tooltip.destroy());
 
@@ -721,16 +705,18 @@ function setGameMode(mode) {
 
             setTimeout(() => wipeOut(() => {
                 resetGameState();
+
                 $('#percent-painted .slider-fill').animate({ height: 0 });
                 $('#spill-warning .slider-mark').animate({ bottom: 2 });
                 $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
+
                 initChallenge(gameState.level, gameState.challengeIndex);
                 setTimer(0, gameState.maxTime);
+                updateUndoStatus();
 
                 wipeIn(() => {
                     restartTimer();
                     setGameMode(GAME_MODE.playing);
-                    updateUndoStatus();
                 });
             }), 1000);
 
@@ -757,55 +743,6 @@ function setGameMode(mode) {
     setupButtons();
 }
 
-/* Poly draw functions */
-
-function getPolyPath(x, y, sides, size, rotation, starred) {
-    var rotation = rotation || (Math.PI - (Math.PI * 2 / sides)) / 2;
-    var path = [];
-
-    if (starred) sides = sides * 2;
-    for (var i = 0; i < sides; i++) {
-        var dist = starred ? (i % 2 ? size / 2 : size) : size;
-        var angle = (Math.PI * 2 / sides) * i + rotation;
-        var ptX = x + dist * Math.cos(angle);
-        var ptY = y + dist * Math.sin(angle);
-        path.push({ x: ptX, y: ptY });
-    }
-    return path;
-}
-
-function drawPolygon(ctx, x, y, sides, size, options) {
-    options = options || {};
-
-    var path = getPolyPath(x, y, sides, size, options.rotation, options.starred);
-    var start = path.shift();
-
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    path.map(p => ctx.lineTo(p.x, p.y));
-    ctx.closePath();
-
-    if (options.style == 'fill') {
-        if (options.color) ctx.fillStyle = options.color;
-        ctx.fill();
-    } else {
-        if (options.color) ctx.strokeStyle = options.color;
-        ctx.stroke();
-    }
-}
-
-function joinPolys(ctx, p1, p2) {
-    if (p1.length != p2.length) return;
-    for (var i = 0; i < p1.length; i++) {
-        var j = (i + 1) % p1.length;
-        ctx.beginPath();
-        ctx.moveTo(p1[i].x, p1[i].y);
-        ctx.lineTo(p1[j].x, p1[j].y);
-        ctx.lineTo(p2[j].x, p2[j].y);
-        ctx.lineTo(p2[i].x, p2[i].y);
-        ctx.fill();
-    }
-}
 
 /* Timer and time-based animations */
 
@@ -1014,6 +951,7 @@ function showCountdown(count, cb) {
     } else if (cb) cb();
 }
 
+
 /* Tool options & selectors */
 
 function drawToolOptions() {
@@ -1026,7 +964,7 @@ function drawToolOptions() {
     var size = sides ? 5 : 4;
     var starred = isStarred();
 
-    $('#new-footer canvas').each(function (index) {
+    $('#footer canvas').each(function (index) {
         var $canvas = $(this);
         var ctx = getContext($canvas);
         ctx.clearRect(0, 0, $canvas.width(), $canvas.height());
@@ -1081,41 +1019,32 @@ function drawToolOptions() {
 
     // set tool type color
 
-    $('#tool-type .tool-option').each(function (index) {
-        var enabled = gameState.enabledOptions[2][index];
-        if (index == 1) {
-            var $img = $(this).find('img');
-            $img.prop('src', enabled ? './dist/lipstick.svg' : './dist/lipstick_gray.svg');
-        } else {
-            $(this).css('color', enabled ? enabledColor : disabledColor);
-        }
+    $('[data-group="toolType"] .tool').each((idx, el) => {
+        const {enabledTools} = gameState;
+        $(el).toggleClass('disabled', !enabledTools[idx]);
     });
 }
 
-function updateSelectors(animated) {
-    var enabled = gameState.enabledOptions;
-    gameState.toolOptions.map((v, i) => {
-        while (enabled && !enabled[i][v]) {
-            v = (v + 1) % enabled[i].length;
-        }
-        gameState.toolOptions[i] = v;
-        setSelector(i, v, animated);
-    });
-}
+function validateToolType() {
+    let {toolTypeIdx: idx, enabledTools} = gameState;
+    idx = (idx + enabledTools.length) % enabledTools.length;
 
-function setSelector(toolIndex, optionIndex, animated) {
-    var $tool = $(`#tools .tool-wrapper:eq(${toolIndex})`);
-    var $selector = $tool.find('.option-selector');
-    var $option = $tool.find(`.tool-option:eq(${optionIndex})`);
-
-    $selector.toggleClass('focus', toolIndex == gameState.toolFocus);
-
-    var position = $option.position();
-    if (animated) {
-        $selector.animate({ 'left': position.left }, 300);
-    } else {
-        $selector.css('left', position.left);
+    while (!isToolEnabled(idx)) {
+        idx = (idx + 1) % enabledTools.length;
     }
+
+    gameState.toolTypeIdx = idx;
+    updateRadioGroup('toolType', idx);
+}
+
+function isToolEnabled(index) {
+    return gameState.enabledTools[index] === 1;
+}
+
+function updateRadioGroup(radioGroup, optionIndex) {
+    const $tool = $(`.radio-group[data-group=${radioGroup}]`);
+    $tool.find('.active').removeClass('active');
+    $tool.find(`.tool:eq(${optionIndex})`).addClass('active');
 }
 
 function drawReticle() {
@@ -1188,6 +1117,58 @@ function getReticle() {
     if (!_$reticle) _$reticle = $('#reticle');
     return _$reticle;
 }
+
+
+/* Poly draw functions */
+
+function getPolyPath(x, y, sides, size, rotation, starred) {
+    var rotation = rotation || (Math.PI - (Math.PI * 2 / sides)) / 2;
+    var path = [];
+
+    if (starred) sides = sides * 2;
+    for (var i = 0; i < sides; i++) {
+        var dist = starred ? (i % 2 ? size / 2 : size) : size;
+        var angle = (Math.PI * 2 / sides) * i + rotation;
+        var ptX = x + dist * Math.cos(angle);
+        var ptY = y + dist * Math.sin(angle);
+        path.push({ x: ptX, y: ptY });
+    }
+    return path;
+}
+
+function drawPolygon(ctx, x, y, sides, size, options) {
+    options = options || {};
+
+    var path = getPolyPath(x, y, sides, size, options.rotation, options.starred);
+    var start = path.shift();
+
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    path.map(p => ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+
+    if (options.style == 'fill') {
+        if (options.color) ctx.fillStyle = options.color;
+        ctx.fill();
+    } else {
+        if (options.color) ctx.strokeStyle = options.color;
+        ctx.stroke();
+    }
+}
+
+function joinPolys(ctx, p1, p2) {
+    if (p1.length != p2.length) return;
+    for (var i = 0; i < p1.length; i++) {
+        var j = (i + 1) % p1.length;
+        ctx.beginPath();
+        ctx.moveTo(p1[i].x, p1[i].y);
+        ctx.lineTo(p1[j].x, p1[j].y);
+        ctx.lineTo(p2[j].x, p2[j].y);
+        ctx.lineTo(p2[i].x, p2[i].y);
+        ctx.fill();
+    }
+}
+
 
 /* Basic drawing */
 

@@ -24,7 +24,7 @@ const CHALLENGE_DATA = {
         paintColor: COLORS.darkpink,
         shapeColor: COLORS.white,
         maxTime: 25,
-        enabledOptions: [[1, 1, 1], [1, 0, 0], [1, 0, 0]]
+        enabledTools: [1, 0, 0],
     },
     2: {
         canvasColor: COLORS.pink,
@@ -32,14 +32,14 @@ const CHALLENGE_DATA = {
         shapeColor: COLORS.white,
         spillColor: COLORS.pinkBlue,
         maxTime: 45,
-        enabledOptions: [[1, 1, 1], [0, 1, 0], [1, 0, 0]]
+        enabledTools: [0, 1, 0],
     },
     3: {
         canvasColor: COLORS.blue,
         paintColor: COLORS.darkblue,
         shapeColor: COLORS.white,
         maxTime: 30,
-        enabledOptions: [[1, 1, 1], [0, 1, 0], [1, 0, 0]]
+        enabledTools: [0, 1, 0],
     }
 };
 
@@ -47,7 +47,6 @@ const LEVEL_DATA = {
     1: {
         name: 'The Cistem',
         description: 'Round pegs in round holes. Everything in its place. The Cistem was built for you!',
-        enabledTools: [1, 0, 0],
         tooltips: [
             [],
             [
@@ -63,30 +62,30 @@ const LEVEL_DATA = {
         ],
         endMessages: {
             0: ["Congrats!", "You played the game. You painted inside the lines and feel strangely validated."],
-            1: ["Oops...", "You transgressed too far. People noticed, and they care way more than they should."],
+            1: ["Oops.", "You transgressed too far. People noticed, and they care way more than they should."],
             2: ["You got clocked", "Time's up. Not everyone gets a chance to fulfill their purpose."]
         },
         challenges: [1, 3]
     },
     2: {
         name: 'Cistem Error',
-        enabledTools: [1, 0, 0]
+        // enabledTools: [1, 0, 0]
     },
     3: {
         name: 'Red Pill',
-        enabledTools: [1, 0, 1]
+        // enabledTools: [1, 0, 1]
     },
     4: {
         name: 'Antisocial Media',
-        enabledTools: [1, 0, 1]
+        // enabledTools: [1, 0, 1]
     },
     5: {
         name: 'Darker Times',
-        enabledTools: [1, 0, 1]
+        // enabledTools: [1, 0, 1]
     },
     6: {
         name: 'Trans-cendence',
-        enabledTools: [1, 1, 1]
+        // enabledTools: [1, 1, 1]
     }
 };
 

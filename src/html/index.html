@@ -3,10 +3,10 @@
 
 <head>
     <meta charset="utf-8">
-    <title> Paint By Gender </title>
+    <title> Paint by Gender </title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Exo+2:wght@200;400&family=Rubik+Iso&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;400&family=Slackey&family=Londrina+Solid:wght@100;300;400;900&display=swap" rel="stylesheet">
     <script defer src="https://use.fontawesome.com/releases/v6.3.0/js/all.js"></script>
 </head>
 
@@ -14,15 +14,13 @@
     <table id="layout" class="unselectable">
         <colgroup>
             <col>
-            <col width="140px">
             <col width="500px">
             <col>
         </colgroup>
         <tr id="header">
             <td id="title">
-                <a href="https://belladonnagable.itch.io/paint-by-gender">Paint By Gender</a>
+                <a href="https://belladonnagable.itch.io/paint-by-gender">Paint by Gender</a>
             </td>
-            <td hidden />
             <td id="status">
                 <span id="level-number">Level 1</span>
                 <span id="level-separator">|</span>
@@ -42,61 +40,25 @@
         </tr>
         <tr class="spacer"></tr>
         <tr id="body">
-            <td id="tools" align="center" hidden>
-                <div class="tool-wrapper" id="brush-size">
-                    <div class="tool-title">Brush size:</div>
-                    <div class="option-wrapper">
-                        <canvas width="40px" height="40px" class="tool-option"></canvas>
-                        <canvas width="40px" height="40px" class="tool-option"></canvas>
-                        <canvas width="40px" height="40px" class="tool-option"></canvas>
-                        <div class="option-selector"></div>
-                    </div>
-                </div>
-                <div class="tool-wrapper" id="brush-shape">
-                    <span class="tool-title">Brush shape:</span>
-                    <div class="option-wrapper">
-                        <canvas width="40px" height="40px" class="tool-option"></canvas>
-                        <canvas width="40px" height="40px" class="tool-option"></canvas>
-                        <canvas width="40px" height="40px" class="tool-option"></canvas>
-                        <div class="option-selector"></div>
-                    </div>
-                </div>
-                <div class="tool-wrapper" id="tool-type">
-                    <span class="tool-title">Tool type:</span>
-                    <div class="option-wrapper">
-                        <div class="tool-option">
-                            <div id="paint-brush-wrapper">
-                                <i class="fas fa-2x fa-paint-brush" data-fa-transform="shrink-2"></i>
-                            </div>
-                        </div>
-                        <div class="tool-option">
-                            <img id="lipstick" src='./dist/lipstick.svg'></img>
-                        </div>
-                        <div class="tool-option">
-                            <div id="pill-wrapper">
-                                <i class="fas fa-2x fa-pills" data-fa-transform="shrink-2"></i>
-                            </div>
-                        </div>
-                        <div class="option-selector"></div>
-                    </div>
-                </div>
-            </td>
-            <td id="new-tools" align="right">
-                <div class="new-tool-group group-vertical radio-group">
-                    <div class="new-tool active">
+            <td id="tools" align="right">
+                <div class="tool-group group-vertical radio-group" data-group="toolType">
+                    <div class="tool active" id="galbrush">
                         <img src="../../img/galbrush.png" width="38" height="38">
                     </div>
-                    <div class="new-tool">
+                    <div class="tool" id="guybrush">
                         <img src="../../img/guybrush.png" width="38" height="38">
                     </div>
-                    <div class="new-tool">
-                        <img id="magic-wand-tool" src="../../img/magicwand.png" width="38" height="44">
+                    <div class="tool" id="magic-wand">
+                        <img src="../../img/magicwand.png" width="38" height="44">
                     </div>
                 </div>
-                <div class="new-tool-group group-vertical">
-                    <div class="new-tool">🫢</div>
-                    <div class="new-tool">
-                        <img src="../../img/pause.png" width="22" height="28">
+                <div class="tool-group group-vertical">
+                    <div class="tool" id="btn-undo">
+                        <img src="../../img/undo_btn.png" width="33" height="31">
+                        <div id="undo-status"></div>
+                    </div>
+                    <div class="tool" id="btn-pause">
+                        <img src="../../img/pause.png" width="25" height="29">
                     </div>
                 </div>
             </td>
@@ -105,6 +67,10 @@
                     <div id="overlay-text">
                         <div id="overlay-title"></div>
                         <div id="overlay-body"></div>
+                        <div id="overlay-btns">
+                            <div id="start" class="bottom-btn"></div>
+                            <div id="retry" class="bottom-btn"></div>
+                        </div>
                     </div>
                     <div id="canvas-texture"></div>
                     <canvas id="game" width=540px height=540px></canvas>
@@ -131,31 +97,20 @@
                 </div>
             </td>
         </tr>
-        <tr id="new-footer">
-            <td hidden />
+        <tr id="footer">
             <td />
             <td align="center">
-                <div class="new-tool-group group-horizontal radio-group">
-                    <div class="new-tool">
+                <div class="tool-group group-horizontal radio-group" data-group="toolOption">
+                    <div class="tool">
                         <canvas width="40px" height="40px"></canvas>
                     </div>
-                    <div class="new-tool active">
+                    <div class="tool active">
                         <canvas width="40px" height="40px"></canvas>
                     </div>
-                    <div class="new-tool">
+                    <div class="tool">
                         <canvas width="40px" height="40px"></canvas>
                     </div>
                 </div>
-            </td>
-            <td />
-        </tr>
-        <tr id="footer">
-            <td hidden />
-            <td />
-            <td align="center">
-                <div id="start" class="bottom-btn">START LEVEL</div>
-                <div id="retry" class="bottom-btn"></div>
-                <div id="undo" class="bottom-btn" data-status>UNDO</div>
             </td>
             <td />
         </tr>
