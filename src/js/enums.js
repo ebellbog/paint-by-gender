@@ -90,12 +90,13 @@ const LEVEL_DATA = {
 };
 
 const GAME_MODE = {
-    newLevel: 0,
-    ready: 1,
-    starting: 2,
-    playing: 3,
-    transitioning: 4,
-    complete: 5,
+    newLevel: 'new-level',
+    ready: 'ready',
+    starting: 'starting',
+    playing: 'playing',
+    transitioning: 'transitioning',
+    complete: 'complete',
+    paused: 'paused',
 };
 
 const GAME_OUTCOME = {
@@ -108,7 +109,7 @@ export {
     BRUSH_TYPES,
     COLORS,
     CHALLENGE_DATA,
-    LEVEL_DATA,
     GAME_MODE,
     GAME_OUTCOME,
+    LEVEL_DATA
 };

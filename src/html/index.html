@@ -10,7 +10,7 @@
     <script defer src="https://use.fontawesome.com/releases/v6.3.0/js/all.js"></script>
 </head>
 
-<body>
+<body class="show-overlay show-blur">
     <table id="layout" class="unselectable">
         <colgroup>
             <col>
@@ -58,23 +58,30 @@
                         <div id="undo-status"></div>
                     </div>
                     <div class="tool" id="btn-pause">
-                        <img src="../../img/pause.png" width="25" height="29">
+                        <img id="play-icon" src="../../img/play.png" width="25" height="29">
+                        <img id="pause-icon" src="../../img/pause.png" width="25" height="29">
                     </div>
                 </div>
             </td>
             <td id="main">
                 <div id="game-wrapper">
-                    <div id="overlay-text">
+                    <div id="game-overlay">
                         <div id="overlay-title"></div>
                         <div id="overlay-body"></div>
                         <div id="overlay-btns">
-                            <div id="start" class="bottom-btn"></div>
-                            <div id="retry" class="bottom-btn"></div>
+                            <div id="start" class="overlay-btn"></div>
+                            <div id="resume" class="overlay-btn">Continue</div>
+                            <div id="retry" class="overlay-btn"></div>
+                            <div id="quit" class="overlay-btn">Quit</div>
                         </div>
                     </div>
-                    <div id="canvas-texture"></div>
-                    <canvas id="game" width=540px height=540px></canvas>
+
                     <canvas id="reticle" width=240px height=240px></canvas>
+
+                    <canvas id="blurred-game" width=540px height=540px></canvas>
+                    <canvas id="game" width=540px height=540px></canvas>
+
+                    <div id="canvas-texture"></div>
                 </div>
             </td>
             <td id="stats" align="center">

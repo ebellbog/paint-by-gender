@@ -58,7 +58,6 @@ $(document).ready(function () {
     });
 
     $canvas.on('mousemove', function (e) {
-        if (gameState.mode == GAME_MODE.playing) $('#reticle').show();
         updateReticle(e);
 
         if (!gameState.isDrawing) return;
@@ -90,7 +89,7 @@ $(document).ready(function () {
     });
 
     $canvas.on('mouseout', function (e) {
-        $('#reticle').hide();
+        getReticle().hide();
     });
 
     $(document).on('mouseup', function () {
@@ -157,15 +156,22 @@ $(document).ready(function () {
         updatePercentPainted();
     });
 
-    $('#retry').click(function () {
-        if ($(this).hasClass('inactive')) return;
-        setGameMode(GAME_MODE.ready);
+    $('#retry').on('click', () => {
+        if (gameState.mode === GAME_MODE.complete) {
+            resetGame();
+        } else {
+            resetGame(true);
+        }
         setGameMode(GAME_MODE.starting);
     });
 
-    $('#start').click(function () {
-        if ($(this).hasClass('inactive')) return;
+    $('#start').on('click', () => {
         setGameMode(GAME_MODE.starting);
+    });
+
+    $('#quit').on('click', () => {
+        // TODO: Return to splash screen
+        initGame();
     });
 
     $('.tool')
@@ -203,7 +209,16 @@ $(document).ready(function () {
             }
         });
 
-    // TODO: pause or quit button?
+    $('#btn-pause').on('click', () => {
+        if (gameState.mode === GAME_MODE.playing) {
+            setGameMode(GAME_MODE.paused);
+        } else if (gameState.mode === GAME_MODE.paused) {
+            setGameMode(GAME_MODE.resuming);
+        }
+    });
+    $('#resume').on('click', () => {
+        setGameMode(GAME_MODE.resuming);
+    });
 });
 
 
@@ -409,22 +424,30 @@ function initGame() {
     setGameMode(GAME_MODE.newLevel);
 }
 
-function initLevel(level) {
-    var enabled = LEVEL_DATA[level].enabledTools;
-    $('.option-selector').each(function (index) {
-        $(this).toggleClass('disabled', !enabled[index]);
-    });
+function resetGame(onlyChallenge) {
+    // TODO: handle more of this with CSS classes
+    $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
+    $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
 
-    setLevelTitle(level)
-}
+    resetState();
 
-function resetLevel(level) {
-    // Facilitate testing specific challenges via query param
-    const searchParams = new URLSearchParams(location.search);
-    const startingChallenge = parseInt(searchParams.get('c') || 0);
+    if (onlyChallenge) {
+        drawChallenge(gameState.level, gameState.challengeIndex);
+    } else {
+        // Facilitate testing specific challenges via query param
+        const searchParams = new URLSearchParams(location.search);
+        const startingChallenge = parseInt(searchParams.get('c') || 0);
 
-    gameState.challengeIndex = startingChallenge;
-    initChallenge(level, startingChallenge);
+        gameState.challengeIndex = startingChallenge;
+        initChallenge(gameState.level, startingChallenge);
+    }
+
+    updatePercentPainted();
+
+    updateUndoStatus();
+    updateBlurLayer();
+
+    setTimer(0, gameState.maxTime);
 }
 
 function updateLevelIcon(level, challengeIndex) {
@@ -441,10 +464,11 @@ function updateLevelIcon(level, challengeIndex) {
     }
 }
 
-function resetGameState() {
+function resetState() {
     gameState.strokes = [];
     gameState.isDrawing = 0;
     gameState.timerRunning = 0;
+    gameState.prevElapsed = 0;
     gameState.undosRemaining = 3;
 }
 
@@ -561,34 +585,6 @@ function drawChallenge(level, challengeIndex) {
     ctx.restore();
 }
 
-// Updates buttons pertaining to game state (start, retry, etc)
-function setupButtons() {
-    switch (gameState.mode) {
-        case GAME_MODE.newLevel:
-            $('#start').html(`START LEVEL ${gameState.level}`).css('display', 'inline-block');
-            $('#retry').css('display', 'none');
-            break;
-        case GAME_MODE.ready:
-            break;
-        case GAME_MODE.transitioning:
-        case GAME_MODE.starting:
-            $('.bottom-btn').addClass('inactive');
-            break;
-        case GAME_MODE.playing:
-            $('#start').css('display', 'none');
-            $('#retry')
-                .html('RESTART')
-                .removeClass('inactive');
-            $('#retry').css('display', 'inline-block')
-            break;
-        case GAME_MODE.complete:
-            var passed = gameState.outcome == GAME_OUTCOME.passed;
-            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameState.level}`).css({ width: passed ? '150px' : '180px' });
-        default:
-            break;
-    }
-}
-
 // TODO: update for Kidpix UI
 function setTooltips(level) {
     tooltips?.forEach((tooltip) => tooltip.destroy());
@@ -630,7 +626,7 @@ function setupContext(ctx, type) {
             break;
         case 'transition':
             ctx.lineJoin = ctx.lineCap = 'round';
-            ctx.lineWidth = 100;
+            ctx.lineWidth = 90; // should divide canvasSize evenly
             ctx.strokeStyle = ctx.fillStyle = rgbToStr(COLORS.purple);
             ctx.globalCompositeOperation = 'source-over';
         default:
@@ -644,68 +640,59 @@ function setLevelTitle(level) {
 }
 
 function setStartText(level) {
-    var $title = $('#overlay-title');
-    var $body = $('#overlay-body');
-
-    $title.addClass('start-title').removeClass('end-title');
-    $body.addClass('start-text').removeClass('end-text');
-
-    $title.html(`${LEVEL_DATA[level].name}`);
-    $body.html(LEVEL_DATA[level].description);
+    $('#overlay-title').html(`${LEVEL_DATA[level].name}`);
+    $('#overlay-body').html(LEVEL_DATA[level].description);
 }
 
 function setEndText(outcome, level) {
-    var $title = $('#overlay-title');
-    var $body = $('#overlay-body');
-
-    $title.addClass('end-title').removeClass('start-title');
-    $body.addClass('end-text').removeClass('start-text');
-
-    var endMessages = LEVEL_DATA[level].endMessages[outcome];
-    $title.html(endMessages[0]);
-    $body.html(endMessages[1]);
+    const endMessages = LEVEL_DATA[level].endMessages[outcome];
+    $('#overlay-title').html(endMessages[0]);
+    $('#overlay-body').html(endMessages[1]);
 }
 
 function setGameMode(mode) {
+    const $body = $('body');
     switch (mode) {
         case GAME_MODE.newLevel:
-            initLevel(gameState.level);
+            setLevelTitle(gameState.level)
             setStartText(gameState.level);
-            $('#overlay-text').show();
-        case GAME_MODE.ready:
-            $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
-            $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
-            $('#game').css('cursor', 'default');
 
-            resetGameState();
-            resetLevel(gameState.level);
-            updatePercentPainted();
-            updateUndoStatus();
-            addBlurLayer();
-            setTimer(0, gameState.maxTime);
+            $('#start').html(`START LEVEL ${gameState.level}`);
+            updateModeClass(mode);
+
+            $body.addClass('show-overlay show-blur');
+            resetGame();
             break;
         case GAME_MODE.starting:
-            $('#overlay-text').hide();
-            showCountdown(3, function () {
-                flashStationary('Paint!', 1000, 400);
-                fadeIn({ duration: 1, delay: 0.5 });
-                setTimeout(restartTimer, 1000);
-                setGameMode(GAME_MODE.playing);
+            $body.removeClass('show-overlay');
+            showCountdown(3, {
+                callback: () => {
+                    flashStationary('Paint!', 1000, 400);
+                    fadeIn({
+                        delay: .75,
+                        callback: () => {
+                            updateModeClass();
+                            restartTimer();
+                            setGameMode(GAME_MODE.playing);
+                        }
+                    });
+                },
+                delay: 900,
             });
             break;
         case GAME_MODE.playing:
-            $('#game').css('cursor', 'crosshair');
+            getReticle().hide(); // hide until mouse move reveals
+            $('#retry').html('RETRY DRAWING')
+            updateModeClass(mode);
             break;
         case GAME_MODE.transitioning:
-            gameState.isDrawing = 0;
-            gameState.timerRunning = 0;
-
-            $('#game').css('cursor', 'default');
-            $('#reticle').hide();
+            pauseGame();
+            updateModeClass(mode);
 
             setTimeout(() => wipeOut(() => {
-                resetGameState();
+                resetState();
 
+                // TODO: handle more of this with CSS classes
                 $('#percent-painted .slider-fill').animate({ height: 0 });
                 $('#spill-warning .slider-mark').animate({ bottom: 2 });
                 $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
@@ -722,25 +709,45 @@ function setGameMode(mode) {
 
             flashExpanding(randomAffirmation(), 800, { hold: 400, styling: 'small', expand: 200 });
             break;
+        case GAME_MODE.paused:
+            pauseGame(true);
+
+            $('#overlay-title').html('PAUSED');
+
+            updateModeClass(mode);
+            $body.addClass('show-overlay show-blur');
+            break;
+        case GAME_MODE.resuming:
+            $body.removeClass('show-overlay show-blur');
+            fadeIn({
+                callback: () => {
+                    updateModeClass();
+                    restartTimer(false);
+                    setGameMode(GAME_MODE.playing);
+                },
+            });
+            break;
         case GAME_MODE.complete:
-            gameState.isDrawing = 0;
-            gameState.timerRunning = 0;
-
-            $('#game').css('cursor', 'default');
-            $('#reticle').hide();
-
-            addBlurLayer(1);
-            fadeOut({ duration: 0.5 });
+            pauseGame(true);
 
             setEndText(gameState.outcome, gameState.level);
-            $('#overlay-title').addClass('smaller-title');
-            $('#overlay-body').show();
-            $('#overlay-text').css({ opacity: 0 }).show().animate({ opacity: 1 }, 1000);
+
+            const passed = (gameState.outcome == GAME_OUTCOME.passed);
+            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameState.level}`);
+
+            updateModeClass(mode);
+            $body.addClass('show-blur show-overlay');
         default:
             break;
     }
+
     gameState.mode = mode;
-    setupButtons();
+}
+
+function updateModeClass(mode) {
+    const $body = $('body');
+    $body.removeClass((_idx, className) => className.includes('mode-') ? className : false);
+    if (mode !== undefined) $body.addClass(`mode-${mode}`);
 }
 
 
@@ -786,12 +793,14 @@ function setTimer(elapsed, max) {
     ctx.beginPath();
     ctx.arc(center, center, radius, 0, angle);
     ctx.stroke();
+
+    gameState.timeElapsed = elapsed;
 }
 
 function updateTimeRing() {
     if (!gameState.timerRunning) return;
 
-    var elapsed = (Date.now() - gameState.startTime) / 1000;
+    const elapsed = (Date.now() - gameState.startTime) / 1000 + gameState.prevElapsed;
     setTimer(elapsed, gameState.maxTime);
 
     if (elapsed < gameState.maxTime) {
@@ -803,71 +812,55 @@ function updateTimeRing() {
     }
 }
 
-function restartTimer() {
+function restartTimer(resetTime = true) {
+    if (resetTime) {
+        gameState.prevElapsed = 0;
+    }
+
     gameState.startTime = Date.now();
     if (!gameState.timerRunning) {
-        gameState.timerRunning = 1;
+        gameState.timerRunning = true;
         updateTimeRing();
     }
 }
 
-function addBlurLayer(hidden) {
-    $('#blurred-game').remove();
+function pauseGame(withBlur) {
+    gameState.isDrawing = false;
+    gameState.timerRunning = false;
+    gameState.prevElapsed = gameState.timeElapsed;
 
-    var $game = $('#game');
-    var $newGame = $(document.createElement('canvas'));
-    $newGame.prop({ width: canvasSize, height: canvasSize });
-    $newGame.css({ filter: 'blur(20px) saturate(60%) brightness(97%)' });
-
-    var newCtx = getContext($newGame);
-    newCtx.drawImage($game[0], 0, 0);
-
-    var $wrapper = $('<div>')
-        .prop({ id: 'blurred-game' })
-        .css({opacity: hidden ? 0 : 1});
-
-    $wrapper.append($newGame);
-    $('#game-wrapper').append($wrapper);
-
-    if (!hidden) {
-        $game.css({ opacity: 0 });
-        $('#canvas-texture').css({ opacity: 0 });
+    if (withBlur) {
+        updateBlurLayer();
     }
+}
+
+function updateBlurLayer() {
+    const $game = $('#game');
+    const $blurredGame = $('#blurred-game');
+
+    const blurredCtx = getContext($blurredGame);
+    blurredCtx.drawImage($game[0], 0, 0);
 }
 
 function fadeIn(options) {
-    var duration = options.duration * 1000 || 1000;
-    var delay = options.delay * 1000 || 0;
-
-    function cb() {
-        $('#blurred-game').remove();
-        if (options.callback) callback();
-    }
+    const duration = options.duration * 1000 || 750;
+    const delay = options.delay * 1000 || 0;
+    const {callback} = options;
 
     setTimeout(function () {
-        $('#blurred-game').animate({ opacity: 0 }, duration, cb);
-        $('#game').animate({ opacity: 1 }, duration * .5);
-        $('#canvas-texture').animate({ opacity: 0.6 }, duration * .5);
+        $('body').removeClass('show-blur');
+        if (callback) setTimeout(callback, duration);
     }, delay);
-}
-
-function fadeOut(options) {
-    var duration = options.duration * 1000 || 1000;
-    var delay = options.delay * 1000 || 0;
-
-    setTimeout(function () {
-        $('#blurred-game').animate({ opacity: 1 }, duration, options.callback);
-    }, delay);
-    setTimeout(function () {
-        $('#game, #canvas-texture').animate({ opacity: 0 }, duration * .5);
-    }, delay + duration * .5);
 }
 
 function wipeOut(cb, x, y, dir, time, ctx) {
-    if (y > 450) { if (cb) cb(); return; }
+    const BRUSH_SIZE = 90; // should evenly divide canvasSize
+
+    if (y > canvasSize) { if (cb) cb(); return; }
+
     if (!(x || y || dir || time)) {
-        x = 0;
-        y = 50;
+        x = - BRUSH_SIZE / 2;
+        y = BRUSH_SIZE / 2;
         dir = 1;
         time = Date.now();
     }
@@ -876,20 +869,20 @@ function wipeOut(cb, x, y, dir, time, ctx) {
     }
 
     var newX = x, newY = y;
-    if (x >= 550 && dir == 1) {
+    if (x >= canvasSize + BRUSH_SIZE / 2 && dir == 1) {
         dir = -1;
-        newY += 100;
-    } else if (x <= -50 && dir == -1) {
+        newY += BRUSH_SIZE;
+    } else if (x <= -BRUSH_SIZE / 2 && dir == -1) {
         dir = 1;
-        newY += 100;
+        newY += BRUSH_SIZE;
     }
 
     // using a time coefficient removes duration variability
     // arising from browser speed, hardware, etc.
     var newTime = Date.now();
     var timeCoefficient = Math.max((newTime - time) / 10, 0.1);
-    var speedCoefficient = 12;
-    newX += dir * timeCoefficient * speedCoefficient;
+    const SPEED_COEFFICIENT = 12;
+    newX += dir * timeCoefficient * SPEED_COEFFICIENT;
 
     setupContext(ctx, 'transition');
     ctx.beginPath();
@@ -944,11 +937,18 @@ function flashStationary(message, duration, fade) {
     setTimeout(() => $number.animate({ opacity: 0 }, fade, () => $number.remove()), duration - fade);
 }
 
-function showCountdown(count, cb) {
-    if (count > 0) {
-        flashExpanding(count, 1200);
-        setTimeout(() => showCountdown(count - 1, cb), 1000);
-    } else if (cb) cb();
+function showCountdown(count, options) {
+    let {delay, callback} = options;
+
+    if (delay) options.delay = 0;
+    else delay = 0;
+
+    setTimeout(() => {
+        if (count > 0) {
+            flashExpanding(count, 1200);
+            setTimeout(() => showCountdown(count - 1, options), 1000);
+        } else if (callback) callback();
+    }, delay);
 }
 
 
@@ -1048,7 +1048,7 @@ function updateRadioGroup(radioGroup, optionIndex) {
 }
 
 function drawReticle() {
-    const $reticle = $('#reticle');
+    const $reticle = getReticle();
     const ctx = getContext($reticle);
 
     const rWidth = parseInt($reticle.attr('width'));
@@ -1086,6 +1086,8 @@ function drawReticle() {
 function updateReticle(e) {
     const $reticle = getReticle();
     const reticleSize = $reticle.height();
+
+    if (gameState.mode === GAME_MODE.playing) $reticle.css('display', 'unset');
 
     const {x, y} = globalToGameCoords(e);
     let top, left;

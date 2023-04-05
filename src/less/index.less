@@ -162,14 +162,13 @@ body {
     border: 2px solid @purple;
     box-shadow: 4px 4px 0 darken(@purple, 5%);
 
-    #game, #canvas-texture, #blurred-game canvas {
+    #game, #canvas-texture, #blurred-game, #blurred-game canvas {
         .fullSize();
     }
 }
 
 #game {
     z-index: 1;
-    cursor: none;
     background-color: white;
 }
 
@@ -182,8 +181,18 @@ body {
     opacity: .6;
 }
 
+#game, #canvas-texture {
+    transition: opacity .5s;
+}
+
 #blurred-game {
     z-index: 3;
+    pointer-events: none;
+
+    opacity: 0;
+    transition: opacity 1s;
+
+    filter: blur(20px) saturate(60%) brightness(97%);
 }
 
 #reticle {
@@ -226,12 +235,22 @@ body {
     user-select: none;
 }
 
-#overlay-text {
+
+.white-with-purple-shadow() {
+    color: white;
+    text-shadow: 3px 3px 1px @purple, 0 0 2px @purple;
+}
+
+#game-overlay {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
     z-index: 4;
+
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .75s;
 
     #overlay-title {
         width: 450px;
@@ -242,15 +261,6 @@ body {
         text-transform: uppercase;
 
         transform: scaleX(1.1);
-
-        &.start-title {
-            color: @purple;
-        }
-
-        &.end-title {
-            color: white;
-            text-shadow: 3px 3px 1px @purple, 0 0 2px @purple;
-        }
     }
 
     #overlay-body {
@@ -265,57 +275,34 @@ body {
 
         z-index: 4;
         width: 95%;
-
-        &.start-text {
-            color: white;
-            text-shadow: 0 0 2px @purple, 0 0 1px @purple, 2px 2px 1px @purple;
-            text-align: center;
-        }
-
-        &.end-text {
-            color: @purple;
-            text-shadow: 2px 2px 0 white;
-        }
     }
 
     #overlay-btns {
         text-align: center;
         margin-top: 2.5em;
 
-        .bottom-btn {
+        .overlay-btn {
             display: none;
 
-            margin: 15px 8px 0 8px;
-            width: 115px;
-            height: 32px;
-            line-height: 34px;
+            margin: .4em auto .8em auto;
+            padding: 0.2em 1.1em;
 
             color: white;
             background-color: @purple;
 
             text-align: center;
+            text-transform: uppercase;
 
             font-size: 20px;
             font-weight: 400;
             letter-spacing: 1.5px;
             cursor: pointer;
 
-            &.inactive {
-                background-color:rgba(138,31,141, 0.3);
-                color: white;
-                cursor: default;
-            }
-
-            &#start {
-                width: 180px;
-            }
-
-            &:not(.inactive):hover {
-                background-color: white;
+            &:hover {
+                background-color: fade(white, 50%);
                 border: 2px solid @purple;
-                width: 111px;
-                height: 28px;
-                line-height: 30px;
+                padding-top: calc(0.2em - 2px);
+                padding-bottom: calc(0.2em - 2px);
                 color: @purple;
             }
         }
@@ -425,15 +412,107 @@ body {
     }
 }
 
+#play-icon {
+    display: none;
+}
+
+.mode-paused {
+    #play-icon {
+        display: block;
+    }
+    #pause-icon {
+        display: none;
+    }
+
+    #game-overlay {
+        #overlay-title {
+            .white-with-purple-shadow();
+        }
+        #overlay-body {
+            display: none;
+        }
+        #overlay-btns {
+            margin-top: 1.75em;
+            .overlay-btn {
+                width: 7em;
+            }
+            #resume, #quit {
+                display: inline-block; // prevent margin collapsing by alternating inline-block & block
+            }
+            #retry {
+                display: block;
+            }
+        }
+    }
+}
+.mode-new-level {
+    #game-overlay {
+        #overlay-title {
+            color: @purple;
+        }
+        #overlay-body {
+            color: white;
+            text-shadow: 0 0 2px @purple, 0 0 1px @purple, 2px 2px 1px @purple;
+            text-align: center;
+        }
+        #overlay-btns #start {
+            display: inline-block;
+        }
+    }
+}
+.mode-playing {
+    #game {
+        cursor: crosshair;
+    }
+    #reticle {
+        display: block;
+    }
+}
+.mode-complete {
+    #game-overlay {
+        #overlay-title {
+            .white-with-purple-shadow();
+        }
+        #overlay-body {
+            color: @purple;
+            text-shadow: 2px 2px 0 white;
+        }
+        #overlay-btns #retry {
+            display: inline-block;
+        }
+    }
+}
+.mode-transitioning {
+    #game {
+        cursor: none;
+    }
+}
+
+.show-overlay {
+    #game-overlay {
+        pointer-events: all;
+        opacity: 1;
+    }
+}
+.show-blur {
+    #blurred-game {
+        opacity: 1;
+        pointer-events: all;
+    }
+    #game, #canvas-texture {
+        opacity: 0;
+    }
+}
+
 .tool-group {
     filter: drop-shadow(2px 2px 1px fade(darken(@purple, 15%), 40%));
 
     .tool {
         position: relative;
-        width: 60px;
-        height: 60px;
+        width: 56px;
+        height: 56px;
 
-        line-height: 60px;
+        line-height: 56px;
         text-align: center;
         font-size: 32px;
 
@@ -506,7 +585,7 @@ body {
 
             #undo-status {
                 position: absolute;
-                top: calc(50% + 2px);
+                top: calc(50% + 1px);
                 right: -7px;
                 transform: translate(100%, -50%);
 
