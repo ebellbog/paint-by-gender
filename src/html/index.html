@@ -11,34 +11,33 @@
 </head>
 
 <body class="show-overlay show-blur">
+    <navbar id="menu-bar">
+        <div id="title">
+            <a href="https://belladonnagable.itch.io/paint-by-gender">Paint by Gender</a>
+        </div>
+        <div id="status">
+            <span id="level-number">Level 1</span>
+            <span id="level-separator">|</span>
+            <span id="level-name">Demo</span>
+            <span id="level-icon-wrapper"></span>
+        </div>
+        <div id="help">
+            <div id="help-icon" data-tippy-content="Click &amp; drag to paint on the canvas!
+                You may choose from three different brush sizes and shapes, by clicking the tool
+                icons or using the arrow keys. Try to fill in the entire heart before the time runs out!
+                Painting outside the lines will <strong>not</strong> be tolerated.
+                <hr>
+                <i>Paint by Gender</i> is a work in progress about gender norms and the pressure to conform,
+                designed & developed by Elana Bell Bogdan."
+            > ? </div>
+        </div>
+    </navbar>
     <table id="layout" class="unselectable">
         <colgroup>
-            <col>
-            <col width="500px">
-            <col>
+            <col width="33%">
+            <col width="33%">
+            <col width="33%">
         </colgroup>
-        <tr id="header">
-            <td id="title">
-                <a href="https://belladonnagable.itch.io/paint-by-gender">Paint by Gender</a>
-            </td>
-            <td id="status">
-                <span id="level-number">Level 1</span>
-                <span id="level-separator">|</span>
-                <span id="level-name">Demo</span>
-                <span id="level-icon-wrapper"></span>
-            </td>
-            <td id="help">
-                <div id="help-icon" data-tippy-content="Click &amp; drag to paint on the canvas!
-                    You may choose from three different brush sizes and shapes, by clicking the tool
-                    icons or using the arrow keys. Try to fill in the entire heart before the time runs out!
-                    Painting outside the lines will <strong>not</strong> be tolerated.
-                    <hr>
-                    <i>Paint by Gender</i> is a work in progress about gender norms and the pressure to conform,
-                    designed & developed by Elana Bell Bogdan."
-                > ? </div>
-            </td>
-        </tr>
-        <tr class="spacer"></tr>
         <tr id="body">
             <td id="tools" align="right">
                 <div class="tool-group group-vertical radio-group" data-group="toolType">
