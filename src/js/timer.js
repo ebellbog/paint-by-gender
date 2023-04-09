@@ -1,5 +1,4 @@
-import {getContext} from './utils';
-import {GAME_OUTCOME} from './enums';
+import {getContext, rgbToStr} from './utils';
 
 class PbgTimer {
     startTime = 0;
@@ -13,6 +12,15 @@ class PbgTimer {
     $timeRing = $('#time-ring');
     _ringSize = 0;
 
+    constructor() {
+        this.$timeRing = $('#time-ring');
+
+        const ctx = getContext(this.$timeRing);
+        ctx.fillStyle = 'rgba(100, 0, 100, .25)';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'butt';
+    }
+
     // For listening to time running out
     on(eventName, handlerFunc) {
         this.$time.on(eventName, function() {
@@ -23,44 +31,30 @@ class PbgTimer {
     update() {
         if (!this.isTimerRunning) return;
 
-        this.timeElapsed = (Date.now() - this.startTime) / 1000 + this.prevElapsed;
+        this.timeElapsed = (Date.now() - this.startTime) / 1000 + this.prevTimeElapsed;
         this.redraw();
 
         if (this.timeElapsed < this.timeLimit) {
-            setTimeout(this.update, 10);
+            setTimeout(this.update.bind(this), 10);
         } else {
             this.isTimerRunning = 0;
-            this.$time.trigger('gameover', {outcome: GAME_OUTCOME.clocked});
-            // gameState.outcome = GAME_OUTCOME.clocked;
-            // setGameMode(GAME_MODE.complete);
+            this.$time.trigger('clocked');
         }
     }
 
     redraw() {
-        if (this._ringSize) this._ringSize = this.$timeRing.height();
+        if (!this._ringSize) this._ringSize = this.$timeRing.height();
 
         const ctx = getContext(this.$timeRing);
         ctx.clearRect(0, 0, this._ringSize, this._ringSize);
 
-        ctx.lineWidth = 8;
-        ctx.lineCap = 'butt';
-
-        ctx.fillStyle = 'rgba(100, 0, 100, .2)';
-        ctx.strokeStyle = 'rgba(90, 90, 90, 0.25)';
-
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#3f163fb5';
-
         const radius = 75;
         const center = this._ringSize / 2;
 
-        // Draw background (full time ring)
+        // Draw background
         ctx.beginPath();
-        ctx.arc(center, center, radius, 0, 2 * Math.PI);
-        ctx.stroke();
-        ctx.fill(); // TODO: fill only inside of the stroke, rather than overlapping?
+        ctx.arc(center, center, radius - ctx.lineWidth / 2, 0, 2 * Math.PI);
+        ctx.fill();
 
         const remaining = this.timeLimit - this.timeElapsed;
 
@@ -83,10 +77,19 @@ class PbgTimer {
             ctx.strokeStyle = rgbToStr([255, greenblue, greenblue]);
         }
 
+        ctx.save();
+
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#3f163f80';
+
         // Draw time elapsed (progress bar)
         ctx.beginPath();
         ctx.arc(center, center, radius, 0, angle);
         ctx.stroke();
+
+        ctx.restore();
     }
 
     restart(resetTime = true) {

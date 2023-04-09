@@ -301,6 +301,7 @@ body, #layout, #menu-bar {
 
             color: white;
             background-color: @purple;
+            box-shadow: 2px 2px 0 lighten(@purple, 35%);
 
             text-align: center;
             text-transform: uppercase;
@@ -310,12 +311,13 @@ body, #layout, #menu-bar {
             letter-spacing: 1.5px;
             cursor: pointer;
 
+            transition: 0.05s all;
+
             &:hover {
-                background-color: fade(white, 50%);
-                border: 2px solid @purple;
-                padding-top: calc(0.2em - 2px);
-                padding-bottom: calc(0.2em - 2px);
-                color: @purple;
+                background-color: lighten(@purple, 20%);
+                box-shadow: none;
+                transform: translate(2px, 2px);
+                text-shadow: 2px 2px 5px fade(@purple, 40%);
             }
         }
     }
@@ -411,7 +413,7 @@ body, #layout, #menu-bar {
     font-size: 4.75em;
     font-weight: 100;
     color: white;
-    text-shadow: 0 0 6px #777;
+    text-shadow: 0 0 6px #666;
 }
 
 #tools {
@@ -648,6 +650,8 @@ body, #layout, #menu-bar {
     }
 
     #game-overlay {
+        transform: translate(-50%, -140px); // prevents jitter on button animation; keep in sync with button dimensions
+
         #overlay-title {
             .white-with-purple-shadow();
         }

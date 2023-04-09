@@ -23,9 +23,9 @@ import PbgTimer from './timer';
 const gameState = {
     level: 1,
     challengeIndex: 0,
-    timerRunning: 0,
     toolTypeIdx: 0,
     toolOptionIdx: 1,
+    timer: new PbgTimer(),
 };
 
 let tooltips, canvasScale, canvasSize;
@@ -141,7 +141,7 @@ $(document).ready(function () {
                     $('#start').click();
                 } else if (gameState.mode == GAME_MODE.complete) {
                     $('#retry').click();
-                } else if (gameState.mode == GAME_MODE.playing) {
+                } else if (gameState.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
                     nextChallenge();
                 }
                 pressedArrow = false;
@@ -231,6 +231,11 @@ $(document).ready(function () {
     $('#resume').on('click', () => {
         setGameMode(GAME_MODE.resuming);
     });
+
+    gameState.timer.on('clocked', () => {
+        gameState.outcome = GAME_OUTCOME.clocked;
+        setGameMode(GAME_MODE.complete);
+    })
 });
 
 
@@ -255,11 +260,6 @@ function getBrushSides() {
 
 function isStarred() {
     return getBrushType().starred;
-}
-
-function getOptionCount() {
-    var $tool = $(`#tools .tool-wrapper:eq(${gameState.toolFocus})`);
-    return $tool.find('.tool-option').length;
 }
 
 function getChallengeData(level, challengeIndex) {
@@ -292,7 +292,6 @@ function getPathPoint(canvas, e) {
     };
 }
 
-
 function updateUndoStatus() {
     const {undosRemaining} = gameState;
     $('#btn-undo').toggleClass('disabled', undosRemaining < 1);
@@ -308,7 +307,6 @@ function updateUndoStatus() {
 
 
 /* Logic functions */
-
 
 function analyzeCanvas() {
     // TODO: only 1/4 canvas at a time? either by region or modulus?
@@ -428,7 +426,7 @@ function resetGame(onlyChallenge) {
     updateUndoStatus();
     updateBlurLayer();
 
-    setTimer(0, gameState.maxTime);
+    gameState.timer.reset();
 }
 
 function updateLevelIcon(level, challengeIndex) {
@@ -448,9 +446,8 @@ function updateLevelIcon(level, challengeIndex) {
 function resetState() {
     gameState.strokes = [];
     gameState.isDrawing = 0;
-    gameState.timerRunning = 0;
-    gameState.prevElapsed = 0;
     gameState.undosRemaining = 3;
+    gameState.timer.reset();
 }
 
 function initChallenge(level, challengeIndex) {
@@ -462,7 +459,7 @@ function initChallenge(level, challengeIndex) {
     $('#game-wrapper').css('background-color', rgbToStr(COLORS.canvas));
     $('#percent-painted .slider-fill').css('background-color', rgbToStr(COLORS.paint));
 
-    gameState.maxTime = CHALLENGE_DATA.maxTime;
+    gameState.timer.timeLimit = CHALLENGE_DATA.maxTime;
     gameState.enabledTools = CHALLENGE_DATA.enabledTools;
 
     validateToolType();
@@ -595,15 +592,6 @@ function setupContext(ctx, type) {
             ctx.strokeStyle = ctx.fillStyle = rgbToStr(COLORS.paint);
             ctx.globalCompositeOperation = 'darken';
             break;
-        case 'timer':
-            ctx.lineWidth = 8;
-            ctx.lineCap = 'butt';
-            ctx.fillStyle = 'rgba(100, 0, 100, .2)';
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = '#3f163fb5';
-            break;
         case 'transition':
             ctx.lineJoin = ctx.lineCap = 'round';
             ctx.lineWidth = 90; // should divide canvasSize evenly
@@ -645,14 +633,14 @@ function setGameMode(mode) {
             break;
         case GAME_MODE.starting:
             $body.removeClass('show-overlay');
-            showCountdown(3, {
+            showCountdown(0, { // TODO: change back to 3
                 callback: () => {
                     flashStationary('Paint!', 1000, 400);
                     fadeIn({
                         delay: .75,
                         callback: () => {
                             updateModeClass();
-                            restartTimer();
+                            gameState.timer.restart();
                             setGameMode(GAME_MODE.playing);
                         }
                     });
@@ -670,19 +658,17 @@ function setGameMode(mode) {
             updateModeClass(mode);
 
             setTimeout(() => wipeOut(() => {
-                resetState();
-
                 // TODO: handle more of this with CSS classes
                 $('#percent-painted .slider-fill').animate({ height: 0 });
                 $('#spill-warning .slider-mark').animate({ bottom: 2 });
                 $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
 
                 initChallenge(gameState.level, gameState.challengeIndex);
-                setTimer(0, gameState.maxTime);
+                resetState();
                 updateUndoStatus();
 
                 wipeIn(() => {
-                    restartTimer();
+                    gameState.timer.restart();
                     setGameMode(GAME_MODE.playing);
                 });
             }), 1000);
@@ -702,7 +688,7 @@ function setGameMode(mode) {
             fadeIn({
                 callback: () => {
                     updateModeClass();
-                    restartTimer(false);
+                    gameState.timer.restart(false);
                     setGameMode(GAME_MODE.playing);
                 },
             });
@@ -733,81 +719,9 @@ function updateModeClass(mode) {
 
 /* Timer and time-based animations */
 
-function setTimer(elapsed, max) {
-    var $ring = $('#time-ring');
-    var ringSize = $ring.height();
-    var ctx = getContext($ring);
-    ctx.clearRect(0, 0, ringSize, ringSize);
-    setupContext(ctx, 'timer');
-
-    var radius = 75;
-    var center = ringSize / 2;
-
-    ctx.strokeStyle = 'rgba(90, 90, 90, 0.25)';
-
-    ctx.beginPath();
-    ctx.arc(center, center, radius, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.fill();
-
-    var remaining = max - elapsed;
-
-    var angle, min, sec;
-    if (elapsed > max) {
-        angle = min = sec = 0;
-    } else {
-        angle = (2 * Math.PI) * (1 - elapsed / max);
-        min = Math.floor(remaining / 60);
-        sec = Math.round(remaining) - 60 * min;
-    }
-
-    $('#time').html(min.toString() + ':' + (sec < 10 ? '0' : '') + sec.toString());
-
-    if (remaining > 5) {
-        ctx.strokeStyle = 'white';
-    } else {
-        var greenblue = Math.abs(Math.round(255 * Math.cos((remaining - 5) * Math.PI)));
-        ctx.strokeStyle = rgbToStr([255, greenblue, greenblue]);
-    }
-
-    ctx.beginPath();
-    ctx.arc(center, center, radius, 0, angle);
-    ctx.stroke();
-
-    gameState.timeElapsed = elapsed;
-}
-
-function updateTimeRing() {
-    if (!gameState.timerRunning) return;
-
-    const elapsed = (Date.now() - gameState.startTime) / 1000 + gameState.prevElapsed;
-    setTimer(elapsed, gameState.maxTime);
-
-    if (elapsed < gameState.maxTime) {
-        setTimeout(updateTimeRing, 10);
-    } else {
-        gameState.timerRunning = 0;
-        gameState.outcome = GAME_OUTCOME.clocked;
-        setGameMode(GAME_MODE.complete);
-    }
-}
-
-function restartTimer(resetTime = true) {
-    if (resetTime) {
-        gameState.prevElapsed = 0;
-    }
-
-    gameState.startTime = Date.now();
-    if (!gameState.timerRunning) {
-        gameState.timerRunning = true;
-        updateTimeRing();
-    }
-}
-
 function pauseGame(withBlur) {
     gameState.isDrawing = false;
-    gameState.timerRunning = false;
-    gameState.prevElapsed = gameState.timeElapsed;
+    gameState.timer.pause();
 
     if (withBlur) {
         updateBlurLayer();
