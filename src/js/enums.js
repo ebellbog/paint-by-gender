@@ -15,21 +15,20 @@ const COLORS = {
     darkpink: [198, 83, 83],
     blue: [132, 189, 250],
     darkblue: [31, 100, 173],
-    pinkblue: [132, 150, 150]
+    pinkblue: [132, 150, 150],
+    outline: [68, 68, 68],
 };
 
 const CHALLENGE_DATA = {
     1: {
         canvasColor: COLORS.pink,
         paintColor: COLORS.darkpink,
-        shapeColor: COLORS.white,
         maxTime: 25,
         enabledTools: [1, 0, 0],
     },
     2: {
         canvasColor: COLORS.pink,
         paintColor: COLORS.blue,
-        shapeColor: COLORS.white,
         spillColor: COLORS.pinkBlue,
         maxTime: 45,
         enabledTools: [0, 1, 0],
@@ -37,7 +36,6 @@ const CHALLENGE_DATA = {
     3: {
         canvasColor: COLORS.blue,
         paintColor: COLORS.darkblue,
-        shapeColor: COLORS.white,
         maxTime: 30,
         enabledTools: [0, 1, 0],
     }
@@ -45,8 +43,8 @@ const CHALLENGE_DATA = {
 
 const LEVEL_DATA = {
     1: {
-        name: 'The Cistem',
-        description: 'Round pegs in round holes. Everything in its place. The Cistem was built for you!',
+        name: "How We're Shaped",
+        description: 'Square pegs in square holes. Everything in its place. Your life is shaping up just fine!',
         tooltips: [
             [],
             [
@@ -68,15 +66,15 @@ const LEVEL_DATA = {
         challenges: [1, 3]
     },
     2: {
-        name: 'Cistem Error',
+        name: 'Out of Shape', // ish? maybe??
         // enabledTools: [1, 0, 0]
     },
     3: {
-        name: 'Red Pill',
+        name: 'Red Pill', // probs not...
         // enabledTools: [1, 0, 1]
     },
     4: {
-        name: 'Antisocial Media',
+        name: 'Antisocial Media', // I like this one. is it original tho?
         // enabledTools: [1, 0, 1]
     },
     5: {

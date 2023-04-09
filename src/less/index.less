@@ -37,6 +37,9 @@ body {
 
     width: 100%;
     border-collapse: collapse;
+
+    opacity: 0;
+    transition: opacity 1.5s;
 }
 #menu-bar {
     position: absolute;
@@ -89,23 +92,23 @@ body, #layout, #menu-bar {
 }
 
 #status {
-    display: inline-block;
+    display: none;
     width: @canvasSize * @canvasScale;
-    font-family: 'Exo 2', sans-serif;
     font-size: 26px;
+    letter-spacing: 1px;
 }
 
 #level-number {
-    font-weight: 400;
-    margin-left: 3px;
+    font-weight: 300;
 }
 
 #level-separator {
-    padding: 0 5px 0 5px;
+    padding: 0 6px 0 8px;
+    font-weight: 100;
 }
 
 #level-name {
-    font-weight:200;
+    font-weight: 100;
 }
 
 #level-icon-wrapper {
@@ -122,24 +125,24 @@ body, #layout, #menu-bar {
     display: inline-block;
     cursor: pointer;
     width: 32px;
-    height: 32px;
+    height: 33px;
+    padding-left: 1px;
     color: @purple;
     background: white;
-    border-radius: 16px;
-    line-height: 30px;
+    border-radius: 50%;
+    line-height: 1.1em;
     text-align: center;
-    font-family: 'Exo 2', sans-serif;
-    font-weight: 600;
-    font-size: 28px;
+    font-weight: 400;
+    font-size: 2em;
 
     &:hover {
         background: @purple;
         color: white;
         border: 3px solid white;
-        border-radius: 26px;
         width: 26px;
-        height: 26px;
-        line-height: 25px;
+        height: 28px;
+        line-height: 28px;
+        font-size: 1.8em;
     }
 }
 
@@ -264,7 +267,8 @@ body, #layout, #menu-bar {
         width: 450px;
         text-align: center;
         font-weight: 900;
-        font-size: 5.4em;
+        font-size: 5.3em;
+        line-height: 1em;
         letter-spacing: 2px;
         text-transform: uppercase;
 
@@ -279,7 +283,7 @@ body, #layout, #menu-bar {
 
         margin-left: auto;
         margin-right: auto;
-        margin-top: .1em;
+        margin-top: .3em;
 
         z-index: 4;
         width: 95%;
@@ -424,94 +428,6 @@ body, #layout, #menu-bar {
     display: none;
 }
 
-.mode-paused {
-    #play-icon {
-        display: block;
-    }
-    #pause-icon {
-        display: none;
-    }
-
-    #game-overlay {
-        #overlay-title {
-            .white-with-purple-shadow();
-        }
-        #overlay-body {
-            display: none;
-        }
-        #overlay-btns {
-            margin-top: 1.75em;
-            .overlay-btn {
-                width: 7em;
-            }
-            #resume, #quit {
-                display: inline-block; // prevent margin collapsing by alternating inline-block & block
-            }
-            #retry {
-                display: block;
-            }
-        }
-    }
-}
-.mode-new-level {
-    #game-overlay {
-        #overlay-title {
-            color: @purple;
-        }
-        #overlay-body {
-            color: white;
-            text-shadow: 0 0 2px @purple, 0 0 1px @purple, 2px 2px 1px @purple;
-            text-align: center;
-        }
-        #overlay-btns #start {
-            display: inline-block;
-        }
-    }
-}
-.mode-playing {
-    #game {
-        cursor: crosshair;
-    }
-    #reticle {
-        display: block;
-    }
-}
-.mode-complete {
-    #game-overlay {
-        #overlay-title {
-            .white-with-purple-shadow();
-        }
-        #overlay-body {
-            color: @purple;
-            text-shadow: 2px 2px 0 white;
-        }
-        #overlay-btns #retry {
-            display: inline-block;
-        }
-    }
-}
-.mode-transitioning {
-    #game {
-        cursor: none;
-    }
-}
-
-.show-overlay {
-    #game-overlay {
-        pointer-events: all;
-        opacity: 1;
-    }
-}
-.show-blur {
-    #blurred-game {
-        opacity: 1;
-        pointer-events: all;
-    }
-    #game, #canvas-texture {
-        opacity: 0;
-    }
-}
-
 .tool-group {
     filter: drop-shadow(2px 2px 1px fade(darken(@purple, 15%), 40%));
 
@@ -650,12 +566,15 @@ body, #layout, #menu-bar {
     }
 }
 
+
+// Tooltips
+
 .tippy-box {
-    font-family: 'Exo 2';
+    font-family: @kidpixFont;
 
     &[data-theme~='gray'] {
         background-color: rgba(90, 90, 90, 0.75);
-        font-family: 'Exo 2';
+        font-family: @kidpixFont;
         font-weight: 600;
         font-size: 14px;
         color: #eee;
@@ -671,11 +590,17 @@ body, #layout, #menu-bar {
 
     &[data-theme~='purple'] {
         background-color: @tooltipBg;
-        font-size: 17px;
-        font-weight: 200;
+        font-size: 1.2em;
+        font-weight: 100;
         backdrop-filter: blur(2px);
-        padding: 4px;
+        padding: 6px;
         border-radius: @borderRadius;
+        letter-spacing: 1px;
+        line-height: 1.2em;
+
+        strong {
+            font-weight: 400;
+        }
 
         &[data-placement^='bottom']>.tippy-arrow {
             &::before {
@@ -683,5 +608,105 @@ body, #layout, #menu-bar {
                 border-bottom-color: @tooltipBg;
             }
         }
+    }
+}
+
+
+// Modes & display modifiers
+
+.show-game {
+    #layout {
+        pointer-events: all;
+        opacity: 1;
+    }
+    #status {
+        display: block;
+    }
+}
+.show-overlay {
+    #game-overlay {
+        pointer-events: all;
+        opacity: 1;
+    }
+}
+.show-blur {
+    #blurred-game {
+        pointer-events: all;
+        opacity: 1;
+    }
+    #game, #canvas-texture {
+        opacity: 0;
+    }
+}
+
+.mode-paused {
+    #play-icon {
+        display: block;
+    }
+    #pause-icon {
+        display: none;
+    }
+
+    #game-overlay {
+        #overlay-title {
+            .white-with-purple-shadow();
+        }
+        #overlay-body {
+            display: none;
+        }
+        #overlay-btns {
+            margin-top: 1.75em;
+            .overlay-btn {
+                width: 7em;
+            }
+            #resume, #quit {
+                display: inline-block; // prevent margin collapsing by alternating inline-block & block
+            }
+            #retry {
+                display: block;
+            }
+        }
+    }
+}
+.mode-new-level {
+    #game-overlay {
+        #overlay-title {
+            color: @purple;
+        }
+        #overlay-body {
+            color: white;
+            text-shadow: 0 0 2px @purple, 0 0 1px @purple, 2px 2px 1px @purple;
+            text-align: center;
+        }
+        #overlay-btns #start {
+            display: inline-block;
+        }
+    }
+}
+.mode-playing {
+    #game {
+        cursor: crosshair;
+    }
+    #reticle {
+        display: block;
+    }
+}
+.mode-complete {
+    #game-overlay {
+        #overlay-title {
+            .white-with-purple-shadow();
+        }
+        #overlay-body {
+            color: @purple;
+            text-shadow: 2px 2px 0 white;
+        }
+        #overlay-btns #retry {
+            display: inline-block;
+        }
+    }
+}
+.mode-transitioning {
+    #game {
+        cursor: none;
     }
 }

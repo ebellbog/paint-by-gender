@@ -7,6 +7,16 @@ import {COLORS, BRUSH_TYPES,
     LEVEL_DATA, CHALLENGE_DATA,
     GAME_MODE, GAME_OUTCOME} from './enums';
 
+import {
+    getCanvas, getContext,
+    rgbToStr, rgbSum,
+    midPointBtw, getDistance,
+    getPolyPath, drawPolygon, joinPolys
+} from './utils';
+
+import ALL_LEVELS from './config'; // Just for smoke testing right now
+import PbgTimer from './timer';
+
 
 /* Global state */
 
@@ -19,12 +29,14 @@ const gameState = {
 };
 
 let tooltips, canvasScale, canvasSize;
-let _$reticle, _$gameCanvas;
+let _$reticle;
 
 
 /* Initialization & event handlers */
 
 $(document).ready(function () {
+    console.log(ALL_LEVELS[0].levelName);
+
     tippy('#help-icon', {
         allowHTML: true,
         maxWidth: 425,
@@ -32,8 +44,8 @@ $(document).ready(function () {
         theme: 'purple',
     });
 
-    const $canvas = $('#game');
-    const ctx = getContext($canvas);
+    const $canvas = getCanvas();
+    const ctx = getContext();
 
     canvasSize = parseInt($canvas.attr('height'));
     canvasScale = $canvas.height() / canvasSize;
@@ -259,29 +271,6 @@ function randomAffirmation() {
     return affirmations[Math.floor(Math.random() * affirmations.length)];
 }
 
-function rgbToStr(rgbList) {
-    return 'rgb(' + rgbList.join(', ') + ')';
-}
-
-// significantly faster than reduce
-// format: R, G, B, A
-function rgbSum(pixelData, start) {
-    if (!pixelData) return;
-    if (!start) start = 0;
-    return pixelData[start] + pixelData[start + 1] + pixelData[start + 2];
-}
-
-function midPointBtw(p1, p2) {
-    return {
-        x: p1.x + (p2.x - p1.x) / 2,
-        y: p1.y + (p2.y - p1.y) / 2
-    };
-}
-
-function getDistance(p1, p2) {
-    return Math.pow(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2), 0.5);
-}
-
 function getPathPoint(canvas, e) {
     const rect = canvas.getBoundingClientRect();
     let x = (e.clientX - rect.left) / canvasScale;
@@ -303,10 +292,6 @@ function getPathPoint(canvas, e) {
     };
 }
 
-function getContext($canvas) {
-    var ctx = ($canvas || getCanvas())[0].getContext('2d');
-    return ctx;
-}
 
 function updateUndoStatus() {
     const {undosRemaining} = gameState;
@@ -324,10 +309,6 @@ function updateUndoStatus() {
 
 /* Logic functions */
 
-function getCanvas() {
-    if (!_$gameCanvas) _$gameCanvas = $('#game');
-    return _$gameCanvas;
-}
 
 function analyzeCanvas() {
     // TODO: only 1/4 canvas at a time? either by region or modulus?
@@ -343,7 +324,7 @@ function analyzeCanvas() {
 
     for (var i = 0; i < imageData.length; i += 4) {
         switch (rgbSum(imageData, i)) {
-            case rgbSum(COLORS.shape):
+            case rgbSum(COLORS.white):
                 totals.unpainted++;
                 break;
             case rgbSum(COLORS.paint):
@@ -477,7 +458,6 @@ function initChallenge(level, challengeIndex) {
     COLORS.paint = CHALLENGE_DATA.paintColor;
     COLORS.canvas = CHALLENGE_DATA.canvasColor;
     COLORS.spill = CHALLENGE_DATA.spillColor;
-    COLORS.shape = CHALLENGE_DATA.shapeColor;
 
     $('#game-wrapper').css('background-color', rgbToStr(COLORS.canvas));
     $('#percent-painted .slider-fill').css('background-color', rgbToStr(COLORS.paint));
@@ -507,7 +487,7 @@ function drawChallenge(level, challengeIndex) {
 
     ctx.fillStyle = rgbToStr(COLORS.canvas);
     ctx.fillRect(0, 0, canvasSize, canvasSize);
-    ctx.fillStyle = rgbToStr(COLORS.shape);
+    ctx.fillStyle = rgbToStr(COLORS.white);
 
     ctx.strokeStyle = '#444';
     ctx.lineWidth = 3.5;
@@ -537,7 +517,6 @@ function drawChallenge(level, challengeIndex) {
             ctx.bezierCurveTo(269 + xoff, 75 + yoff, 279 + xoff, 58 + yoff, 302 + xoff, 57 + yoff);
 
             ctx.closePath();
-
             break;
         case 2: // Design: Heart
             xoff = -15;
@@ -553,6 +532,7 @@ function drawChallenge(level, challengeIndex) {
             ctx.bezierCurveTo(296 + xoff, 171 + yoff, 347 + xoff, 60 + yoff, 440 + xoff, 101 + yoff);
             ctx.bezierCurveTo(516 + xoff, 135 + yoff, 500 + xoff, 219 + yoff, 469 + xoff, 248 + yoff);
 
+            ctx.closePath();
             break;
         case 3:
         case 4: // Design: "QR code" squares
@@ -746,7 +726,7 @@ function setGameMode(mode) {
 
 function updateModeClass(mode) {
     const $body = $('body');
-    $body.removeClass((_idx, className) => className.includes('mode-') ? className : false);
+    $body.removeClass((_idx, allClasses) => allClasses.split(' ').filter((className) => className.includes('mode-')).join(' '));
     if (mode !== undefined) $body.addClass(`mode-${mode}`);
 }
 
@@ -835,11 +815,9 @@ function pauseGame(withBlur) {
 }
 
 function updateBlurLayer() {
-    const $game = $('#game');
     const $blurredGame = $('#blurred-game');
-
     const blurredCtx = getContext($blurredGame);
-    blurredCtx.drawImage($game[0], 0, 0);
+    blurredCtx.drawImage(getCanvas()[0], 0, 0);
 }
 
 function fadeIn(options) {
@@ -1118,57 +1096,6 @@ function globalToGameCoords(e) {
 function getReticle() {
     if (!_$reticle) _$reticle = $('#reticle');
     return _$reticle;
-}
-
-
-/* Poly draw functions */
-
-function getPolyPath(x, y, sides, size, rotation, starred) {
-    var rotation = rotation || (Math.PI - (Math.PI * 2 / sides)) / 2;
-    var path = [];
-
-    if (starred) sides = sides * 2;
-    for (var i = 0; i < sides; i++) {
-        var dist = starred ? (i % 2 ? size / 2 : size) : size;
-        var angle = (Math.PI * 2 / sides) * i + rotation;
-        var ptX = x + dist * Math.cos(angle);
-        var ptY = y + dist * Math.sin(angle);
-        path.push({ x: ptX, y: ptY });
-    }
-    return path;
-}
-
-function drawPolygon(ctx, x, y, sides, size, options) {
-    options = options || {};
-
-    var path = getPolyPath(x, y, sides, size, options.rotation, options.starred);
-    var start = path.shift();
-
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    path.map(p => ctx.lineTo(p.x, p.y));
-    ctx.closePath();
-
-    if (options.style == 'fill') {
-        if (options.color) ctx.fillStyle = options.color;
-        ctx.fill();
-    } else {
-        if (options.color) ctx.strokeStyle = options.color;
-        ctx.stroke();
-    }
-}
-
-function joinPolys(ctx, p1, p2) {
-    if (p1.length != p2.length) return;
-    for (var i = 0; i < p1.length; i++) {
-        var j = (i + 1) % p1.length;
-        ctx.beginPath();
-        ctx.moveTo(p1[i].x, p1[i].y);
-        ctx.lineTo(p1[j].x, p1[j].y);
-        ctx.lineTo(p2[j].x, p2[j].y);
-        ctx.lineTo(p2[i].x, p2[i].y);
-        ctx.fill();
-    }
 }
 
 
