@@ -14,8 +14,9 @@ import {
     getPolyPath, drawPolygon, joinPolys
 } from './utils';
 
-import ALL_LEVELS from './config'; // Just for smoke testing right now
-import PbgTimer from './timer';
+
+import PbgGame from './game';
+import levelData from './config';
 
 
 /* Global state */
@@ -25,8 +26,9 @@ const gameState = {
     challengeIndex: 0,
     toolTypeIdx: 0,
     toolOptionIdx: 1,
-    timer: new PbgTimer(),
 };
+
+const gameInstance = new PbgGame(levelData);
 
 let tooltips, canvasScale, canvasSize;
 let _$reticle;
@@ -35,8 +37,6 @@ let _$reticle;
 /* Initialization & event handlers */
 
 $(document).ready(function () {
-    console.log(ALL_LEVELS[0].levelName);
-
     tippy('#help-icon', {
         allowHTML: true,
         maxWidth: 425,
@@ -232,7 +232,7 @@ $(document).ready(function () {
         setGameMode(GAME_MODE.resuming);
     });
 
-    gameState.timer.on('clocked', () => {
+    gameInstance.timer.on('clocked', () => {
         gameState.outcome = GAME_OUTCOME.clocked;
         setGameMode(GAME_MODE.complete);
     })
@@ -341,32 +341,29 @@ function analyzeCanvas() {
 }
 
 function updatePercentPainted() {
-    var canvasData = analyzeCanvas();
+    const canvasData = analyzeCanvas();
+    const maxSpill = gameInstance.currentChallenge.maxSpill;
 
-    var percent, spill, maxSpill;
+    let percent, spill;
     if (COLORS.spill) {
         percent = canvasData.painted / (canvasData.painted + canvasData.unpainted);
         spill = canvasData.spill;
-        maxSpill = 12000;
     } else {
         percent = (gameState.maxShape - canvasData.unpainted) / gameState.maxShape;
         spill = gameState.maxCanvas - canvasData.canvas;
-        maxSpill = 7000; // TODO: this number should be level- AND challenge-dependent
     }
 
-    var $slider = $('#percent-painted .slider-outline');
-    var height = $slider.height();
-    var $fill = $('#percent-painted .slider-fill');
-    $fill.css('height', height * percent);
+    const $fill = $('#percent-painted .slider-fill');
+    $fill.css('height', `${percent * 98.6}%`);
 
-    var bottom;
+    let bottom;
     if (spill >= maxSpill) {
-        bottom = height - 10;
+        bottom = 'calc(100% - 17px)';
     } else {
-        bottom = (height - 10) * spill / maxSpill + 2;
+        bottom =  `calc(${95.5 * spill / maxSpill}% + 2px)`;
     }
 
-    var $spillSlider = $('#spill-warning .slider-mark');
+    const $spillSlider = $('#spill-warning .slider-mark');
     $spillSlider.css({bottom});
 
     if (gameState.mode != GAME_MODE.playing) return;
@@ -382,9 +379,15 @@ function updatePercentPainted() {
     }
 }
 
+function resetPercentPainted() {
+    $('#spill-warning .slider-mark').css('bottom', '2px');
+    $('#percent-painted .slider-fill').css('height', '0%');
+    gameInstance.resetDom();
+}
+
 function nextChallenge() {
-    gameState.challengeIndex += 1;
-    if (gameState.challengeIndex == LEVEL_DATA[gameState.level].challenges.length) {
+    gameInstance.nextChallenge();
+    if (gameInstance.currentLevel.challengeIdx == gameInstance.currentLevel.challenges.length) {
         gameState.outcome = GAME_OUTCOME.passed;
         setGameMode(GAME_MODE.complete);
     } else {
@@ -404,19 +407,17 @@ function initGame() {
 }
 
 function resetGame(onlyChallenge) {
-    // TODO: handle more of this with CSS classes
-    $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
-    $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
-
     resetState();
 
     if (onlyChallenge) {
-        drawChallenge(gameState.level, gameState.challengeIndex);
+        gameInstance.resetDom();
+        gameInstance.drawChallenge();
     } else {
         // Facilitate testing specific challenges via query param
         const searchParams = new URLSearchParams(location.search);
         const startingChallenge = parseInt(searchParams.get('c') || 0);
 
+        gameInstance.resetAll();
         gameState.challengeIndex = startingChallenge;
         initChallenge(gameState.level, startingChallenge);
     }
@@ -426,7 +427,7 @@ function resetGame(onlyChallenge) {
     updateUndoStatus();
     updateBlurLayer();
 
-    gameState.timer.reset();
+    gameInstance.timer.reset();
 }
 
 function updateLevelIcon(level, challengeIndex) {
@@ -447,7 +448,7 @@ function resetState() {
     gameState.strokes = [];
     gameState.isDrawing = 0;
     gameState.undosRemaining = 3;
-    gameState.timer.reset();
+    gameInstance.resetCurrent();
 }
 
 function initChallenge(level, challengeIndex) {
@@ -459,7 +460,7 @@ function initChallenge(level, challengeIndex) {
     $('#game-wrapper').css('background-color', rgbToStr(COLORS.canvas));
     $('#percent-painted .slider-fill').css('background-color', rgbToStr(COLORS.paint));
 
-    gameState.timer.timeLimit = CHALLENGE_DATA.maxTime;
+    gameInstance.timer.timeLimit = CHALLENGE_DATA.maxTime;
     gameState.enabledTools = CHALLENGE_DATA.enabledTools;
 
     validateToolType();
@@ -468,98 +469,11 @@ function initChallenge(level, challengeIndex) {
     setTooltips(level);
 
     updateLevelIcon(level, challengeIndex);
-    drawChallenge(level, challengeIndex);
+    gameInstance.drawChallenge();
 
     var canvasData = analyzeCanvas();
     gameState.maxShape = canvasData.unpainted;
     gameState.maxCanvas = canvasData.canvas;
-}
-
-function drawChallenge(level, challengeIndex) {
-    var challenge = LEVEL_DATA[level].challenges[challengeIndex];
-
-    var ctx = getContext();
-    ctx.save();
-    ctx.globalCompositeOperation = 'source-over';
-
-    ctx.fillStyle = rgbToStr(COLORS.canvas);
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
-    ctx.fillStyle = rgbToStr(COLORS.white);
-
-    ctx.strokeStyle = '#444';
-    ctx.lineWidth = 3.5;
-
-    let xoff, yoff;
-
-    switch (challenge) {
-        case 1: // Design: Body/toy curves
-            xoff = -100;
-            yoff = -20;
-
-            ctx.scale(1.35, 1.22);
-            ctx.beginPath();
-
-            ctx.moveTo(304 + xoff, 57 + yoff);
-            ctx.bezierCurveTo(326 + xoff, 57 + yoff, 335 + xoff, 77 + yoff, 338 + xoff, 91 + yoff);
-            ctx.bezierCurveTo(342 + xoff, 113 + yoff, 325 + xoff, 118 + yoff, 328 + xoff, 133 + yoff);
-            ctx.bezierCurveTo(331 + xoff, 149 + yoff, 362 + xoff, 160 + yoff, 364 + xoff, 193 + yoff);
-            ctx.bezierCurveTo(366 + xoff, 229 + yoff, 341 + xoff, 236 + yoff, 350 + xoff, 259 + yoff);
-            ctx.bezierCurveTo(358 + xoff, 279 + yoff, 383 + xoff, 278 + yoff, 385 + xoff, 331 + yoff);
-            ctx.bezierCurveTo(386 + xoff, 353 + yoff, 362 + xoff, 417 + yoff, 297 + xoff, 417 + yoff);
-            ctx.bezierCurveTo(238 + xoff, 417 + yoff, 207 + xoff, 364 + yoff, 212 + xoff, 324 + yoff);
-            ctx.bezierCurveTo(219 + xoff, 272 + yoff, 247 + xoff, 271 + yoff, 250 + xoff, 251 + yoff);
-            ctx.bezierCurveTo(253 + xoff, 234 + yoff, 235 + xoff, 223 + yoff, 238 + xoff, 196 + yoff);
-            ctx.bezierCurveTo(242 + xoff, 158 + yoff, 279 + xoff, 149 + yoff, 278 + xoff, 131 + yoff);
-            ctx.bezierCurveTo(277 + xoff, 119 + yoff, 264 + xoff, 109 + yoff, 267 + xoff, 90 + yoff);
-            ctx.bezierCurveTo(269 + xoff, 75 + yoff, 279 + xoff, 58 + yoff, 302 + xoff, 57 + yoff);
-
-            ctx.closePath();
-            break;
-        case 2: // Design: Heart
-            xoff = -15;
-            yoff = 5;
-
-            ctx.beginPath();
-
-            // generated at http://www.victoriakirst.com/beziertool/
-            ctx.moveTo(289 + xoff, 446 + yoff);
-            ctx.bezierCurveTo(197 + xoff, 355 + yoff, 150 + xoff, 316 + yoff, 89 + xoff, 236 + yoff);
-            ctx.bezierCurveTo(67 + xoff, 207 + yoff, 77 + xoff, 124 + yoff, 144 + xoff, 100 + yoff);
-            ctx.bezierCurveTo(225 + xoff, 71 + yoff, 273 + xoff, 145 + yoff, 291 + xoff, 184 + yoff);
-            ctx.bezierCurveTo(296 + xoff, 171 + yoff, 347 + xoff, 60 + yoff, 440 + xoff, 101 + yoff);
-            ctx.bezierCurveTo(516 + xoff, 135 + yoff, 500 + xoff, 219 + yoff, 469 + xoff, 248 + yoff);
-
-            ctx.closePath();
-            break;
-        case 3:
-        case 4: // Design: "QR code" squares
-            const ss = BRUSH_TYPES[1].sizes[0];
-            const ms = BRUSH_TYPES[1].sizes[1];
-            const ls = BRUSH_TYPES[1].sizes[2];
-
-            ctx.beginPath();
-
-            ctx.rect(0, 0, ls, ls);
-            ctx.rect(ls, canvasSize - 2 * ls, ls, ls);
-            ctx.rect(canvasSize - ls * 2, ls, ls, ls);
-            ctx.rect(canvasSize - ls, canvasSize - ls, ls, ls);
-
-            ctx.rect(2 * ls - ss, 2 * ls - ss, ls + 2 * ss, ls + 2 * ss);
-
-            ctx.rect(ms, ms, canvasSize - ms * 2, ms);
-            ctx.rect(ms, canvasSize - ms * 2, canvasSize - ms * 2, ms);
-            ctx.rect(ms, ms * 2, ms, canvasSize - ms * 4);
-            ctx.rect(canvasSize - ms * 2, ms * 2, ms, canvasSize - ms * 4);
-
-            break;
-        default:
-            break;
-    }
-
-    ctx.stroke();
-    ctx.fill();
-
-    ctx.restore();
 }
 
 // TODO: update for Kidpix UI
@@ -640,7 +554,7 @@ function setGameMode(mode) {
                         delay: .75,
                         callback: () => {
                             updateModeClass();
-                            gameState.timer.restart();
+                            gameInstance.timer.restart();
                             setGameMode(GAME_MODE.playing);
                         }
                     });
@@ -658,17 +572,14 @@ function setGameMode(mode) {
             updateModeClass(mode);
 
             setTimeout(() => wipeOut(() => {
-                // TODO: handle more of this with CSS classes
-                $('#percent-painted .slider-fill').animate({ height: 0 });
-                $('#spill-warning .slider-mark').animate({ bottom: 2 });
-                $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
+                resetPercentPainted();
 
-                initChallenge(gameState.level, gameState.challengeIndex);
+                initChallenge(gameState.level, gameInstance.currentLevel.challengeIdx);
                 resetState();
                 updateUndoStatus();
 
                 wipeIn(() => {
-                    gameState.timer.restart();
+                    gameInstance.timer.restart();
                     setGameMode(GAME_MODE.playing);
                 });
             }), 1000);
@@ -688,7 +599,7 @@ function setGameMode(mode) {
             fadeIn({
                 callback: () => {
                     updateModeClass();
-                    gameState.timer.restart(false);
+                    gameInstance.timer.restart(false);
                     setGameMode(GAME_MODE.playing);
                 },
             });
@@ -721,7 +632,7 @@ function updateModeClass(mode) {
 
 function pauseGame(withBlur) {
     gameState.isDrawing = false;
-    gameState.timer.pause();
+    gameInstance.timer.pause();
 
     if (withBlur) {
         updateBlurLayer();
@@ -803,7 +714,7 @@ function wipeIn(cb, y, time, ctx) {
     var newY = y + timeCoefficient * speedCoefficient;
 
     ctx.clearRect(0, 0, canvasSize, canvasSize);
-    drawChallenge(gameState.level, gameState.challengeIndex);
+    gameInstance.drawChallenge();
     setupContext(ctx, 'transition');
     ctx.fillRect(0, 0, canvasSize, canvasSize - newY);
     setTimeout(() => wipeIn(cb, newY, newTime, ctx), 0);
@@ -1059,7 +970,7 @@ function drawPath(ctx, pts) {
 }
 
 function redrawGame(ctx) {
-    drawChallenge(gameState.level, gameState.challengeIndex);
+    gameInstance.drawChallenge();
     setupContext(ctx, 'painting');
 
     var total = 0;

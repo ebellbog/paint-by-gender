@@ -1,4 +1,5 @@
 import PbgTimer from './timer';
+import {getContext} from './utils';
 
 class PbgGame {
     // Required config
@@ -18,18 +19,25 @@ class PbgGame {
     strokes = [];
     isDrawing = false;
 
+    outcome = null;
+
     constructor(levels) {
         this.levels = levels;
         this.timer = new PbgTimer();
     }
 
-    reset() {
+    resetAll() {
+        this.resetCurrent();
+        this.resetDom();
+
         this.levelIdx = 0;
+        this.levels.forEach((level) => level.reset());
+    }
+
+    resetCurrent() {
         this.strokes = [];
         this.isDrawing = false;
-
         this.timer.reset();
-        this.levels.forEach((level) => level.reset());
     }
 
     resetDom() {
@@ -46,6 +54,24 @@ class PbgGame {
         }
     }
 
+    redraw() {
+        const ctx = getContext();
+
+        ctx.lineJoin = ctx.lineCap = 'round';
+        ctx.strokeStyle = ctx.fillStyle = rgbToStr(COLORS.paint);
+        ctx.globalCompositeOperation = 'darken';
+
+        // TODO: complete
+    }
+
+    drawChallenge() {
+        this.currentChallenge.draw();
+    }
+
+    nextChallenge() {
+        this.currentLevel.challengeIdx++;
+    }
+
     get currentLevel() {
         return this.levels[this.levelIdx];
     }
@@ -54,4 +80,5 @@ class PbgGame {
         return this.currentLevel.currentChallenge;
     }
 }
+
 export default PbgGame;

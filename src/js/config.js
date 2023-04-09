@@ -8,13 +8,13 @@ const level1 = new PbgLevel(
         new PbgChallenge({
             shape: SHAPES.curvyToy,
             timeLimit: 25,
-            maxSpill: 1200,
+            maxSpill: 7000,
             enabledTools: [1, 0, 0],
         }),
         new PbgChallenge({
             shape: SHAPES.qrCode,
             timeLimit: 30,
-            maxSpill: 7000,
+            maxSpill: 9000,
             enabledTools: [0, 1, 0],
         }),
     ]
