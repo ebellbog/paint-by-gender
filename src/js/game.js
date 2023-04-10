@@ -28,7 +28,6 @@ class PbgGame {
 
     resetAll() {
         this.resetCurrent();
-        this.resetDom();
 
         this.levelIdx = 0;
         this.levels.forEach((level) => level.reset());
@@ -42,6 +41,8 @@ class PbgGame {
 
         this.currentChallenge.reset();
         this.timer.reset();
+
+        this.resetDom();
     }
 
     resetDom() {
@@ -93,7 +94,7 @@ class PbgGame {
         const EMPTY_CLASS = 'far', FILLED_CLASS = 'fas';
 
         this.currentLevel.challenges.forEach((challenge) => {
-            const roundBrushEnabled = challenge.enabledTools[0];
+            const roundBrushEnabled = this.isToolEnabled(0, challenge);
             const challengeCompleted = challenge.completionTime;
 
             const iconClasses = [
@@ -114,6 +115,10 @@ class PbgGame {
         const endMessages = this.currentLevel.endMessages[this.outcome];
         $('#overlay-title').html(endMessages[0]);
         $('#overlay-body').html(endMessages[1]);
+    }
+
+    isToolEnabled(idx, challenge) {
+        return (challenge || this.currentChallenge).enabledTools[idx];
     }
 
     // Getters

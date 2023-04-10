@@ -1,8 +1,6 @@
 const COLORS = {
     innerReticle: [153, 153, 153],
     outerReticle: [221, 221, 221],
-    enabledOption: [255, 255, 255],
-    disabledOption: [110, 110, 110],
     white: [255, 255, 255],
     purple: [128, 0, 128],
     pink: [255, 150, 150],

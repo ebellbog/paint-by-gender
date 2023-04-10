@@ -28,6 +28,8 @@ class PbgChallenge {
 
     reset() {
         this.undosRemaining = this.maxUndos;
+        this.updateUndoStatus();
+
         this.completionTime = 0;
         this.attempts = 0;
     }

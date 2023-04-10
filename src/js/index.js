@@ -201,7 +201,7 @@ $(document).ready(function () {
             if (isRadio) {
                 const groupType = $group.data('group');
                 if (groupType === 'toolType') {
-                    if (!isToolEnabled(inputIdx)) return;
+                    if (!gameInstance.isToolEnabled(inputIdx)) return;
                     gameState.toolTypeIdx = inputIdx;
                 } else {
                     gameState.toolOptionIdx = inputIdx;
@@ -406,22 +406,22 @@ function resetGame(onlyChallenge) {
     resetState();
 
     if (onlyChallenge) {
-        gameInstance.resetDom();
+        gameInstance.resetCurrent();
         gameInstance.drawChallenge();
     } else {
+        gameInstance.resetAll();
+
         // Facilitate testing specific challenges via query param
         const searchParams = new URLSearchParams(location.search);
-        const startingChallenge = parseInt(searchParams.get('c') || 0);
-
-        gameInstance.resetAll();
-        gameState.challengeIndex = startingChallenge;
+        const startingChallenge = parseInt(searchParams.get('c'));
+        if (startingChallenge) {
+            gameInstance.currentLevel.challengeIdx = startingChallenge;
+        }
 
         initChallenge();
     }
 
     updatePercentPainted();
-
-    gameInstance.currentChallenge.updateUndoStatus();
     updateBlurLayer();
 
     gameInstance.timer.reset();
@@ -430,12 +430,10 @@ function resetGame(onlyChallenge) {
 function resetState() {
     gameState.strokes = [];
     gameState.isDrawing = 0;
-    gameInstance.resetCurrent();
 }
 
 function initChallenge() {
     gameInstance.timer.timeLimit = gameInstance.currentChallenge.timeLimit;
-    gameState.enabledTools = gameInstance.currentChallenge.enabledTools;
 
     validateToolType();
 
@@ -459,7 +457,7 @@ function setTooltips(level) {
 
     $('.tool-wrapper').each(function (toolIndex) {
         $(this).find('.tool-option').each(function (optionIndex) {
-            var enabled = gameState.enabledOptions[toolIndex][optionIndex];
+            // var enabled = gameState.enabledOptions[toolIndex][optionIndex];
             $(this).toggleClass('disabled', !enabled);
             if (enabled) {
                 $(this).removeAttr('data-tippy-content');
@@ -535,9 +533,10 @@ function setGameMode(mode) {
             setTimeout(() => transitionManager.wipeOut(() => {
                 resetPercentPainted();
 
-                initChallenge();
                 resetState();
-                gameInstance.currentChallenge.updateUndoStatus();
+                gameInstance.resetCurrent();
+
+                initChallenge();
 
                 transitionManager.wipeIn(() => {
                     gameInstance.timer.restart();
@@ -557,7 +556,7 @@ function setGameMode(mode) {
             break;
         case GAME_MODE.resuming:
             $body.removeClass('show-overlay show-blur');
-            fadeIn({
+            transitionManager.fadeIn({
                 callback: () => {
                     updateModeClass();
                     gameInstance.timer.restart(false);
@@ -644,90 +643,50 @@ function showCountdown(count, options) {
 /* Tool options & selectors */
 
 function drawToolOptions() {
-    var enabledColor = rgbToStr(COLORS.enabledOption);
-    var disabledColor = rgbToStr(COLORS.disabledOption);
+    const starred = isStarred();
+    const sides = getBrushSides();
+    let size = sides ? 5 : 4;
 
-    // draw brush size
-
-    var sides = getBrushSides();
-    var size = sides ? 5 : 4;
-    var starred = isStarred();
-
-    $('#footer canvas').each(function (index) {
-        var $canvas = $(this);
-        var ctx = getContext($canvas);
+    $('#footer canvas').each((_idx, canvas) => {
+        const $canvas = $(canvas);
+        const ctx = getContext($canvas);
         ctx.clearRect(0, 0, $canvas.width(), $canvas.height());
 
-        var centerX = $canvas.width() / 2;
-        var centerY = centerX;
+        let centerX = $canvas.width() / 2;
+        let centerY = centerX;
 
         if (!sides) {
-            ctx.fillStyle = enabledColor;
+            ctx.fillStyle = 'white';
             ctx.beginPath();
             ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
             ctx.fill();
             size += 6;
         } else {
-            var centerX = $canvas.width() / 2;
-            var centerY = centerX;
+            centerX = $canvas.width() / 2;
+            centerY = centerX;
             if (sides == 5) centerY += 1;
-            drawPolygon(ctx, centerX, centerY, sides, size, { style: 'fill', color: enabledColor, starred: starred });
+            drawPolygon(ctx, centerX, centerY, sides, size, {style: 'fill', color: 'white', starred: starred});
             size += 7;
         }
     });
 
-    // draw brush shape
-
-    var sideValues = BRUSH_TYPES.map(v => v.sides);
-
-    $('#brush-shape canvas').each(function (index) {
-        var optionColor = gameState.enabledOptions[1][index] ? enabledColor : disabledColor;
-        var $canvas = $(this);
-        var ctx = getContext($canvas);
-        ctx.clearRect(0, 0, $canvas.width(), $canvas.height());
-
-        var centerX = $canvas.width() / 2;
-        var centerY = centerX;
-        size = 13;
-
-        sides = sideValues[index];
-        starred = BRUSH_TYPES[index].starred;
-
-        if (!sides) {
-            ctx.fillStyle = optionColor;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, size - 2, 0, Math.PI * 2);
-            ctx.fill();
-        } else {
-            var centerX = $canvas.width() / 2;
-            var centerY = centerX;
-            if (sides == 5) centerY += 1;
-            drawPolygon(ctx, centerX, centerY, sides, size, { style: 'fill', color: optionColor, starred: starred });
-        }
-    });
-
-    // set tool type color
-
     $('[data-group="toolType"] .tool').each((idx, el) => {
-        const {enabledTools} = gameState;
-        $(el).toggleClass('disabled', !enabledTools[idx]);
+        $(el).toggleClass('disabled', !gameInstance.isToolEnabled(idx));
     });
 }
 
 function validateToolType() {
-    let {toolTypeIdx: idx, enabledTools} = gameState;
-    idx = (idx + enabledTools.length) % enabledTools.length;
+    const numTools = BRUSH_TYPES.length;
 
-    while (!isToolEnabled(idx)) {
-        idx = (idx + 1) % enabledTools.length;
+    let {toolTypeIdx: idx} = gameState;
+    idx = (idx + numTools) % numTools;
+
+    while (!gameInstance.isToolEnabled(idx)) {
+        idx = (idx + 1) % numTools;
     }
 
     gameState.toolTypeIdx = idx;
     updateRadioGroup('toolType', idx);
-}
-
-function isToolEnabled(index) {
-    return gameState.enabledTools[index] === 1;
 }
 
 function updateRadioGroup(radioGroup, optionIndex) {
