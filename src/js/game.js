@@ -13,10 +13,7 @@ class PbgGame {
     levelIdx = 0;
 
     toolTypeIdx = 0;
-    toolOptionIdx = 0;
-
-    strokes = [];
-    isDrawing = false;
+    toolOptionIdx = 1;
 
     mode = null;
     outcome = null;
@@ -26,23 +23,25 @@ class PbgGame {
         this.timer = new PbgTimer();
     }
 
+    _reset(resetAll) {
+        if (resetAll) {
+            this.levelIdx = 0;
+            this.levels.forEach((level) => level.reset());
+            this.setChallengeIcon();
+        } else {
+            this.currentChallenge.reset();
+        }
+
+        this.timer.reset();
+        this.resetDom();
+    }
+
     resetAll() {
-        this.resetCurrent();
-
-        this.levelIdx = 0;
-        this.levels.forEach((level) => level.reset());
-
-        this.setChallengeIcon();
+        this._reset(true);
     }
 
     resetCurrent() {
-        this.strokes = [];
-        this.isDrawing = false;
-
-        this.currentChallenge.reset();
-        this.timer.reset();
-
-        this.resetDom();
+        this._reset();
     }
 
     resetDom() {
@@ -122,16 +121,17 @@ class PbgGame {
     }
 
     // Getters
+
     get currentLevel() {
         return this.levels[this.levelIdx];
     }
 
     get currentChallenge() {
-        return this.currentLevel.currentChallenge;
+        return this.currentLevel?.currentChallenge;
     }
 
     get bgColor() {
-        return this.currentChallenge.shape.bgColor;
+        return this.currentChallenge?.shape.bgColor;
     }
 }
 

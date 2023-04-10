@@ -15,18 +15,15 @@ import {
 
 
 import PbgGame from './game';
+import PbgCanvas from './canvas';
 import PbgTransitionManager from './transitions';
 import levelData from './config';
 
 
 /* Global state */
 
-const gameState = {
-    toolTypeIdx: 0,
-    toolOptionIdx: 1,
-};
-
 const gameInstance = new PbgGame(levelData);
+const pbgCanvas = new PbgCanvas();
 const transitionManager = new PbgTransitionManager(gameInstance);
 
 let tooltips, canvasScale, canvasSize;
@@ -52,29 +49,27 @@ $(document).ready(function () {
     initGame();
 
     $canvas.on('mousedown', function (e) {
-        if (gameState.mode != GAME_MODE.playing) return;
+        if (gameInstance.mode != GAME_MODE.playing) return;
 
-        gameState.isDrawing = 1;
-        gameState.buffer = [];
+        pbgCanvas.startDrawing();
 
-        var strokes = gameState.strokes;
+        const strokes = pbgCanvas.strokes;
         if (!strokes.length) strokes.push([]);
 
-        var pt = getPathPoint($canvas[0], e);
+        const pt = getPathPoint($canvas[0], e);
         strokes[strokes.length - 1].push(pt);
 
         drawPoint(ctx, pt);
         updatePercentAsync();
-        $('#strokes').html(strokes.length);
     });
 
     $canvas.on('mousemove', function (e) {
         updateReticle(e);
 
-        if (!gameState.isDrawing) return;
+        if (!pbgCanvas.isDrawing) return;
 
-        var strokes = gameState.strokes;
-        var buffer = gameState.buffer;
+        var strokes = pbgCanvas.strokes;
+        var buffer = pbgCanvas.buffer;
 
         var curPos = getPathPoint($canvas[0], e);
         var lastPos = strokes[strokes.length - 1].slice(-1)[0];
@@ -83,7 +78,7 @@ $(document).ready(function () {
             if (getDistance(curPos, lastPos) < 10) {
                 buffer.push(curPos);
             } else {
-                gameState.buffer = [];
+                pbgCanvas.buffer = [];
             }
         }
 
@@ -92,7 +87,7 @@ $(document).ready(function () {
             var avgPos = { x: totals.x / buffer.length, y: totals.y / buffer.length, brushSize: buffer[0].brushSize };
 
             strokes[strokes.length - 1].splice(-(buffer.length - 1), buffer.length - 1, avgPos);
-            gameState.buffer = [curPos];
+            pbgCanvas.buffer = [curPos];
         }
 
         strokes[strokes.length - 1].push(curPos);
@@ -104,14 +99,7 @@ $(document).ready(function () {
     });
 
     $(document).on('mouseup', function () {
-        gameState.isDrawing = false;
-        if (gameState.mode != GAME_MODE.playing) return;
-
-        const {strokes} = gameState;
-        if (strokes.length && strokes[strokes.length - 1].length > 0) {
-            strokes.push([]);
-        }
-
+        pbgCanvas.stopDrawing();
         updatePercentPainted();
     });
 
@@ -120,32 +108,32 @@ $(document).ready(function () {
 
         switch (e.which) {
             case 38: // up arrow
-                gameState.toolTypeIdx -= 2;
+                gameInstance.toolTypeIdx -= 2;
             case 40: // down arrow
-                gameState.toolTypeIdx++;
+                gameInstance.toolTypeIdx++;
                 validateToolType();
                 drawToolOptions();
                 break;
             case 37: // left arrow
-                gameState.toolOptionIdx -= 2;
+                gameInstance.toolOptionIdx -= 2;
             case 39: // right arrow
                 const sizes = getBrushType().sizes.length;
-                gameState.toolOptionIdx = (gameState.toolOptionIdx + 1 + sizes) % sizes;
-                updateRadioGroup('toolOption', gameState.toolOptionIdx);
+                gameInstance.toolOptionIdx = (gameInstance.toolOptionIdx + 1 + sizes) % sizes;
+                updateRadioGroup('toolOption', gameInstance.toolOptionIdx);
                 break;
             case 13: // return key
             case 32: // spacebar
-                if (gameState.mode == GAME_MODE.newLevel) {
+                if (gameInstance.mode == GAME_MODE.newLevel) {
                     $('#start').click();
-                } else if (gameState.mode == GAME_MODE.complete) {
+                } else if (gameInstance.mode == GAME_MODE.complete) {
                     $('#retry').click();
-                } else if (gameState.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
+                } else if (gameInstance.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
                     nextChallenge();
                 }
                 pressedArrow = false;
                 break;
             case 27:
-                if ([GAME_MODE.playing, GAME_MODE.paused].includes(gameState.mode)) {
+                if ([GAME_MODE.playing, GAME_MODE.paused].includes(gameInstance.mode)) {
                     $('#btn-pause').click();
                 }
                 break;
@@ -159,10 +147,10 @@ $(document).ready(function () {
     });
 
     $('#btn-undo').on('click', () => {
-        const {mode, strokes} = gameState;
+        const {strokes} = pbgCanvas;
         const {undosRemaining} = gameInstance.currentChallenge;
 
-        if (mode !== GAME_MODE.playing || !undosRemaining || strokes.length < 2) return;
+        if (gameInstance.mode !== GAME_MODE.playing || !undosRemaining || strokes.length < 2) return;
 
         strokes.splice(strokes.length - 2, 1);
         gameInstance.currentChallenge.undo();
@@ -172,7 +160,7 @@ $(document).ready(function () {
     });
 
     $('#retry').on('click', () => {
-        if (gameState.mode === GAME_MODE.complete) {
+        if (gameInstance.mode === GAME_MODE.complete) {
             resetGame();
         } else {
             resetGame(true);
@@ -202,9 +190,9 @@ $(document).ready(function () {
                 const groupType = $group.data('group');
                 if (groupType === 'toolType') {
                     if (!gameInstance.isToolEnabled(inputIdx)) return;
-                    gameState.toolTypeIdx = inputIdx;
+                    gameInstance.toolTypeIdx = inputIdx;
                 } else {
-                    gameState.toolOptionIdx = inputIdx;
+                    gameInstance.toolOptionIdx = inputIdx;
                 }
                 $group.find('.active').removeClass('active');
             }
@@ -225,9 +213,9 @@ $(document).ready(function () {
         });
 
     $('#btn-pause').on('click', () => {
-        if (gameState.mode === GAME_MODE.playing) {
+        if (gameInstance.mode === GAME_MODE.playing) {
             setGameMode(GAME_MODE.paused);
-        } else if (gameState.mode === GAME_MODE.paused) {
+        } else if (gameInstance.mode === GAME_MODE.paused) {
             setGameMode(GAME_MODE.resuming);
         }
     });
@@ -245,13 +233,13 @@ $(document).ready(function () {
 /* Helper functions */
 
 function getBrushType() {
-    return BRUSH_TYPES[gameState.toolTypeIdx];
+    return BRUSH_TYPES[gameInstance.toolTypeIdx];
 }
 
 function getBrushSize(asDiameter) {
     const brushType = getBrushType();
     const {sizes, sides, isQuantized} = brushType;
-    let size = sizes[gameState.toolOptionIdx];
+    let size = sizes[gameInstance.toolOptionIdx];
 
     if (isQuantized && !asDiameter) size = size / (Math.cos(Math.PI / sides) * 2);
     return size;
@@ -336,6 +324,8 @@ function analyzeCanvas() {
 }
 
 function updatePercentPainted() {
+    if (!gameInstance.currentChallenge) return;
+
     const canvasData = analyzeCanvas();
     const maxSpill = gameInstance.currentChallenge.maxSpill;
 
@@ -344,8 +334,8 @@ function updatePercentPainted() {
         percent = canvasData.painted / (canvasData.painted + canvasData.unpainted);
         spill = canvasData.spill;
     } else {
-        percent = (gameState.maxShape - canvasData.unpainted) / gameState.maxShape;
-        spill = gameState.maxCanvas - canvasData.canvas;
+        percent = (pbgCanvas.maxShape - canvasData.unpainted) / pbgCanvas.maxShape;
+        spill = pbgCanvas.maxBg - canvasData.canvas;
     }
 
     const $fill = $('#percent-painted .slider-fill');
@@ -361,13 +351,13 @@ function updatePercentPainted() {
     const $spillSlider = $('#spill-warning .slider-mark');
     $spillSlider.css({bottom});
 
-    if (gameState.mode != GAME_MODE.playing) return;
+    if (gameInstance.mode != GAME_MODE.playing) return;
     else if (spill >= maxSpill) {
         $spillSlider.css('background-color', 'red');
         gameInstance.outcome = GAME_OUTCOME.transgressed;
         setGameMode(GAME_MODE.complete);
     }
-    else if (percent >= 1 && gameState.mode == GAME_MODE.playing) {
+    else if (percent >= 1 && gameInstance.mode == GAME_MODE.playing) {
         $fill.css('background-color', '#0f0');
         $fill.css('border-radius', '6px');
         nextChallenge();
@@ -403,7 +393,7 @@ function initGame() {
 }
 
 function resetGame(onlyChallenge) {
-    resetState();
+    pbgCanvas.reset();
 
     if (onlyChallenge) {
         gameInstance.resetCurrent();
@@ -427,11 +417,6 @@ function resetGame(onlyChallenge) {
     gameInstance.timer.reset();
 }
 
-function resetState() {
-    gameState.strokes = [];
-    gameState.isDrawing = 0;
-}
-
 function initChallenge() {
     gameInstance.timer.timeLimit = gameInstance.currentChallenge.timeLimit;
 
@@ -447,8 +432,8 @@ function initChallenge() {
     gameInstance.drawChallenge();
 
     const canvasData = analyzeCanvas();
-    gameState.maxShape = canvasData.unpainted;
-    gameState.maxCanvas = canvasData.canvas;
+    pbgCanvas.maxShape = canvasData.unpainted;
+    pbgCanvas.maxBg = canvasData.canvas;
 }
 
 // TODO: update for Kidpix UI
@@ -472,23 +457,6 @@ function setTooltips(level) {
         maxWidth: '150px',
         theme: 'gray',
     });
-}
-
-function setupContext(ctx, type) {
-    switch (type) {
-        case 'painting':
-            ctx.lineJoin = ctx.lineCap = 'round';
-            ctx.strokeStyle = ctx.fillStyle = rgbToStr(getBrushColor());
-            ctx.globalCompositeOperation = 'darken';
-            break;
-        case 'transition':
-            ctx.lineJoin = ctx.lineCap = 'round';
-            ctx.lineWidth = 90; // should divide canvasSize evenly
-            ctx.strokeStyle = ctx.fillStyle = rgbToStr(COLORS.purple);
-            ctx.globalCompositeOperation = 'source-over';
-        default:
-            break;
-    }
 }
 
 function setGameMode(mode) {
@@ -533,7 +501,7 @@ function setGameMode(mode) {
             setTimeout(() => transitionManager.wipeOut(() => {
                 resetPercentPainted();
 
-                resetState();
+                pbgCanvas.reset();
                 gameInstance.resetCurrent();
 
                 initChallenge();
@@ -578,7 +546,7 @@ function setGameMode(mode) {
             break;
     }
 
-    gameState.mode = mode;
+    gameInstance.mode = mode;
 }
 
 function updateModeClass(mode) {
@@ -591,7 +559,7 @@ function updateModeClass(mode) {
 /* Timer and time-based animations */
 
 function pauseGame(withBlur) {
-    gameState.isDrawing = false;
+    pbgCanvas.isDrawing = false;
     gameInstance.timer.pause();
 
     if (withBlur) {
@@ -606,14 +574,17 @@ function updateBlurLayer() {
 }
 
 function flashExpanding(message, duration, options) {
-    var options = options || {};
-    var hold = options.hold || 200;
-    var className = 'flash ' + options.styling;
-    var expand = options.expand || 350;
+    options = options || {};
 
-    var $gameCell = $('td#main');
-    var $number = $('<div></div>').addClass(className).html(message);
-    $gameCell.append($number);
+    const hold = options.hold || 200;
+    const className = 'flash ' + options.styling;
+    const expand = options.expand || 350;
+
+    const $number = $('<div></div>')
+        .addClass(className)
+        .html(message)
+        .appendTo('td#main');
+
     setTimeout(() => $number.animate({ 'font-size': `+=${expand}`, opacity: 0 }, duration - hold, () => $number.remove()), hold);
 }
 
@@ -678,14 +649,14 @@ function drawToolOptions() {
 function validateToolType() {
     const numTools = BRUSH_TYPES.length;
 
-    let {toolTypeIdx: idx} = gameState;
+    let {toolTypeIdx: idx} = gameInstance;
     idx = (idx + numTools) % numTools;
 
     while (!gameInstance.isToolEnabled(idx)) {
         idx = (idx + 1) % numTools;
     }
 
-    gameState.toolTypeIdx = idx;
+    gameInstance.toolTypeIdx = idx;
     updateRadioGroup('toolType', idx);
 }
 
@@ -735,7 +706,7 @@ function updateReticle(e) {
     const $reticle = getReticle();
     const reticleSize = $reticle.height();
 
-    if (gameState.mode === GAME_MODE.playing) $reticle.css('display', 'unset');
+    if (gameInstance.mode === GAME_MODE.playing) $reticle.css('display', 'unset');
 
     const {x, y} = globalToGameCoords(e);
     let top, left;
@@ -772,7 +743,7 @@ function getReticle() {
 /* Basic drawing */
 
 function drawPoint(ctx, pt) {
-    setupContext(ctx, 'painting');
+    pbgCanvas.setupContext(getBrushColor());
     if (!pt.brushSides) {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, pt.brushSize, 0, Math.PI * 2);
@@ -816,11 +787,11 @@ function drawPath(ctx, pts) {
 
 function redrawGame(ctx) {
     gameInstance.drawChallenge();
-    setupContext(ctx, 'painting');
+    pbgCanvas.setupContext(getBrushColor());
 
     var total = 0;
-    for (var j = 0; j < gameState.strokes.length; j++) {
-        var points = gameState.strokes[j];
+    for (var j = 0; j < pbgCanvas.strokes.length; j++) {
+        var points = pbgCanvas.strokes[j];
         total += points.length;
 
         if (!points.length) continue;
