@@ -13,7 +13,10 @@ class PbgCanvas {
     $canvas = getCanvas();
     ctx = getContext();
 
-    constructor() {
+    game = null;
+
+    constructor(game) {
+        this.game = game;
         this.hookEvents();
     }
 
@@ -52,9 +55,9 @@ class PbgCanvas {
         }
 
         const unpaintedSum = rgbSum(COLORS.white);
-        const paintedSum = rgbSum(getBrushColor());
+        const paintedSum = rgbSum(this.game.brushColor);
         const spillSum = rgbSum(COLORS.spill);
-        const bgSum = rgbSum(gameInstance.bgColor);
+        const bgSum = rgbSum(this.game.bgColor);
 
         for (var i = 0; i < imageData.length; i += 4) {
             switch (rgbSum(imageData, i)) {
@@ -74,6 +77,12 @@ class PbgCanvas {
         }
 
         return totals;
+    }
+
+    updateMaxCounts() {
+        const canvasData = this.analyze();
+        this.maxShape = canvasData.unpainted;
+        this.maxBg = canvasData.canvas;
     }
 
     reset() {

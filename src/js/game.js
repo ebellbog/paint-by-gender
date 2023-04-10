@@ -1,5 +1,6 @@
 import PbgTimer from './timer';
 import {getContext} from './utils';
+import {BRUSH_TYPES} from './enums';
 
 class PbgGame {
     // Required config
@@ -132,6 +133,39 @@ class PbgGame {
 
     get bgColor() {
         return this.currentChallenge?.shape.bgColor;
+    }
+
+    get brushType() {
+        return BRUSH_TYPES[this.toolTypeIdx];
+    }
+
+    get brushSize() {
+        let size = this.brushDiameter;
+
+        if (this.brushType.isQuantized) {
+            size = size / (Math.cos(Math.PI / this.brushSides) * 2);
+        }
+        return size;
+    }
+
+    get brushDiameter() {
+        return this.brushType.sizes[this.toolOptionIdx];
+    }
+
+    get brushSides() {
+        return this.brushType.sides;
+    }
+
+    get brushColor() {
+        return this.brushType.color;
+    }
+
+    get isStarred() {
+        return this.brushType.starred;
+    }
+
+    get isQuantized() {
+        return this.brushType.isQuantized;
     }
 }
 

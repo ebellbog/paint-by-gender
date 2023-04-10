@@ -22,9 +22,9 @@ import levelData from './config';
 
 /* Global state */
 
-const gameInstance = new PbgGame(levelData);
-const pbgCanvas = new PbgCanvas();
-const transitionManager = new PbgTransitionManager(gameInstance);
+const pbgGame = new PbgGame(levelData);
+const pbgCanvas = new PbgCanvas(pbgGame);
+const transitionManager = new PbgTransitionManager(pbgGame);
 
 let tooltips, canvasScale, canvasSize;
 let _$reticle;
@@ -49,7 +49,7 @@ $(document).ready(function () {
     initGame();
 
     $canvas.on('mousedown', function (e) {
-        if (gameInstance.mode != GAME_MODE.playing) return;
+        if (pbgGame.mode != GAME_MODE.playing) return;
 
         pbgCanvas.startDrawing();
 
@@ -74,7 +74,7 @@ $(document).ready(function () {
         var curPos = getPathPoint($canvas[0], e);
         var lastPos = strokes[strokes.length - 1].slice(-1)[0];
 
-        if (!getBrushType().isQuantized) {
+        if (!pbgGame.isQuantized) {
             if (getDistance(curPos, lastPos) < 10) {
                 buffer.push(curPos);
             } else {
@@ -108,32 +108,32 @@ $(document).ready(function () {
 
         switch (e.which) {
             case 38: // up arrow
-                gameInstance.toolTypeIdx -= 2;
+                pbgGame.toolTypeIdx -= 2;
             case 40: // down arrow
-                gameInstance.toolTypeIdx++;
+                pbgGame.toolTypeIdx++;
                 validateToolType();
                 drawToolOptions();
                 break;
             case 37: // left arrow
-                gameInstance.toolOptionIdx -= 2;
+                pbgGame.toolOptionIdx -= 2;
             case 39: // right arrow
-                const sizes = getBrushType().sizes.length;
-                gameInstance.toolOptionIdx = (gameInstance.toolOptionIdx + 1 + sizes) % sizes;
-                updateRadioGroup('toolOption', gameInstance.toolOptionIdx);
+                const sizes = pbgGame.brushType.sizes.length;
+                pbgGame.toolOptionIdx = (pbgGame.toolOptionIdx + 1 + sizes) % sizes;
+                updateRadioGroup('toolOption', pbgGame.toolOptionIdx);
                 break;
             case 13: // return key
             case 32: // spacebar
-                if (gameInstance.mode == GAME_MODE.newLevel) {
+                if (pbgGame.mode == GAME_MODE.newLevel) {
                     $('#start').click();
-                } else if (gameInstance.mode == GAME_MODE.complete) {
+                } else if (pbgGame.mode == GAME_MODE.complete) {
                     $('#retry').click();
-                } else if (gameInstance.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
+                } else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
                     nextChallenge();
                 }
                 pressedArrow = false;
                 break;
             case 27:
-                if ([GAME_MODE.playing, GAME_MODE.paused].includes(gameInstance.mode)) {
+                if ([GAME_MODE.playing, GAME_MODE.paused].includes(pbgGame.mode)) {
                     $('#btn-pause').click();
                 }
                 break;
@@ -148,19 +148,19 @@ $(document).ready(function () {
 
     $('#btn-undo').on('click', () => {
         const {strokes} = pbgCanvas;
-        const {undosRemaining} = gameInstance.currentChallenge;
+        const {undosRemaining} = pbgGame.currentChallenge;
 
-        if (gameInstance.mode !== GAME_MODE.playing || !undosRemaining || strokes.length < 2) return;
+        if (pbgGame.mode !== GAME_MODE.playing || !undosRemaining || strokes.length < 2) return;
 
         strokes.splice(strokes.length - 2, 1);
-        gameInstance.currentChallenge.undo();
+        pbgGame.currentChallenge.undo();
 
         redrawGame(ctx);
         updatePercentPainted();
     });
 
     $('#retry').on('click', () => {
-        if (gameInstance.mode === GAME_MODE.complete) {
+        if (pbgGame.mode === GAME_MODE.complete) {
             resetGame();
         } else {
             resetGame(true);
@@ -189,10 +189,10 @@ $(document).ready(function () {
             if (isRadio) {
                 const groupType = $group.data('group');
                 if (groupType === 'toolType') {
-                    if (!gameInstance.isToolEnabled(inputIdx)) return;
-                    gameInstance.toolTypeIdx = inputIdx;
+                    if (!pbgGame.isToolEnabled(inputIdx)) return;
+                    pbgGame.toolTypeIdx = inputIdx;
                 } else {
-                    gameInstance.toolOptionIdx = inputIdx;
+                    pbgGame.toolOptionIdx = inputIdx;
                 }
                 $group.find('.active').removeClass('active');
             }
@@ -213,9 +213,9 @@ $(document).ready(function () {
         });
 
     $('#btn-pause').on('click', () => {
-        if (gameInstance.mode === GAME_MODE.playing) {
+        if (pbgGame.mode === GAME_MODE.playing) {
             setGameMode(GAME_MODE.paused);
-        } else if (gameInstance.mode === GAME_MODE.paused) {
+        } else if (pbgGame.mode === GAME_MODE.paused) {
             setGameMode(GAME_MODE.resuming);
         }
     });
@@ -223,8 +223,8 @@ $(document).ready(function () {
         setGameMode(GAME_MODE.resuming);
     });
 
-    gameInstance.timer.on('clocked', () => {
-        gameInstance.outcome = GAME_OUTCOME.clocked;
+    pbgGame.timer.on('clocked', () => {
+        pbgGame.outcome = GAME_OUTCOME.clocked;
         setGameMode(GAME_MODE.complete);
     })
 });
@@ -232,33 +232,8 @@ $(document).ready(function () {
 
 /* Helper functions */
 
-function getBrushType() {
-    return BRUSH_TYPES[gameInstance.toolTypeIdx];
-}
-
-function getBrushSize(asDiameter) {
-    const brushType = getBrushType();
-    const {sizes, sides, isQuantized} = brushType;
-    let size = sizes[gameInstance.toolOptionIdx];
-
-    if (isQuantized && !asDiameter) size = size / (Math.cos(Math.PI / sides) * 2);
-    return size;
-}
-
-function getBrushSides() {
-    return getBrushType().sides;
-}
-
-function getBrushColor() {
-    return getBrushType().color;
-}
-
-function isStarred() {
-    return getBrushType().starred;
-}
-
 function randomAffirmation() {
-    var affirmations = ['Nice job!', 'Awesome!', '100%', 'Nailed it!'];
+    const affirmations = ['Nice job!', 'Awesome!', '100%', 'Nailed it!'];
     return affirmations[Math.floor(Math.random() * affirmations.length)];
 }
 
@@ -266,10 +241,10 @@ function getPathPoint(canvas, e) {
     const rect = canvas.getBoundingClientRect();
     let x = (e.clientX - rect.left) / canvasScale;
     let y =(e.clientY - rect.top) / canvasScale;
-    let brushSize = getBrushSize();
+    let brushSize = pbgGame.brushSize;
 
-    if (getBrushType().isQuantized) {
-        const diameter = getBrushSize(true);
+    if (pbgGame.isQuantized) {
+        const diameter = pbgGame.brushDiameter;
         x = (Math.floor(x / diameter) + .5) * diameter;
         y = (Math.floor(y / diameter) + .5) * diameter;
         // brushSize *= 1.01; // Prevent thin blank borders between quantized strokes
@@ -278,56 +253,19 @@ function getPathPoint(canvas, e) {
     return {
         x, y,
         brushSize,
-        brushSides: getBrushSides(),
-        starred: isStarred()
+        brushSides: pbgGame.brushSides,
+        starred: pbgGame.isStarred
     };
 }
 
 
 /* Logic functions */
 
-function analyzeCanvas() {
-    // TODO: only 1/4 canvas at a time? either by region or modulus?
-    var ctx = getContext();
-    var imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height).data; // R, G, B, A, R, G, B, etc.
-
-    var totals = {
-        unpainted: 0,
-        painted: 0,
-        spill: 0,
-        canvas: 0
-    }
-
-    const unpaintedSum = rgbSum(COLORS.white);
-    const paintedSum = rgbSum(getBrushColor());
-    const spillSum = rgbSum(COLORS.spill);
-    const bgSum = rgbSum(gameInstance.bgColor);
-
-    for (var i = 0; i < imageData.length; i += 4) {
-        switch (rgbSum(imageData, i)) {
-            case unpaintedSum:
-                totals.unpainted++;
-                break;
-            case paintedSum:
-                totals.painted++;
-                break;
-            case spillSum:
-                totals.spill++;
-                break;
-            case bgSum:
-                totals.canvas++;
-                break;
-        }
-    }
-
-    return totals;
-}
-
 function updatePercentPainted() {
-    if (!gameInstance.currentChallenge) return;
+    if (!pbgGame.currentChallenge) return;
 
-    const canvasData = analyzeCanvas();
-    const maxSpill = gameInstance.currentChallenge.maxSpill;
+    const canvasData = pbgCanvas.analyze();
+    const maxSpill = pbgGame.currentChallenge.maxSpill;
 
     let percent, spill;
     if (COLORS.spill) {
@@ -351,38 +289,38 @@ function updatePercentPainted() {
     const $spillSlider = $('#spill-warning .slider-mark');
     $spillSlider.css({bottom});
 
-    if (gameInstance.mode != GAME_MODE.playing) return;
+    if (pbgGame.mode != GAME_MODE.playing) return;
     else if (spill >= maxSpill) {
         $spillSlider.css('background-color', 'red');
-        gameInstance.outcome = GAME_OUTCOME.transgressed;
+        pbgGame.outcome = GAME_OUTCOME.transgressed;
         setGameMode(GAME_MODE.complete);
     }
-    else if (percent >= 1 && gameInstance.mode == GAME_MODE.playing) {
+    else if (percent >= 1 && pbgGame.mode == GAME_MODE.playing) {
         $fill.css('background-color', '#0f0');
         $fill.css('border-radius', '6px');
         nextChallenge();
     }
 }
 
+function updatePercentAsync() {
+    setTimeout(updatePercentPainted, 0);
+}
+
 function resetPercentPainted() {
     $('#spill-warning .slider-mark').css('bottom', '2px');
     $('#percent-painted .slider-fill').css('height', '0%');
-    gameInstance.resetDom();
+    pbgGame.resetDom();
 }
 
 function nextChallenge() {
-    gameInstance.nextChallenge();
+    pbgGame.nextChallenge();
 
-    if (gameInstance.currentLevel.challengeIdx == gameInstance.currentLevel.challenges.length) {
-        gameInstance.outcome = GAME_OUTCOME.passed;
+    if (pbgGame.currentLevel.challengeIdx == pbgGame.currentLevel.challenges.length) {
+        pbgGame.outcome = GAME_OUTCOME.passed;
         setGameMode(GAME_MODE.complete);
     } else {
         setGameMode(GAME_MODE.transitioning);
     }
-}
-
-function updatePercentAsync() {
-    setTimeout(updatePercentPainted, 0);
 }
 
 
@@ -396,16 +334,16 @@ function resetGame(onlyChallenge) {
     pbgCanvas.reset();
 
     if (onlyChallenge) {
-        gameInstance.resetCurrent();
-        gameInstance.drawChallenge();
+        pbgGame.resetCurrent();
+        pbgGame.drawChallenge();
     } else {
-        gameInstance.resetAll();
+        pbgGame.resetAll();
 
         // Facilitate testing specific challenges via query param
         const searchParams = new URLSearchParams(location.search);
         const startingChallenge = parseInt(searchParams.get('c'));
         if (startingChallenge) {
-            gameInstance.currentLevel.challengeIdx = startingChallenge;
+            pbgGame.currentLevel.challengeIdx = startingChallenge;
         }
 
         initChallenge();
@@ -414,26 +352,23 @@ function resetGame(onlyChallenge) {
     updatePercentPainted();
     updateBlurLayer();
 
-    gameInstance.timer.reset();
+    pbgGame.timer.reset();
 }
 
 function initChallenge() {
-    gameInstance.timer.timeLimit = gameInstance.currentChallenge.timeLimit;
+    pbgGame.timer.timeLimit = pbgGame.currentChallenge.timeLimit;
 
     validateToolType();
 
-    $('#game-wrapper').css('background-color', rgbToStr(gameInstance.bgColor));
-    $('#percent-painted .slider-fill').css('background-color', rgbToStr(getBrushColor()));
+    $('#game-wrapper').css('background-color', rgbToStr(pbgGame.bgColor));
+    $('#percent-painted .slider-fill').css('background-color', rgbToStr(pbgGame.brushColor));
 
     drawReticle();
     drawToolOptions();
     // setTooltips(gameInstance.levelIdx);
 
-    gameInstance.drawChallenge();
-
-    const canvasData = analyzeCanvas();
-    pbgCanvas.maxShape = canvasData.unpainted;
-    pbgCanvas.maxBg = canvasData.canvas;
+    pbgGame.drawChallenge();
+    pbgCanvas.updateMaxCounts();
 }
 
 // TODO: update for Kidpix UI
@@ -463,10 +398,10 @@ function setGameMode(mode) {
     const $body = $('body');
     switch (mode) {
         case GAME_MODE.newLevel:
-            gameInstance.setLevelTitle()
-            gameInstance.setStartText();
+            pbgGame.setLevelTitle()
+            pbgGame.setStartText();
 
-            $('#start').html(`START LEVEL ${gameInstance.levelIdx + 1}`);
+            $('#start').html(`START LEVEL ${pbgGame.levelIdx + 1}`);
             updateModeClass(mode);
 
             $body.addClass('show-overlay show-blur');
@@ -481,7 +416,7 @@ function setGameMode(mode) {
                         delay: .75,
                         callback: () => {
                             updateModeClass();
-                            gameInstance.timer.restart();
+                            pbgGame.timer.restart();
                             setGameMode(GAME_MODE.playing);
                         }
                     });
@@ -502,12 +437,12 @@ function setGameMode(mode) {
                 resetPercentPainted();
 
                 pbgCanvas.reset();
-                gameInstance.resetCurrent();
+                pbgGame.resetCurrent();
 
                 initChallenge();
 
                 transitionManager.wipeIn(() => {
-                    gameInstance.timer.restart();
+                    pbgGame.timer.restart();
                     setGameMode(GAME_MODE.playing);
                 });
             }), 1000);
@@ -527,7 +462,7 @@ function setGameMode(mode) {
             transitionManager.fadeIn({
                 callback: () => {
                     updateModeClass();
-                    gameInstance.timer.restart(false);
+                    pbgGame.timer.restart(false);
                     setGameMode(GAME_MODE.playing);
                 },
             });
@@ -535,10 +470,10 @@ function setGameMode(mode) {
         case GAME_MODE.complete:
             pauseGame(true);
 
-            gameInstance.setEndText();
+            pbgGame.setEndText();
 
-            const passed = (gameInstance.outcome === GAME_OUTCOME.passed);
-            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameInstance.levelIdx + 1}`);
+            const passed = (pbgGame.outcome === GAME_OUTCOME.passed);
+            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${pbgGame.levelIdx + 1}`);
 
             updateModeClass(mode);
             $body.addClass('show-blur show-overlay');
@@ -546,7 +481,7 @@ function setGameMode(mode) {
             break;
     }
 
-    gameInstance.mode = mode;
+    pbgGame.mode = mode;
 }
 
 function updateModeClass(mode) {
@@ -560,7 +495,7 @@ function updateModeClass(mode) {
 
 function pauseGame(withBlur) {
     pbgCanvas.isDrawing = false;
-    gameInstance.timer.pause();
+    pbgGame.timer.pause();
 
     if (withBlur) {
         updateBlurLayer();
@@ -614,8 +549,8 @@ function showCountdown(count, options) {
 /* Tool options & selectors */
 
 function drawToolOptions() {
-    const starred = isStarred();
-    const sides = getBrushSides();
+    const starred = pbgGame.isStarred;
+    const sides = pbgGame.brushSides;
     let size = sides ? 5 : 4;
 
     $('#footer canvas').each((_idx, canvas) => {
@@ -642,21 +577,21 @@ function drawToolOptions() {
     });
 
     $('[data-group="toolType"] .tool').each((idx, el) => {
-        $(el).toggleClass('disabled', !gameInstance.isToolEnabled(idx));
+        $(el).toggleClass('disabled', !pbgGame.isToolEnabled(idx));
     });
 }
 
 function validateToolType() {
     const numTools = BRUSH_TYPES.length;
 
-    let {toolTypeIdx: idx} = gameInstance;
+    let {toolTypeIdx: idx} = pbgGame;
     idx = (idx + numTools) % numTools;
 
-    while (!gameInstance.isToolEnabled(idx)) {
+    while (!pbgGame.isToolEnabled(idx)) {
         idx = (idx + 1) % numTools;
     }
 
-    gameInstance.toolTypeIdx = idx;
+    pbgGame.toolTypeIdx = idx;
     updateRadioGroup('toolType', idx);
 }
 
@@ -679,12 +614,13 @@ function drawReticle() {
     const centerX = rWidth / 2;
     const centerY = rHeight / 2;
 
-    const brushSize = getBrushSize() * canvasScale;
+    const brushSize = pbgGame.brushSize * canvasScale;
 
     const innerColor = rgbToStr(COLORS.innerReticle);
     const outerColor = rgbToStr(COLORS.outerReticle);
 
-    if (!getBrushSides()) {
+    const brushSides = pbgGame.brushSides;
+    if (!brushSides) {
         ctx.strokeStyle = innerColor;
         ctx.beginPath();
         ctx.arc(centerX, centerY, brushSize, 0, 2 * Math.PI);
@@ -695,10 +631,11 @@ function drawReticle() {
         ctx.arc(centerX, centerY, brushSize + 1, 0, 2 * Math.PI);
         ctx.stroke();
     } else {
-        drawPolygon(ctx, centerX, centerY, getBrushSides(), brushSize,
-            { style: 'stroke', color: innerColor, starred: isStarred() });
-        drawPolygon(ctx, centerX, centerY, getBrushSides(), brushSize + 1,
-            { style: 'stroke', color: outerColor, starred: isStarred() });
+        const isStarred = pbgGame.isStarred;
+        drawPolygon(ctx, centerX, centerY, brushSides, brushSize,
+            { style: 'stroke', color: innerColor, starred: isStarred });
+        drawPolygon(ctx, centerX, centerY, brushSides, brushSize + 1,
+            { style: 'stroke', color: outerColor, starred: isStarred });
     }
 }
 
@@ -706,13 +643,13 @@ function updateReticle(e) {
     const $reticle = getReticle();
     const reticleSize = $reticle.height();
 
-    if (gameInstance.mode === GAME_MODE.playing) $reticle.css('display', 'unset');
+    if (pbgGame.mode === GAME_MODE.playing) $reticle.css('display', 'unset');
 
     const {x, y} = globalToGameCoords(e);
     let top, left;
 
-    if (getBrushType().isQuantized) {
-        const brushSize = getBrushSize(true) * canvasScale;
+    if (pbgGame.isQuantized) {
+        const brushSize = pbgGame.brushDiameter * canvasScale;
         const reticleBorder = (reticleSize - brushSize) / 2;
 
         top = Math.floor(y / brushSize) * brushSize - reticleBorder;
@@ -743,7 +680,7 @@ function getReticle() {
 /* Basic drawing */
 
 function drawPoint(ctx, pt) {
-    pbgCanvas.setupContext(getBrushColor());
+    pbgCanvas.setupContext(pbgGame.brushColor);
     if (!pt.brushSides) {
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, pt.brushSize, 0, Math.PI * 2);
@@ -786,8 +723,8 @@ function drawPath(ctx, pts) {
 }
 
 function redrawGame(ctx) {
-    gameInstance.drawChallenge();
-    pbgCanvas.setupContext(getBrushColor());
+    pbgGame.drawChallenge();
+    pbgCanvas.setupContext(pbgGame.brushColor);
 
     var total = 0;
     for (var j = 0; j < pbgCanvas.strokes.length; j++) {
