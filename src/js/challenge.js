@@ -28,6 +28,7 @@ class PbgChallenge {
 
     reset() {
         this.undosRemaining = this.maxUndos;
+        this.completionTime = 0;
         this.attempts = 0;
     }
 

@@ -2,14 +2,20 @@ class PbgLevel {
     // Required config
 
     challenges = [];
+
     levelName = '';
+    levelDescription = '';
+    endMessages = {};
 
     // State
 
     challengeIdx = 0;
 
-    constructor(levelName, challenges) {
-        this.levelName = levelName;
+    constructor(cfg, challenges) {
+        this.levelName = cfg.levelName;
+        this.levelDescription = cfg.levelDescription;
+        this.endMessages = cfg.endMessages;
+
         this.challenges.push(...challenges);
     }
 

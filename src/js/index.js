@@ -16,19 +16,19 @@ import {
 
 
 import PbgGame from './game';
+import PbgTransitionManager from './transitions';
 import levelData from './config';
 
 
 /* Global state */
 
 const gameState = {
-    level: 1,
-    challengeIndex: 0,
     toolTypeIdx: 0,
     toolOptionIdx: 1,
 };
 
 const gameInstance = new PbgGame(levelData);
+const transitionManager = new PbgTransitionManager(gameInstance);
 
 let tooltips, canvasScale, canvasSize;
 let _$reticle;
@@ -146,6 +146,11 @@ $(document).ready(function () {
                 }
                 pressedArrow = false;
                 break;
+            case 27:
+                if ([GAME_MODE.playing, GAME_MODE.paused].includes(gameState.mode)) {
+                    $('#btn-pause').click();
+                }
+                break;
             default:
                 pressedArrow = false;
                 break;
@@ -233,7 +238,7 @@ $(document).ready(function () {
     });
 
     gameInstance.timer.on('clocked', () => {
-        gameState.outcome = GAME_OUTCOME.clocked;
+        gameInstance.outcome = GAME_OUTCOME.clocked;
         setGameMode(GAME_MODE.complete);
     })
 });
@@ -256,6 +261,10 @@ function getBrushSize(asDiameter) {
 
 function getBrushSides() {
     return getBrushType().sides;
+}
+
+function getBrushColor() {
+    return getBrushType().color;
 }
 
 function isStarred() {
@@ -320,18 +329,23 @@ function analyzeCanvas() {
         canvas: 0
     }
 
+    const unpaintedSum = rgbSum(COLORS.white);
+    const paintedSum = rgbSum(getBrushColor());
+    const spillSum = rgbSum(COLORS.spill);
+    const bgSum = rgbSum(gameInstance.bgColor);
+
     for (var i = 0; i < imageData.length; i += 4) {
         switch (rgbSum(imageData, i)) {
-            case rgbSum(COLORS.white):
+            case unpaintedSum:
                 totals.unpainted++;
                 break;
-            case rgbSum(COLORS.paint):
+            case paintedSum:
                 totals.painted++;
                 break;
-            case rgbSum(COLORS.spill):
+            case spillSum:
                 totals.spill++;
                 break;
-            case rgbSum(COLORS.canvas):
+            case bgSum:
                 totals.canvas++;
                 break;
         }
@@ -369,7 +383,7 @@ function updatePercentPainted() {
     if (gameState.mode != GAME_MODE.playing) return;
     else if (spill >= maxSpill) {
         $spillSlider.css('background-color', 'red');
-        gameState.outcome = GAME_OUTCOME.transgressed;
+        gameInstance.outcome = GAME_OUTCOME.transgressed;
         setGameMode(GAME_MODE.complete);
     }
     else if (percent >= 1 && gameState.mode == GAME_MODE.playing) {
@@ -387,8 +401,9 @@ function resetPercentPainted() {
 
 function nextChallenge() {
     gameInstance.nextChallenge();
+
     if (gameInstance.currentLevel.challengeIdx == gameInstance.currentLevel.challenges.length) {
-        gameState.outcome = GAME_OUTCOME.passed;
+        gameInstance.outcome = GAME_OUTCOME.passed;
         setGameMode(GAME_MODE.complete);
     } else {
         setGameMode(GAME_MODE.transitioning);
@@ -419,7 +434,8 @@ function resetGame(onlyChallenge) {
 
         gameInstance.resetAll();
         gameState.challengeIndex = startingChallenge;
-        initChallenge(gameState.level, startingChallenge);
+
+        initChallenge();
     }
 
     updatePercentPainted();
@@ -430,20 +446,6 @@ function resetGame(onlyChallenge) {
     gameInstance.timer.reset();
 }
 
-function updateLevelIcon(level, challengeIndex) {
-    var $iconWrapper = $('#level-icon-wrapper');
-    var faClasses = 'fa-xs fa-fw fa-circle';
-
-    var $circle = $(document.createElement('i')).addClass(faClasses);
-    var $openCircle = $circle.clone().addClass('far');
-    var $closedCircle = $circle.clone().addClass('fas');
-
-    $iconWrapper.empty();
-    for (var i = 0; i < LEVEL_DATA[level].challenges.length; i++) {
-        $iconWrapper.append(i <= challengeIndex ? $closedCircle.clone() : $openCircle.clone());
-    }
-}
-
 function resetState() {
     gameState.strokes = [];
     gameState.isDrawing = 0;
@@ -451,27 +453,22 @@ function resetState() {
     gameInstance.resetCurrent();
 }
 
-function initChallenge(level, challengeIndex) {
-    var CHALLENGE_DATA = getChallengeData(level, challengeIndex);
-    COLORS.paint = CHALLENGE_DATA.paintColor;
-    COLORS.canvas = CHALLENGE_DATA.canvasColor;
-    COLORS.spill = CHALLENGE_DATA.spillColor;
-
-    $('#game-wrapper').css('background-color', rgbToStr(COLORS.canvas));
-    $('#percent-painted .slider-fill').css('background-color', rgbToStr(COLORS.paint));
-
-    gameInstance.timer.timeLimit = CHALLENGE_DATA.maxTime;
-    gameState.enabledTools = CHALLENGE_DATA.enabledTools;
+function initChallenge() {
+    gameInstance.timer.timeLimit = gameInstance.currentChallenge.timeLimit;
+    gameState.enabledTools = gameInstance.currentChallenge.enabledTools;
 
     validateToolType();
+
+    $('#game-wrapper').css('background-color', rgbToStr(gameInstance.bgColor));
+    $('#percent-painted .slider-fill').css('background-color', rgbToStr(getBrushColor()));
+
     drawReticle();
     drawToolOptions();
-    setTooltips(level);
+    // setTooltips(gameInstance.levelIdx);
 
-    updateLevelIcon(level, challengeIndex);
     gameInstance.drawChallenge();
 
-    var canvasData = analyzeCanvas();
+    const canvasData = analyzeCanvas();
     gameState.maxShape = canvasData.unpainted;
     gameState.maxCanvas = canvasData.canvas;
 }
@@ -503,7 +500,7 @@ function setupContext(ctx, type) {
     switch (type) {
         case 'painting':
             ctx.lineJoin = ctx.lineCap = 'round';
-            ctx.strokeStyle = ctx.fillStyle = rgbToStr(COLORS.paint);
+            ctx.strokeStyle = ctx.fillStyle = rgbToStr(getBrushColor());
             ctx.globalCompositeOperation = 'darken';
             break;
         case 'transition':
@@ -516,30 +513,14 @@ function setupContext(ctx, type) {
     }
 }
 
-function setLevelTitle(level) {
-    $('#level-number').html(`Level ${level}`);
-    $('#level-name').html(LEVEL_DATA[level].name);
-}
-
-function setStartText(level) {
-    $('#overlay-title').html(`${LEVEL_DATA[level].name}`);
-    $('#overlay-body').html(LEVEL_DATA[level].description);
-}
-
-function setEndText(outcome, level) {
-    const endMessages = LEVEL_DATA[level].endMessages[outcome];
-    $('#overlay-title').html(endMessages[0]);
-    $('#overlay-body').html(endMessages[1]);
-}
-
 function setGameMode(mode) {
     const $body = $('body');
     switch (mode) {
         case GAME_MODE.newLevel:
-            setLevelTitle(gameState.level)
-            setStartText(gameState.level);
+            gameInstance.setLevelTitle()
+            gameInstance.setStartText();
 
-            $('#start').html(`START LEVEL ${gameState.level}`);
+            $('#start').html(`START LEVEL ${gameInstance.levelIdx + 1}`);
             updateModeClass(mode);
 
             $body.addClass('show-overlay show-blur');
@@ -571,14 +552,14 @@ function setGameMode(mode) {
             pauseGame();
             updateModeClass(mode);
 
-            setTimeout(() => wipeOut(() => {
+            setTimeout(() => transitionManager.wipeOut(() => {
                 resetPercentPainted();
 
-                initChallenge(gameState.level, gameInstance.currentLevel.challengeIdx);
+                initChallenge();
                 resetState();
                 updateUndoStatus();
 
-                wipeIn(() => {
+                transitionManager.wipeIn(() => {
                     gameInstance.timer.restart();
                     setGameMode(GAME_MODE.playing);
                 });
@@ -607,10 +588,10 @@ function setGameMode(mode) {
         case GAME_MODE.complete:
             pauseGame(true);
 
-            setEndText(gameState.outcome, gameState.level);
+            gameInstance.setEndText();
 
-            const passed = (gameState.outcome == GAME_OUTCOME.passed);
-            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameState.level}`);
+            const passed = (gameInstance.outcome === GAME_OUTCOME.passed);
+            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${gameInstance.levelIdx + 1}`);
 
             updateModeClass(mode);
             $body.addClass('show-blur show-overlay');
@@ -656,70 +637,6 @@ function fadeIn(options) {
     }, delay);
 }
 
-function wipeOut(cb, x, y, dir, time, ctx) {
-    const BRUSH_SIZE = 90; // should evenly divide canvasSize
-
-    if (y > canvasSize) { if (cb) cb(); return; }
-
-    if (!(x || y || dir || time)) {
-        x = - BRUSH_SIZE / 2;
-        y = BRUSH_SIZE / 2;
-        dir = 1;
-        time = Date.now();
-    }
-    if (!ctx) {
-        ctx = getContext();
-    }
-
-    var newX = x, newY = y;
-    if (x >= canvasSize + BRUSH_SIZE / 2 && dir == 1) {
-        dir = -1;
-        newY += BRUSH_SIZE;
-    } else if (x <= -BRUSH_SIZE / 2 && dir == -1) {
-        dir = 1;
-        newY += BRUSH_SIZE;
-    }
-
-    // using a time coefficient removes duration variability
-    // arising from browser speed, hardware, etc.
-    var newTime = Date.now();
-    var timeCoefficient = Math.max((newTime - time) / 10, 0.1);
-    const SPEED_COEFFICIENT = 12;
-    newX += dir * timeCoefficient * SPEED_COEFFICIENT;
-
-    setupContext(ctx, 'transition');
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(newX, newY);
-    ctx.stroke();
-
-    setTimeout(() => wipeOut(cb, newX, newY, dir, newTime, ctx), 0);
-}
-
-function wipeIn(cb, y, time, ctx) {
-    if (y > canvasSize) { if (cb) cb(); return; }
-    if (!(y || time)) {
-        y = 0;
-        time = Date.now();
-    }
-    if (!ctx) {
-        ctx = getContext();
-    }
-
-    // using a time coefficient removes duration variability
-    // arising from browser speed, hardware, etc.
-    var newTime = Date.now();
-    var timeCoefficient = Math.max((newTime - time) / 10, 0.1);
-    var speedCoefficient = 3;
-    var newY = y + timeCoefficient * speedCoefficient;
-
-    ctx.clearRect(0, 0, canvasSize, canvasSize);
-    gameInstance.drawChallenge();
-    setupContext(ctx, 'transition');
-    ctx.fillRect(0, 0, canvasSize, canvasSize - newY);
-    setTimeout(() => wipeIn(cb, newY, newTime, ctx), 0);
-}
-
 function flashExpanding(message, duration, options) {
     var options = options || {};
     var hold = options.hold || 200;
@@ -727,7 +644,7 @@ function flashExpanding(message, duration, options) {
     var expand = options.expand || 350;
 
     var $gameCell = $('td#main');
-    var $number = $(document.createElement('div')).addClass(className).html(message);
+    var $number = $('<div></div>').addClass(className).html(message);
     $gameCell.append($number);
     setTimeout(() => $number.animate({ 'font-size': `+=${expand}`, opacity: 0 }, duration - hold, () => $number.remove()), hold);
 }
@@ -735,7 +652,7 @@ function flashExpanding(message, duration, options) {
 function flashStationary(message, duration, fade) {
     var fade = fade || 1000;
     var $gameCell = $('td#main');
-    var $number = $(document.createElement('div')).addClass('flash').html(message);
+    var $number = $('<div></div>').addClass('flash').html(message);
     $gameCell.append($number);
     setTimeout(() => $number.animate({ opacity: 0 }, fade, () => $number.remove()), duration - fade);
 }

@@ -1,9 +1,3 @@
-const BRUSH_TYPES = [
-    { sides: 0, sizes: [8, 25, 50] },
-    { sides: 4, sizes: [27, 54, 108], isQuantized: true },
-    { sides: 5, sizes: [10, 28, 57], starred: 1 }
-];
-
 const COLORS = {
     innerReticle: [153, 153, 153],
     outerReticle: [221, 221, 221],
@@ -18,6 +12,12 @@ const COLORS = {
     pinkblue: [132, 150, 150],
     outline: [68, 68, 68],
 };
+
+const BRUSH_TYPES = [
+    { sides: 0, sizes: [8, 25, 50], color: COLORS.darkpink },
+    { sides: 4, sizes: [27, 54, 108], color: COLORS.darkblue, isQuantized: true },
+    { sides: 5, sizes: [10, 28, 57], color: COLORS.purple, starred: 1 }
+];
 
 const CHALLENGE_DATA = {
     1: {
