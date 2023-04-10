@@ -9,7 +9,7 @@ class PbgTransitionManager {
         this.ctx = ctx || getContext();
     }
 
-    setupContext() {
+    _setupContext() {
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
         this.ctx.lineWidth = 90; // should divide canvasSize evenly
         this.ctx.strokeStyle = this.ctx.fillStyle = rgbToStr(COLORS.purple);
@@ -34,7 +34,7 @@ class PbgTransitionManager {
         const SPEED_COEFFICIENT = 3;
         const newY = y + timeCoefficient * SPEED_COEFFICIENT;
 
-        this.setupContext();
+        this._setupContext();
         this.ctx.fillRect(0, 0, canvasSize, canvasSize - newY);
 
         setTimeout(() => this.wipeIn(cb, newY, newTime), 0);
@@ -69,7 +69,7 @@ class PbgTransitionManager {
         const SPEED_COEFFICIENT = 12;
         newX += dir * timeCoefficient * SPEED_COEFFICIENT;
 
-        this.setupContext();
+        this._setupContext();
 
         this.ctx.beginPath();
         this.ctx.moveTo(x, y);
@@ -77,6 +77,17 @@ class PbgTransitionManager {
         this.ctx.stroke();
 
         setTimeout(() => this.wipeOut(cb, newX, newY, dir, newTime), 0);
+    }
+
+    fadeIn(options) {
+        const duration = options.duration * 1000 || 750;
+        const delay = options.delay * 1000 || 0;
+        const {callback} = options;
+
+        setTimeout(function () {
+            $('body').removeClass('show-blur');
+            if (callback) setTimeout(callback, duration);
+        }, delay);
     }
 }
 

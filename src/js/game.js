@@ -1,6 +1,5 @@
 import PbgTimer from './timer';
 import {getContext} from './utils';
-import {GAME_MODE} from './enums';
 
 class PbgGame {
     // Required config
@@ -40,6 +39,8 @@ class PbgGame {
     resetCurrent() {
         this.strokes = [];
         this.isDrawing = false;
+
+        this.currentChallenge.reset();
         this.timer.reset();
     }
 

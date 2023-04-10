@@ -37,6 +37,24 @@ class PbgChallenge {
         this.attempts++;
         this.draw();
     }
+
+    undo() {
+        this.undosRemaining--;
+        this.updateUndoStatus();
+    }
+
+    updateUndoStatus() {
+        $('#btn-undo').toggleClass('disabled', this.undosRemaining < 1);
+
+        const $undoStatus = $('#undo-status');
+        $undoStatus.empty();
+
+        for (let i = 0; i < this.maxUndos; i++) {
+            $undoStatus.append(
+                $('<div></div>').addClass(`status-icon status-${i < this.undosRemaining ? 'filled' : 'empty'}`)
+            );
+        }
+    }
 }
 
 export default PbgChallenge;

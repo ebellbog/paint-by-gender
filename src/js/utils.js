@@ -95,9 +95,7 @@ function joinPolys(ctx, p1, p2) {
 
 
 export {
-    getCanvas,
-    getCanvasSize,
-    getContext,
+    getCanvas, getCanvasSize, getContext,
     rgbToStr, rgbSum,
     midPointBtw, getDistance,
     getPolyPath, drawPolygon, joinPolys,

@@ -4,7 +4,6 @@ import 'tippy.js/dist/tippy.css';
 import '../less/index.less';
 
 import {COLORS, BRUSH_TYPES,
-    LEVEL_DATA, CHALLENGE_DATA,
     GAME_MODE, GAME_OUTCOME} from './enums';
 
 import {
@@ -108,10 +107,9 @@ $(document).ready(function () {
         gameState.isDrawing = false;
         if (gameState.mode != GAME_MODE.playing) return;
 
-        var strokes = gameState.strokes;
+        const {strokes} = gameState;
         if (strokes.length && strokes[strokes.length - 1].length > 0) {
             strokes.push([]);
-            updateUndoStatus();
         }
 
         updatePercentPainted();
@@ -161,13 +159,13 @@ $(document).ready(function () {
     });
 
     $('#btn-undo').on('click', () => {
-        const {mode, strokes, undosRemaining} = gameState;
+        const {mode, strokes} = gameState;
+        const {undosRemaining} = gameInstance.currentChallenge;
+
         if (mode !== GAME_MODE.playing || !undosRemaining || strokes.length < 2) return;
 
         strokes.splice(strokes.length - 2, 1);
-
-        gameState.undosRemaining--;
-        updateUndoStatus();
+        gameInstance.currentChallenge.undo();
 
         redrawGame(ctx);
         updatePercentPainted();
@@ -271,10 +269,6 @@ function isStarred() {
     return getBrushType().starred;
 }
 
-function getChallengeData(level, challengeIndex) {
-    return CHALLENGE_DATA[LEVEL_DATA[level].challenges[challengeIndex]];
-}
-
 function randomAffirmation() {
     var affirmations = ['Nice job!', 'Awesome!', '100%', 'Nailed it!'];
     return affirmations[Math.floor(Math.random() * affirmations.length)];
@@ -299,19 +293,6 @@ function getPathPoint(canvas, e) {
         brushSides: getBrushSides(),
         starred: isStarred()
     };
-}
-
-function updateUndoStatus() {
-    const {undosRemaining} = gameState;
-    $('#btn-undo').toggleClass('disabled', undosRemaining < 1);
-
-    const $undoStatus = $('#undo-status');
-    $undoStatus.empty();
-    for (let i = 0; i < 3; i++) { // TOOD: maxUndos
-        $undoStatus.append(
-            $('<div></div>').addClass(`status-icon status-${i < undosRemaining ? 'filled' : 'empty'}`)
-        );
-    }
 }
 
 
@@ -440,7 +421,7 @@ function resetGame(onlyChallenge) {
 
     updatePercentPainted();
 
-    updateUndoStatus();
+    gameInstance.currentChallenge.updateUndoStatus();
     updateBlurLayer();
 
     gameInstance.timer.reset();
@@ -449,7 +430,6 @@ function resetGame(onlyChallenge) {
 function resetState() {
     gameState.strokes = [];
     gameState.isDrawing = 0;
-    gameState.undosRemaining = 3;
     gameInstance.resetCurrent();
 }
 
@@ -484,7 +464,7 @@ function setTooltips(level) {
             if (enabled) {
                 $(this).removeAttr('data-tippy-content');
             } else {
-                $(this).attr('data-tippy-content', LEVEL_DATA[gameState.level].tooltips[toolIndex][optionIndex]);
+                // $(this).attr('data-tippy-content', LEVEL_DATA[gameState.level].tooltips[toolIndex][optionIndex]);
             }
         });
     });
@@ -531,7 +511,7 @@ function setGameMode(mode) {
             showCountdown(0, { // TODO: change back to 3
                 callback: () => {
                     flashStationary('Paint!', 1000, 400);
-                    fadeIn({
+                    transitionManager.fadeIn({
                         delay: .75,
                         callback: () => {
                             updateModeClass();
@@ -557,7 +537,7 @@ function setGameMode(mode) {
 
                 initChallenge();
                 resetState();
-                updateUndoStatus();
+                gameInstance.currentChallenge.updateUndoStatus();
 
                 transitionManager.wipeIn(() => {
                     gameInstance.timer.restart();
@@ -624,17 +604,6 @@ function updateBlurLayer() {
     const $blurredGame = $('#blurred-game');
     const blurredCtx = getContext($blurredGame);
     blurredCtx.drawImage(getCanvas()[0], 0, 0);
-}
-
-function fadeIn(options) {
-    const duration = options.duration * 1000 || 750;
-    const delay = options.delay * 1000 || 0;
-    const {callback} = options;
-
-    setTimeout(function () {
-        $('body').removeClass('show-blur');
-        if (callback) setTimeout(callback, duration);
-    }, delay);
 }
 
 function flashExpanding(message, duration, options) {

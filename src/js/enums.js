@@ -19,74 +19,6 @@ const BRUSH_TYPES = [
     { sides: 5, sizes: [10, 28, 57], color: COLORS.purple, starred: 1 }
 ];
 
-const CHALLENGE_DATA = {
-    1: {
-        canvasColor: COLORS.pink,
-        paintColor: COLORS.darkpink,
-        maxTime: 25,
-        enabledTools: [1, 0, 0],
-    },
-    2: {
-        canvasColor: COLORS.pink,
-        paintColor: COLORS.blue,
-        spillColor: COLORS.pinkBlue,
-        maxTime: 45,
-        enabledTools: [0, 1, 0],
-    },
-    3: {
-        canvasColor: COLORS.blue,
-        paintColor: COLORS.darkblue,
-        maxTime: 30,
-        enabledTools: [0, 1, 0],
-    }
-};
-
-const LEVEL_DATA = {
-    1: {
-        name: "How We're Shaped",
-        description: 'Square pegs in square holes. Everything in its place. Your life is shaping up just fine!',
-        tooltips: [
-            [],
-            [
-                "Why? Your brush is perfect the way it is!",
-                "Why? Your brush is perfect the way it is!",
-                "What?? This isn't even a real thing..."
-            ],
-            [
-                '',
-                'Too expensive!',
-                "Too risky! You're not ready yet."
-            ],
-        ],
-        endMessages: {
-            0: ["Congrats!", "You played the game. You painted inside the lines and feel strangely validated."],
-            1: ["Oops.", "You transgressed too far. People noticed, and they care way more than they should."],
-            2: ["You got clocked", "Time's up. Not everyone gets a chance to fulfill their purpose."]
-        },
-        challenges: [1, 3]
-    },
-    2: {
-        name: 'Out of Shape', // ish? maybe??
-        // enabledTools: [1, 0, 0]
-    },
-    3: {
-        name: 'Red Pill', // probs not...
-        // enabledTools: [1, 0, 1]
-    },
-    4: {
-        name: 'Antisocial Media', // I like this one. is it original tho?
-        // enabledTools: [1, 0, 1]
-    },
-    5: {
-        name: 'Darker Times',
-        // enabledTools: [1, 0, 1]
-    },
-    6: {
-        name: 'Trans-cendence',
-        // enabledTools: [1, 1, 1]
-    }
-};
-
 const GAME_MODE = {
     newLevel: 'new-level',
     ready: 'ready',
@@ -104,10 +36,8 @@ const GAME_OUTCOME = {
 };
 
 export {
-    BRUSH_TYPES,
     COLORS,
-    CHALLENGE_DATA,
+    BRUSH_TYPES,
     GAME_MODE,
-    GAME_OUTCOME,
-    LEVEL_DATA
+    GAME_OUTCOME
 };

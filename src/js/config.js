@@ -28,5 +28,30 @@ const level1 = new PbgLevel(
     ]
 );
 
+/**
+ * OLD DESIGN NOTES
+ * 
+ * Level 2
+ * Name: 'Out of Shape' // ish? maybe??
+ * EnabledTools: [1, 0, 0]
+ * 
+ * Level 3
+ * Name: 'Red Pill' // probs not...
+ * EnabledTools: [1, 0, 1]
+ * 
+ * Level 4
+ * Name: 'Antisocial Media' // I like this one. is it original tho?
+ * EnabledTools: [1, 0, 1]
+ * 
+ * Level 5
+ * Name: 'Darker Times'
+ * EnabledTools: [1, 0, 1]
+ * 
+ * Level 6:
+ * Name: 'Trans-cendence'
+ * EnabledTools: [1, 1, 1]
+ */
+
+
 const ALL_LEVELS = [level1];
 export default ALL_LEVELS;
