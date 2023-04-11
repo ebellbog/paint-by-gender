@@ -86,7 +86,7 @@ class PbgTransitionManager {
 
         const newTime = Date.now();
         const timeCoefficient = Math.max((newTime - time) / 10, 0.1);
-        const SPEED_COEFFICIENT = 2.5;
+        const SPEED_COEFFICIENT = 2.75;
         const newR = r + timeCoefficient * SPEED_COEFFICIENT;
 
         this._setupContext();

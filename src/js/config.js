@@ -28,6 +28,32 @@ const level1 = new PbgLevel(
     ]
 );
 
+const level2 = new PbgLevel(
+    {
+        levelName: "Out of Shape",
+        levelDescription: 'Something went wrong this time around... Nothing makes sense anymore.',
+        endMessages: {
+            0: ["Congrats!", "You played the game. You painted inside the lines and feel strangely validated."],
+            1: ["Oops.", "You transgressed too far. People noticed, and they care way more than they should."],
+            2: ["You got clocked", "Time's up. Not everyone gets a chance to fulfill their purpose."]
+        }
+    },
+    [
+        new PbgChallenge({
+            shape: SHAPES.curvyToy,
+            timeLimit: 25,
+            maxSpill: 7000,
+            enabledTools: [0, 1, 0],
+        }),
+        new PbgChallenge({
+            shape: SHAPES.qrCode,
+            timeLimit: 30,
+            maxSpill: 9000,
+            enabledTools: [1, 0, 0],
+        }),
+    ]
+);
+
 /**
  * OLD DESIGN NOTES
  * 
@@ -53,5 +79,5 @@ const level1 = new PbgLevel(
  */
 
 
-const ALL_LEVELS = [level1];
+const ALL_LEVELS = [level1, level2];
 export default ALL_LEVELS;

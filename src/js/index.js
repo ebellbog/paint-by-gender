@@ -30,6 +30,8 @@ const transitionManager = new PbgTransitionManager(pbgGame);
 let tooltips, canvasScale, canvasSize;
 let _$reticle;
 
+let startingChallenge;
+
 
 /* Initialization & event handlers */
 
@@ -133,7 +135,8 @@ function hookEvents() {
                 } else if (pbgGame.mode == GAME_MODE.complete) {
                     $('#retry').click();
                 } else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
-                    advanceGame();
+                    pbgGame.outcome = GAME_OUTCOME.passed;
+                    setGameMode(pbgGame.advanceGame());
                 }
                 pressedArrow = false;
                 break;
@@ -166,11 +169,12 @@ function hookEvents() {
 
     $('#retry').on('click', () => {
         if (pbgGame.mode === GAME_MODE.complete) {
-            // TODO: handle transition and next level progression properly
-            $('body').addClass('show-blur');
             resetGame();
+            return $('#next-level').click();
+        } else if (pbgGame.mode === GAME_MODE.paused) {
+            resetChallenge();
         } else {
-            resetGame(true);
+            resetLevel();
         }
         setGameMode(GAME_MODE.starting);
     });
@@ -179,9 +183,18 @@ function hookEvents() {
         setGameMode(GAME_MODE.starting);
     });
 
+    $('#next-level').on('click', () => {
+        const $body = $('body');
+        $body.removeClass('show-overlay');
+        setTimeout(() => {
+            setGameMode(GAME_MODE.newLevel);
+            $('body').removeClass('show-curtain');
+        }, 500);
+    });
+
     $('#quit').on('click', () => {
-        // TODO: Return to splash screen
-        initGame();
+        resetGame();
+        return $('#next-level').click();
     });
 
     $('.tool')
@@ -233,8 +246,8 @@ function hookEvents() {
     pbgGame.timer.on('clocked', () => {
         pbgGame.outcome = GAME_OUTCOME.clocked;
         $('#spill-warning .slider-wrapper').removeClass('danger');
-        setGameMode(GAME_MODE.failed);
-    })
+    setGameMode(GAME_MODE.failed);
+})
 
 }
 
@@ -308,7 +321,8 @@ function updatePercentPainted() {
     }
     else if (percent >= 1 && pbgGame.mode === GAME_MODE.playing) {
         $fill.css('background-color', '#0f0');
-        advanceGame();
+        pbgGame.outcome = GAME_OUTCOME.passed;
+        setGameMode(pbgGame.advanceGame());
     }
 }
 
@@ -316,65 +330,59 @@ function updatePercentAsync() {
     setTimeout(updatePercentPainted, 0);
 }
 
-function resetPercentPainted() {
-    $('#spill-warning .slider-wrapper')
-        .removeClass('danger transgressed')
-        .find('.slider-mark')
-        .css('bottom', '0%')
-        .find('.mark-color')
-        .css('background-color', 'limegreen');
-    $('#percent-painted .slider-fill').css('height', '0%');
-}
-
-function advanceGame() {
-    pbgGame.nextChallenge();
-    pbgGame.outcome = GAME_OUTCOME.passed;
-
-    if (pbgGame.currentLevel.challengeIdx == pbgGame.currentLevel.challenges.length) {
-        if (pbgGame.levelIdx === pbgGame.levels.length - 1) {
-            setGameMode(GAME_MODE.complete);
-        } else {
-            setGameMode(GAME_MODE.nextLevel);
-        }
-    } else {
-        setGameMode(GAME_MODE.nextChallenge);
-    }
-}
-
 
 /* Setup functions */
 
 function initGame() {
+    // Facilitate testing specific challenges via query param
+    const searchParams = new URLSearchParams(location.search);
+
+    const startingLevel = parseInt(searchParams.get('l'));
+    if (startingLevel) pbgGame.levelIdx = startingLevel;
+
+    startingChallenge = parseInt(searchParams.get('c'));
+
     setGameMode(GAME_MODE.newLevel);
 }
 
-function resetGame(onlyChallenge) {
+function resetChallenge() {
+    _reset('challenge');
+}
+function resetLevel() {
+    _reset('level');
+}
+function resetGame() {
+    _reset('game');
+}
+
+function _reset(resetType) {
     pbgCanvas.reset();
-    resetPercentPainted();
 
-    if (onlyChallenge) {
-        pbgGame.resetCurrent();
-        pbgGame.drawChallenge();
-    } else {
-        pbgGame.resetAll();
+    switch(resetType) {
+        case 'challenge':
+            pbgGame.resetCurrent();
+            pbgGame.drawChallenge();
+            break;
+        case 'level':
+            pbgGame.resetLevel();
 
-        // Facilitate testing specific challenges via query param
-        const searchParams = new URLSearchParams(location.search);
-        const startingChallenge = parseInt(searchParams.get('c'));
-        if (startingChallenge) {
-            pbgGame.currentLevel.challengeIdx = startingChallenge;
-        }
+            if (startingChallenge) {
+                pbgGame.currentLevel.challengeIdx = startingChallenge;
+                startingChallenge = null;
+            }
 
-        initChallenge();
+            initChallenge();
+            break;
+        case 'game':
+            pbgGame.resetAll();
+            initChallenge();
+            break;
     }
 
     updateBlurLayer();
-    pbgGame.timer.reset();
 }
 
 function initChallenge() {
-    pbgGame.timer.timeLimit = pbgGame.currentChallenge.timeLimit;
-
     validateToolType();
 
     $('#game-wrapper').css('background-color', rgbToStr(pbgGame.bgColor));
@@ -384,7 +392,8 @@ function initChallenge() {
     drawToolOptions();
     // setTooltips(gameInstance.levelIdx);
 
-    pbgGame.drawChallenge();
+    pbgGame.timer.timeLimit = pbgGame.currentChallenge.timeLimit;
+    pbgGame.resetCurrent();
     pbgCanvas.updateMaxCounts();
 }
 
@@ -415,6 +424,8 @@ function setGameMode(mode) {
     const $body = $('body');
     switch (mode) {
         case GAME_MODE.newLevel:
+            resetLevel();
+
             pbgGame.setLevelTitle()
             pbgGame.setStartText();
 
@@ -422,7 +433,6 @@ function setGameMode(mode) {
             updateModeClass(mode);
 
             $body.addClass('show-overlay show-blur');
-            resetGame();
             break;
         case GAME_MODE.starting:
             $body.removeClass('show-overlay show-curtain');
@@ -438,7 +448,7 @@ function setGameMode(mode) {
                         }
                     });
                 },
-                delay: 900,
+                delay: 800,
             });
             break;
         case GAME_MODE.playing:
@@ -450,12 +460,13 @@ function setGameMode(mode) {
             pauseGame();
             updateModeClass(mode);
 
+            $('#spill-warning .slider-wrapper')
+                .removeClass('danger transgressed')
+
             setTimeout(() => transitionManager.wipeOut(() => {
-                resetPercentPainted();
-
                 pbgCanvas.reset();
-                pbgGame.resetCurrent();
 
+                pbgGame.timer.reset();
                 initChallenge();
 
                 transitionManager.wipeIn(() => {
@@ -475,7 +486,10 @@ function setGameMode(mode) {
             pbgGame.setEndText();
 
             transitionManager.boxOut(() => {
-                $body.addClass('show-overlay show-curtain');
+                setTimeout(
+                    () => $body.addClass('show-overlay show-curtain'),
+                    150
+                );
             });
             break;
         case GAME_MODE.failed:

@@ -1,6 +1,6 @@
 import PbgTimer from './timer';
 import {getContext} from './utils';
-import {BRUSH_TYPES} from './enums';
+import {BRUSH_TYPES, GAME_MODE} from './enums';
 
 class PbgGame {
     // Required config
@@ -24,24 +24,21 @@ class PbgGame {
         this.timer = new PbgTimer();
     }
 
-    _reset(resetAll) {
-        if (resetAll) {
-            this.levelIdx = 0;
-            this.levels.forEach((level) => level.reset());
-            this.setChallengeIcon();
-        } else {
-            this.currentChallenge.reset();
-        }
-
-        this.timer.reset();
-    }
-
-    resetAll() {
-        this._reset(true);
-    }
 
     resetCurrent() {
-        this._reset();
+        this.currentChallenge.reset();
+        this.drawChallenge();
+        this.timer.reset();
+    }
+    resetLevel() {
+        this.currentLevel.reset();
+        this.setChallengeIcon();
+        this.timer.reset();
+    }
+    resetAll() {
+        this.levelIdx = 0;
+        this.resetLevel();
+        this.levels.slice(1).forEach((level) => level.reset());
     }
 
     pause(withBlur) {
@@ -67,12 +64,26 @@ class PbgGame {
         this.currentChallenge.draw();
     }
 
-    nextChallenge() {
+    advanceGame() {
         this.currentChallenge.completionTime = this.timer.timeElapsed;
         this.currentChallenge.attempts++;
 
         this.currentLevel.challengeIdx++;
         this.setChallengeIcon();
+
+        let nextMode;
+        if (this.currentLevel.challengeIdx === this.currentLevel.challenges.length) {
+            if (this.levelIdx === this.levels.length - 1) {
+                nextMode = GAME_MODE.complete;
+            } else {
+                this.levelIdx++;
+                nextMode = GAME_MODE.nextLevel;
+            }
+        } else {
+            nextMode = GAME_MODE.nextChallenge;
+        }
+
+        return nextMode;
     }
 
     setLevelTitle() {

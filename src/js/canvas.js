@@ -89,6 +89,17 @@ class PbgCanvas {
         this.strokes = [];
         this.buffer = [];
         this.isDrawing = false;
+        this.resetPercentPainted();
+    }
+
+    resetPercentPainted() {
+        $('#spill-warning .slider-wrapper')
+            .removeClass('danger transgressed')
+            .find('.slider-mark')
+            .css('bottom', '0%')
+            .find('.mark-color')
+            .css('background-color', 'limegreen');
+        $('#percent-painted .slider-fill').css('height', '0%');
     }
 }
 
