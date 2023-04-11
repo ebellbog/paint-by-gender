@@ -331,10 +331,18 @@ body, #layout, #menu-bar {
 }
 
 #spill-warning {
-    .slider-fill{
-        background: linear-gradient(fade(red, 55%), fade(yellow, 55%) 45%, fade(limegreen, 55%));
-        background-color: white;
-        height: 100%;
+    .slider-wrapper {
+        .slider-fill {
+            height: 100%;
+        }
+        &:not(.transgressed) {
+            background: linear-gradient(fade(red, 55%), fade(yellow, 55%) 45%, fade(limegreen, 55%));
+            background-color: white;
+        }
+        &.transgressed {
+            background-color: #ffa4a4;
+            border-color: red;
+        }
     }
 }
 
@@ -379,6 +387,7 @@ body, #layout, #menu-bar {
 
 .slider-mark {
     position: absolute;
+    bottom: 0;
 
     width: 17px;
     height: 17px;
@@ -397,6 +406,7 @@ body, #layout, #menu-bar {
         height: 100%;
         border-radius: 50%;
         mix-blend-mode: color-burn;
+        color: limegreen;
     }
 }
 

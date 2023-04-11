@@ -292,8 +292,9 @@ function updatePercentPainted() {
     const color = chromaScale(1 - spillPercent).toString();
     $spillSlider.find('.mark-color').css({backgroundColor: color});
 
-    $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1);
+    $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1 && percent < 1);
     if (spillPercent === 1) {
+        $spillWarning.addClass('transgressed');
         pbgGame.outcome = GAME_OUTCOME.transgressed;
         setGameMode(GAME_MODE.complete);
     }
@@ -309,7 +310,7 @@ function updatePercentAsync() {
 
 function resetPercentPainted() {
     $('#spill-warning .slider-wrapper')
-        .removeClass('danger')
+        .removeClass('danger transgressed')
         .find('.slider-mark')
         .css('bottom', '0%')
         .find('.mark-color')
