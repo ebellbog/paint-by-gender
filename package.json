@@ -9,6 +9,7 @@
     "webpack-dev-server": "^3.2.1"
   },
   "dependencies": {
+    "chroma-js": "^2.4.2",
     "css-loader": "^5.2.4",
     "handlebars": "^4.7.7",
     "handlebars-loader": "^1.7.1",

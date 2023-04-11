@@ -1,3 +1,4 @@
+import chroma from 'chroma-js';
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 
@@ -262,7 +263,7 @@ function getPathPoint(canvas, e) {
 /* Logic functions */
 
 function updatePercentPainted() {
-    if (!pbgGame.currentChallenge) return;
+    if (!pbgGame.currentChallenge || pbgGame.mode !== GAME_MODE.playing) return;
 
     const canvasData = pbgCanvas.analyze();
     const maxSpill = pbgGame.currentChallenge.maxSpill;
@@ -277,27 +278,27 @@ function updatePercentPainted() {
     }
 
     const $fill = $('#percent-painted .slider-fill');
-    $fill.css('height', `${percent * 98.6}%`);
+    $fill.css('height', `${percent * 100}%`);
 
-    let bottom;
-    if (spill >= maxSpill) {
-        bottom = 'calc(100% - 17px)';
-    } else {
-        bottom =  `calc(${95.5 * spill / maxSpill}% + 2px)`;
-    }
+    const spillPercent = Math.min(spill / maxSpill, 1);
 
+    const $spillWarning = $('#spill-warning .slider-wrapper');
     const $spillSlider = $('#spill-warning .slider-mark');
-    $spillSlider.css({bottom});
+    const totalSpillHeight = $spillWarning.height() - $spillSlider.height();
 
-    if (pbgGame.mode != GAME_MODE.playing) return;
-    else if (spill >= maxSpill) {
-        $spillSlider.css('background-color', 'red');
+    $spillSlider.css('bottom', `${spillPercent * totalSpillHeight}px`);
+
+    const chromaScale = chroma.scale(['red', 'yellow', 'limegreen']);
+    const color = chromaScale(1 - spillPercent).toString();
+    $spillSlider.find('.mark-color').css({backgroundColor: color});
+
+    $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1);
+    if (spillPercent === 1) {
         pbgGame.outcome = GAME_OUTCOME.transgressed;
         setGameMode(GAME_MODE.complete);
     }
-    else if (percent >= 1 && pbgGame.mode == GAME_MODE.playing) {
+    else if (percent >= 1 && pbgGame.mode === GAME_MODE.playing) {
         $fill.css('background-color', '#0f0');
-        $fill.css('border-radius', '6px');
         nextChallenge();
     }
 }
@@ -307,9 +308,13 @@ function updatePercentAsync() {
 }
 
 function resetPercentPainted() {
-    $('#spill-warning .slider-mark').css('bottom', '2px');
+    $('#spill-warning .slider-wrapper')
+        .removeClass('danger')
+        .find('.slider-mark')
+        .css('bottom', '0%')
+        .find('.mark-color')
+        .css('background-color', 'limegreen');
     $('#percent-painted .slider-fill').css('height', '0%');
-    pbgGame.resetDom();
 }
 
 function nextChallenge() {
@@ -332,6 +337,7 @@ function initGame() {
 
 function resetGame(onlyChallenge) {
     pbgCanvas.reset();
+    resetPercentPainted();
 
     if (onlyChallenge) {
         pbgGame.resetCurrent();
@@ -349,9 +355,7 @@ function resetGame(onlyChallenge) {
         initChallenge();
     }
 
-    updatePercentPainted();
     updateBlurLayer();
-
     pbgGame.timer.reset();
 }
 

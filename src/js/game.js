@@ -34,7 +34,6 @@ class PbgGame {
         }
 
         this.timer.reset();
-        this.resetDom();
     }
 
     resetAll() {
@@ -43,11 +42,6 @@ class PbgGame {
 
     resetCurrent() {
         this._reset();
-    }
-
-    resetDom() {
-        $('#percent-painted .slider-fill').css('border-radius', '0px 0px 6px 6px');
-        $('#spill-warning .slider-mark').css('background-color', 'rgba(50, 50, 50, 0.6');
     }
 
     pause(withBlur) {

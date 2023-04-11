@@ -331,14 +331,10 @@ body, #layout, #menu-bar {
 }
 
 #spill-warning {
-    .slider-outline {
-        background: linear-gradient(red,yellow 45%,#0f0);
-        opacity: 0.75;
-    }
     .slider-fill{
-        height: calc(100% - 4px);
-        background-color: rgba(255, 255, 255, 0.3);
-        border-radius: 9px;
+        background: linear-gradient(fade(red, 55%), fade(yellow, 55%) 45%, fade(limegreen, 55%));
+        background-color: white;
+        height: 100%;
     }
 }
 
@@ -350,38 +346,58 @@ body, #layout, #menu-bar {
 
 .slider-wrapper {
     position: relative;
-    height: 294px * @canvasScale;
-    width: 19px;
+    height: 300px * @canvasScale;
+    width: 17px;
     margin: 0 auto;
+
+    border-radius: 16px;
+    border: 2px solid lighten(desaturate(@purple, 60%), 00%);
+
+    background-color: white;
     overflow: hidden;
+
+    &.danger {
+        animation: 1.1s infinite pulseWarning;
+    }
 }
 
-.slider-outline {
-    width: 14px;
-    height: 290px * @canvasScale;
-    border-radius: 9px;
-    border: 2px solid lighten(desaturate(@purple, 60%), 00%);
-    background-color: white;
-    position: absolute;
-    bottom: 0px;
+@keyframes pulseWarning {
+    from {
+        box-shadow: 0 0 0 0 fade(darken(red, 10%), 75%);
+    }
+    to {
+        box-shadow: 0 0 0 13px transparent;
+    }
 }
 
 .slider-fill {
-    width: 14px;
-    height: 0;
-    border-radius: 0 0 7px 7px;
     position: absolute;
-    bottom: 2px;
-    left: 2px;
+    bottom: 0;
+    width: 100%;
+    height: 0;
 }
 
 .slider-mark {
-    width: 14px;
-    height: 14px;
-    border-radius: 8px;
     position: absolute;
-    left: 2px;
-    bottom: 2px;
+
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+
+    background-image: url('../../img/slider_orb.png');
+    background-size: 100%;
+
+    box-shadow: 0 0 4px fade(black, 35%);
+
+    .mark-color {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        mix-blend-mode: color-burn;
+    }
 }
 
 .slider-fill, .slider-mark {
@@ -398,16 +414,15 @@ body, #layout, #menu-bar {
 
 #time-ring {
     position: absolute;
-    top: 5px;
     left: 50%;
+    top: 0;
     transform: translate(-50%, 0);
     border-radius: 50%;
-    // backdrop-filter: blur(1px);
 }
 
 #time {
     position: absolute;
-    top: 51px;
+    top: 46px;
     left: 50%;
     transform: translate(-50%, 0) scaleX(.75);
     font-size: 4.75em;
