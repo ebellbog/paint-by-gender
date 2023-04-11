@@ -27,8 +27,6 @@ class PbgTransitionManager {
             time = Date.now();
         }
 
-        // using a time coefficient removes duration variability
-        // arising from browser speed, hardware, etc.
         const newTime = Date.now();
         const timeCoefficient = Math.max((newTime - time) / 10, 0.1);
         const SPEED_COEFFICIENT = 3;
@@ -62,8 +60,6 @@ class PbgTransitionManager {
             newY += BRUSH_SIZE;
         }
 
-        // using a time coefficient removes duration variability
-        // arising from browser speed, hardware, etc.
         const newTime = Date.now();
         const timeCoefficient = Math.max((newTime - time) / 10, 0.1);
         const SPEED_COEFFICIENT = 12;
@@ -77,6 +73,31 @@ class PbgTransitionManager {
         this.ctx.stroke();
 
         setTimeout(() => this.wipeOut(cb, newX, newY, dir, newTime), 0);
+    }
+
+    boxOut(cb, r, time) {
+        const canvasSize = getCanvasSize();
+
+        if (r > canvasSize / 2) { if (cb) cb(); return; }
+        if (!(r || time)) {
+            r = 0;
+            time = Date.now();
+        }
+
+        const newTime = Date.now();
+        const timeCoefficient = Math.max((newTime - time) / 10, 0.1);
+        const SPEED_COEFFICIENT = 2.5;
+        const newR = r + timeCoefficient * SPEED_COEFFICIENT;
+
+        this._setupContext();
+
+        this.ctx.beginPath();
+        this.ctx.rect(canvasSize, canvasSize, -canvasSize, -canvasSize);
+        this.ctx.rect(r, r, canvasSize - 2 * r, canvasSize - 2 * r);
+        this.ctx.fill('evenodd');
+
+        setTimeout(() => this.boxOut(cb, newR, newTime), 0);
+
     }
 
     fadeIn(options) {

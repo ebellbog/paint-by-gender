@@ -10,7 +10,7 @@
     <script defer src="https://use.fontawesome.com/releases/v6.3.0/js/all.js"></script>
 </head>
 
-<body class="show-game show-overlay show-blur">
+<body class="show-game show-overlay show-blur preload">
     <navbar id="menu-bar">
         <div id="title">
             <a href="https://belladonnagable.itch.io/paint-by-gender">Paint by Gender</a>
@@ -71,16 +71,18 @@
                             <div id="start" class="overlay-btn"></div>
                             <div id="resume" class="overlay-btn">Continue</div>
                             <div id="retry" class="overlay-btn"></div>
+                            <div id="next-level" class="overlay-btn">Next level</div>
                             <div id="quit" class="overlay-btn">Quit</div>
                         </div>
                     </div>
 
-                    <canvas id="reticle" width=240px height=240px></canvas>
-
+                    <div id="new-level-curtain"></div>
                     <canvas id="blurred-game" width=540px height=540px></canvas>
-                    <canvas id="game" width=540px height=540px></canvas>
 
                     <div id="canvas-texture"></div>
+                    <canvas id="game" width=540px height=540px></canvas>
+
+                    <canvas id="reticle" width=240px height=240px></canvas>
                 </div>
             </td>
             <td id="stats" align="center">

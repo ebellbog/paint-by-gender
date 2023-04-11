@@ -34,6 +34,8 @@ let _$reticle;
 /* Initialization & event handlers */
 
 $(document).ready(function () {
+    $('body').removeClass('preload');
+
     tippy('#help-icon', {
         allowHTML: true,
         maxWidth: 425,
@@ -42,62 +44,64 @@ $(document).ready(function () {
     });
 
     const $canvas = getCanvas();
-    const ctx = getContext();
-
     canvasSize = parseInt($canvas.attr('height'));
     canvasScale = $canvas.height() / canvasSize;
 
     initGame();
+    hookEvents();
+});
 
-    $canvas.on('mousedown', function (e) {
-        if (pbgGame.mode != GAME_MODE.playing) return;
+function hookEvents() {
+    const ctx = getContext();
 
-        pbgCanvas.startDrawing();
+    getCanvas()
+        .on('mousedown', function (e) {
+            if (pbgGame.mode != GAME_MODE.playing) return;
 
-        const strokes = pbgCanvas.strokes;
-        if (!strokes.length) strokes.push([]);
+            pbgCanvas.startDrawing();
 
-        const pt = getPathPoint($canvas[0], e);
-        strokes[strokes.length - 1].push(pt);
+            const strokes = pbgCanvas.strokes;
+            if (!strokes.length) strokes.push([]);
 
-        drawPoint(ctx, pt);
-        updatePercentAsync();
-    });
+            const pt = getPathPoint(getCanvas()[0], e);
+            strokes[strokes.length - 1].push(pt);
 
-    $canvas.on('mousemove', function (e) {
-        updateReticle(e);
+            drawPoint(ctx, pt);
+            updatePercentAsync();
+        })
+        .on('mousemove', function (e) {
+            updateReticle(e);
 
-        if (!pbgCanvas.isDrawing) return;
+            if (!pbgCanvas.isDrawing) return;
 
-        var strokes = pbgCanvas.strokes;
-        var buffer = pbgCanvas.buffer;
+            var strokes = pbgCanvas.strokes;
+            var buffer = pbgCanvas.buffer;
 
-        var curPos = getPathPoint($canvas[0], e);
-        var lastPos = strokes[strokes.length - 1].slice(-1)[0];
+            var curPos = getPathPoint(getCanvas()[0], e);
+            var lastPos = strokes[strokes.length - 1].slice(-1)[0];
 
-        if (!pbgGame.isQuantized) {
-            if (getDistance(curPos, lastPos) < 10) {
-                buffer.push(curPos);
-            } else {
-                pbgCanvas.buffer = [];
+            if (!pbgGame.isQuantized) {
+                if (getDistance(curPos, lastPos) < 10) {
+                    buffer.push(curPos);
+                } else {
+                    pbgCanvas.buffer = [];
+                }
             }
-        }
 
-        if (buffer.length > 3) {
-            var totals = buffer.reduce((a, b) => ({ x: a.x + b.x, y: a.y + b.y }));
-            var avgPos = { x: totals.x / buffer.length, y: totals.y / buffer.length, brushSize: buffer[0].brushSize };
+            if (buffer.length > 3) {
+                var totals = buffer.reduce((a, b) => ({ x: a.x + b.x, y: a.y + b.y }));
+                var avgPos = { x: totals.x / buffer.length, y: totals.y / buffer.length, brushSize: buffer[0].brushSize };
 
-            strokes[strokes.length - 1].splice(-(buffer.length - 1), buffer.length - 1, avgPos);
-            pbgCanvas.buffer = [curPos];
-        }
+                strokes[strokes.length - 1].splice(-(buffer.length - 1), buffer.length - 1, avgPos);
+                pbgCanvas.buffer = [curPos];
+            }
 
-        strokes[strokes.length - 1].push(curPos);
-        redrawGame(ctx);
-    });
-
-    $canvas.on('mouseout', function (e) {
-        getReticle().hide();
-    });
+            strokes[strokes.length - 1].push(curPos);
+            redrawGame(ctx);
+        })
+        .on('mouseout', function (e) {
+            getReticle().hide();
+        });
 
     $(document).on('mouseup', function () {
         pbgCanvas.stopDrawing();
@@ -129,7 +133,7 @@ $(document).ready(function () {
                 } else if (pbgGame.mode == GAME_MODE.complete) {
                     $('#retry').click();
                 } else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
-                    nextChallenge();
+                    advanceGame();
                 }
                 pressedArrow = false;
                 break;
@@ -162,6 +166,8 @@ $(document).ready(function () {
 
     $('#retry').on('click', () => {
         if (pbgGame.mode === GAME_MODE.complete) {
+            // TODO: handle transition and next level progression properly
+            $('body').addClass('show-blur');
             resetGame();
         } else {
             resetGame(true);
@@ -226,9 +232,11 @@ $(document).ready(function () {
 
     pbgGame.timer.on('clocked', () => {
         pbgGame.outcome = GAME_OUTCOME.clocked;
-        setGameMode(GAME_MODE.complete);
+        $('#spill-warning .slider-wrapper').removeClass('danger');
+        setGameMode(GAME_MODE.failed);
     })
-});
+
+}
 
 
 /* Helper functions */
@@ -296,11 +304,11 @@ function updatePercentPainted() {
     if (spillPercent === 1) {
         $spillWarning.addClass('transgressed');
         pbgGame.outcome = GAME_OUTCOME.transgressed;
-        setGameMode(GAME_MODE.complete);
+        setGameMode(GAME_MODE.failed);
     }
     else if (percent >= 1 && pbgGame.mode === GAME_MODE.playing) {
         $fill.css('background-color', '#0f0');
-        nextChallenge();
+        advanceGame();
     }
 }
 
@@ -318,14 +326,18 @@ function resetPercentPainted() {
     $('#percent-painted .slider-fill').css('height', '0%');
 }
 
-function nextChallenge() {
+function advanceGame() {
     pbgGame.nextChallenge();
+    pbgGame.outcome = GAME_OUTCOME.passed;
 
     if (pbgGame.currentLevel.challengeIdx == pbgGame.currentLevel.challenges.length) {
-        pbgGame.outcome = GAME_OUTCOME.passed;
-        setGameMode(GAME_MODE.complete);
+        if (pbgGame.levelIdx === pbgGame.levels.length - 1) {
+            setGameMode(GAME_MODE.complete);
+        } else {
+            setGameMode(GAME_MODE.nextLevel);
+        }
     } else {
-        setGameMode(GAME_MODE.transitioning);
+        setGameMode(GAME_MODE.nextChallenge);
     }
 }
 
@@ -413,7 +425,7 @@ function setGameMode(mode) {
             resetGame();
             break;
         case GAME_MODE.starting:
-            $body.removeClass('show-overlay');
+            $body.removeClass('show-overlay show-curtain');
             showCountdown(0, { // TODO: change back to 3
                 callback: () => {
                     flashStationary('Paint!', 1000, 400);
@@ -434,7 +446,7 @@ function setGameMode(mode) {
             $('#retry').html('RETRY DRAWING')
             updateModeClass(mode);
             break;
-        case GAME_MODE.transitioning:
+        case GAME_MODE.nextChallenge:
             pauseGame();
             updateModeClass(mode);
 
@@ -454,10 +466,25 @@ function setGameMode(mode) {
 
             flashExpanding(randomAffirmation(), 800, { hold: 400, styling: 'small', expand: 200 });
             break;
+        case GAME_MODE.complete:
+            $('#retry').html('PLAY AGAIN');
+        case GAME_MODE.nextLevel:
+            pauseGame();
+            updateModeClass(mode);
+
+            pbgGame.setEndText();
+
+            transitionManager.boxOut(() => {
+                $body.addClass('show-overlay show-curtain');
+            });
+            break;
+        case GAME_MODE.failed:
+            $('#retry').html( `RETRY LEVEL ${pbgGame.levelIdx + 1}`);
+            pbgGame.setEndText();
         case GAME_MODE.paused:
             pauseGame(true);
 
-            $('#overlay-title').html('PAUSED');
+            if (mode === GAME_MODE.paused) $('#overlay-title').html('PAUSED');
 
             updateModeClass(mode);
             $body.addClass('show-overlay show-blur');
@@ -472,16 +499,6 @@ function setGameMode(mode) {
                 },
             });
             break;
-        case GAME_MODE.complete:
-            pauseGame(true);
-
-            pbgGame.setEndText();
-
-            const passed = (pbgGame.outcome === GAME_OUTCOME.passed);
-            $('#retry').html(passed ? 'PLAY AGAIN' : `RETRY LEVEL ${pbgGame.levelIdx + 1}`);
-
-            updateModeClass(mode);
-            $body.addClass('show-blur show-overlay');
         default:
             break;
     }
@@ -648,7 +665,7 @@ function updateReticle(e) {
     const $reticle = getReticle();
     const reticleSize = $reticle.height();
 
-    if (pbgGame.mode === GAME_MODE.playing) $reticle.css('display', 'unset');
+    if (pbgGame.mode === GAME_MODE.playing) $reticle.css('display', '');
 
     const {x, y} = globalToGameCoords(e);
     let top, left;

@@ -22,8 +22,10 @@ const GAME_MODE = {
     ready: 'ready',
     starting: 'starting',
     playing: 'playing',
-    transitioning: 'transitioning',
+    nextChallenge: 'next-challenge',
+    nextLevel: 'next-level',
     complete: 'complete',
+    failed: 'failed',
     paused: 'paused',
 };
 
