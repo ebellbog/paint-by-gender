@@ -527,8 +527,8 @@ body, #layout, #menu-bar {
         img {
             image-rendering: pixelated;
         }
-        &#magic-wand img {
-            transform:translate(-50%, -50%)  rotateZ(-45deg);
+        &#mystery-tool img {
+            opacity: .8;
         }
         &#btn-undo {
             img {
@@ -618,13 +618,15 @@ body, #layout, #menu-bar {
 
     &[data-theme~='purple'] {
         background-color: @tooltipBg;
+        backdrop-filter: blur(2px);
+
         font-size: 1.2em;
         font-weight: 100;
-        backdrop-filter: blur(2px);
-        padding: 6px;
-        border-radius: @borderRadius;
         letter-spacing: 1px;
         line-height: 1.2em;
+
+        padding: 6px;
+        border-radius: @borderRadius;
 
         strong {
             font-weight: 400;
@@ -635,6 +637,71 @@ body, #layout, #menu-bar {
                 border-bottom-width: 7px;
                 border-bottom-color: @tooltipBg;
             }
+        }
+    }
+
+    &[data-theme~='white'] {
+        font-size: 1.4em;
+
+        color: @purple;
+        background-color: white;
+        filter: drop-shadow(2px 2px 0 @purple) drop-shadow(-1px -1px 0 @purple) drop-shadow(1px -2px 0 @purple) drop-shadow(-1px 1px 0 @purple);
+
+        padding: 1px 3px;
+        border-radius: @borderRadius;
+
+        &[data-placement^='left'] {
+            & > .tippy-arrow {
+                &::before {
+                    border-left-width: 9px;
+                    border-left-color: white;
+                }
+            }
+        }
+        &[data-placement^='right'] {
+            & > .tippy-arrow {
+                &::before {
+                    border-right-width: 9px;
+                    border-right-color: white;
+                }
+            }
+        }
+
+        .tt-title {
+            font-size: 1em;
+            font-weight: 900;
+
+            &.text-pink {
+                color: rgb(253, 117, 140);
+            }
+            &.text-blue {
+                color: rgb(9, 144, 228);
+            }
+
+            &.disabled::after {
+                content: '(not allowed)';
+                color: red;
+
+                font-style: italic;
+                font-weight: 300;
+                font-size: .85em;
+
+                padding-top: 4px;
+                padding-left: 6px;
+
+                float: right;
+            }
+        }
+        hr {
+            background-color: purple;
+            border: none;
+            height: 2px;
+            margin: 8px 0;
+        }
+        .tt-body {
+            font-size: .9em;
+            font-weight: 300;
+            width: 250px;
         }
     }
 }

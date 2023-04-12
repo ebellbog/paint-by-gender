@@ -67,6 +67,7 @@ class PbgGame {
     advanceGame() {
         this.currentChallenge.completionTime = this.timer.timeElapsed;
         this.currentChallenge.attempts++;
+        this.currentChallenge.destroyTooltips();
 
         this.currentLevel.challengeIdx++;
         this.setChallengeIcon();

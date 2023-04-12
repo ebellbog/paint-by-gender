@@ -1,4 +1,5 @@
 import chroma from 'chroma-js';
+
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 
@@ -8,8 +9,8 @@ import {COLORS, BRUSH_TYPES,
     GAME_MODE, GAME_OUTCOME} from './enums';
 
 import {
+    rgbToStr,
     getCanvas, getContext,
-    rgbToStr, rgbSum,
     midPointBtw, getDistance,
     getPolyPath, drawPolygon, joinPolys
 } from './utils';
@@ -390,34 +391,12 @@ function initChallenge() {
 
     drawReticle();
     drawToolOptions();
-    // setTooltips(gameInstance.levelIdx);
 
     pbgGame.timer.timeLimit = pbgGame.currentChallenge.timeLimit;
     pbgGame.resetCurrent();
     pbgCanvas.updateMaxCounts();
-}
 
-// TODO: update for Kidpix UI
-function setTooltips(level) {
-    tooltips?.forEach((tooltip) => tooltip.destroy());
-
-    $('.tool-wrapper').each(function (toolIndex) {
-        $(this).find('.tool-option').each(function (optionIndex) {
-            // var enabled = gameState.enabledOptions[toolIndex][optionIndex];
-            $(this).toggleClass('disabled', !enabled);
-            if (enabled) {
-                $(this).removeAttr('data-tippy-content');
-            } else {
-                // $(this).attr('data-tippy-content', LEVEL_DATA[gameState.level].tooltips[toolIndex][optionIndex]);
-            }
-        });
-    });
-
-    tooltips = tippy('.tool-option[data-tippy-content]', {
-        placement: 'bottom',
-        maxWidth: '150px',
-        theme: 'gray',
-    });
+    pbgGame.currentChallenge.setTooltips();
 }
 
 function setGameMode(mode) {

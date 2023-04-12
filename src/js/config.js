@@ -18,12 +18,21 @@ const level1 = new PbgLevel(
             timeLimit: 25,
             maxSpill: 7000,
             enabledTools: [1, 0, 0],
+            tooltips: {
+                galbrush: ['Galbrush', 'A soft brush with smooth movement. Great for natural curves like these!'],
+                guybrush: ['Guybrush', 'A solid brush with precise movement. You wouldn\'t have much use for it here.'],
+                'mystery-tool': ['???', ''],
+            }
         }),
         new PbgChallenge({
             shape: SHAPES.qrCode,
             timeLimit: 30,
             maxSpill: 9000,
             enabledTools: [0, 1, 0],
+            tooltips: {
+                galbrush: ['Galbrush', 'A soft brush with smooth movement. You wouldn\'t have much use for it here.'],
+                guybrush: ['Guybrush', 'A solid brush with precise movement. Great for geometric shapes like these!'],
+            }
         }),
     ]
 );
@@ -44,6 +53,10 @@ const level2 = new PbgLevel(
             timeLimit: 25,
             maxSpill: 7000,
             enabledTools: [0, 1, 0],
+            tooltips: {
+                galbrush: ['Galbrush', 'A soft brush with smooth movement. Most people would use it for this kind of shape.'],
+                guybrush: ['Guybrush', 'A solid brush with precise movement. Good luck using it on these curves!'],
+            }
         }),
         new PbgChallenge({
             shape: SHAPES.qrCode,
