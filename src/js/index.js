@@ -125,7 +125,7 @@ function hookEvents() {
                 pbgGame.toolTypeIdx -= 2;
             case 40: // down arrow
                 pbgGame.toolTypeIdx++;
-                validateToolType();
+                validateToolType(1000);
                 drawToolOptions();
                 break;
             case 37: // left arrow
@@ -387,19 +387,18 @@ function _reset(resetType) {
 }
 
 function initChallenge() {
-    validateToolType();
-
     $('#game-wrapper').css('background-color', rgbToStr(pbgGame.bgColor));
     $('#percent-painted .slider-fill').css('background-color', rgbToStr(pbgGame.brushColor));
-
-    drawReticle();
-    drawToolOptions();
 
     pbgGame.timer.timeLimit = pbgGame.currentChallenge.timeLimit;
     pbgGame.resetChallenge();
     pbgCanvas.updateMaxCounts();
 
     pbgGame.currentChallenge.setTooltips();
+    validateToolType((pbgGame.currentLevel.challengeIdx > 0) ? 2600 : null);
+
+    drawReticle();
+    drawToolOptions();
 }
 
 function setGameMode(mode) {
@@ -605,7 +604,7 @@ function drawToolOptions() {
     });
 }
 
-function validateToolType() {
+function validateToolType(showTooltip) {
     const numTools = BRUSH_TYPES.length;
 
     let {toolTypeIdx: idx} = pbgGame;
@@ -616,13 +615,24 @@ function validateToolType() {
     }
 
     pbgGame.toolTypeIdx = idx;
-    updateRadioGroup('toolType', idx);
+    updateRadioGroup('toolType', idx, showTooltip);
 }
 
-function updateRadioGroup(radioGroup, optionIndex) {
-    const $tool = $(`.radio-group[data-group=${radioGroup}]`);
-    $tool.find('.active').removeClass('active');
-    $tool.find(`.tool:eq(${optionIndex})`).addClass('active');
+function updateRadioGroup(radioGroup, optionIndex, showTooltip) {
+    const $toolGroup = $(`.radio-group[data-group=${radioGroup}]`);
+    $toolGroup.find('.active').removeClass('active');
+    const $newTool = $toolGroup.find(`.tool:eq(${optionIndex})`).addClass('active')
+
+    if (!showTooltip) return;
+
+    const tippyInstance = $newTool[0]._tippy;
+    if (tippyInstance) {
+        pbgGame.currentChallenge.hideTooltips();
+        setTimeout(() => {
+            tippyInstance.show();
+            setTimeout(() => tippyInstance.hide(), showTooltip);
+        }, 100);
+    }
 }
 
 function drawReticle() {
@@ -759,5 +769,5 @@ function redrawGame(ctx) {
         if (points.length === 1) drawPoint(ctx, points[0]);
         else drawPath(ctx, points);
     }
-    if (pbgGame.isQuantized || total % 10 === 0) updatePercentAsync();
+    if (pbgGame.isQuantized ||total % 10 === 0) updatePercentAsync();
 }

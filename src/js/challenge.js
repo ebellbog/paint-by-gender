@@ -84,10 +84,15 @@ class PbgChallenge {
 
         this.tippyInstances = tippy('.tool[data-tippy-content]', {
             allowHTML: true,
+            delay: [400, null],
             offset: [0, 15],
             placement: 'left',
             theme: 'white'
         });
+    }
+
+    hideTooltips() {
+        this.tippyInstances.forEach((ti) => ti.hide());
     }
 
     destroyTooltips() {
