@@ -44,15 +44,6 @@ class PbgGame {
         this.levels.slice(1).forEach((level) => level.reset());
     }
 
-    pause(withBlur) {
-        this.isDrawing = false;
-        this.timer.pause();
-
-        if (withBlur) {
-            // updateBlurLayer();
-        }
-    }
-
     redraw() {
         const ctx = getContext();
 

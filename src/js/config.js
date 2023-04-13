@@ -37,7 +37,7 @@ const level1 = new PbgLevel(
         new PbgChallenge({
             shape: SHAPES.boob,
             timeLimit: 50,
-            maxSpill: 7500,
+            maxSpill: 7000,
             enabledTools: [1, 0, 0],
             tooltips: {
                 galbrush: ['Galbrush', 'A soft brush with smooth movement. Great for natural curves like these!'],
@@ -61,8 +61,8 @@ const level2 = new PbgLevel(
     [
         new PbgChallenge({
             shape: SHAPES.curvyToy,
-            timeLimit: 25,
-            maxSpill: 7000,
+            timeLimit: 60,
+            maxSpill: 15000,
             enabledTools: [0, 1, 0],
             tooltips: {
                 galbrush: ['Galbrush', 'A soft brush with smooth movement. Most people would use it for this kind of shape.'],
@@ -71,8 +71,8 @@ const level2 = new PbgLevel(
         }),
         new PbgChallenge({
             shape: SHAPES.qrCode,
-            timeLimit: 30,
-            maxSpill: 9000,
+            timeLimit: 70,
+            maxSpill: 11000,
             enabledTools: [1, 0, 0],
         }),
         new PbgChallenge({

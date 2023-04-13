@@ -77,14 +77,23 @@ function hookEvents() {
 
             if (!pbgCanvas.isDrawing) return;
 
-            var strokes = pbgCanvas.strokes;
-            var buffer = pbgCanvas.buffer;
+            const strokes = pbgCanvas.strokes;
+            const buffer = pbgCanvas.buffer;
 
-            var curPos = getPathPoint(getCanvas()[0], e);
-            var lastPos = strokes[strokes.length - 1].slice(-1)[0];
+            const curPos = getPathPoint(getCanvas()[0], e);
+            const lastPos = strokes[strokes.length - 1].slice(-1)[0];
+            const distance = getDistance(curPos, lastPos);
 
-            if (!pbgGame.isQuantized) {
-                if (getDistance(curPos, lastPos) < 10) {
+            if (pbgGame.isQuantized) {
+                if (distance < pbgGame.brushDiameter) {
+                    return;
+                } else if (distance > pbgGame.brushDiameter) {
+                    // Prevent diagonal paths for quantized brushes by breaking into separate paths
+                    pbgCanvas.stopDrawing();
+                    pbgCanvas.startDrawing();
+                }
+            } else {
+                if (distance < 10) {
                     buffer.push(curPos);
                 } else {
                     pbgCanvas.buffer = [];
@@ -92,11 +101,8 @@ function hookEvents() {
             }
 
             if (buffer.length > 3) {
-                var totals = buffer.reduce((a, b) => ({ x: a.x + b.x, y: a.y + b.y }));
-                var avgPos = { x: totals.x / buffer.length, y: totals.y / buffer.length, brushSize: buffer[0].brushSize };
-
-                strokes[strokes.length - 1].splice(-(buffer.length - 1), buffer.length - 1, avgPos);
-                pbgCanvas.buffer = [curPos];
+                pbgCanvas.flushBuffer();
+                pbgCanvas.buffer.push(curPos);
             }
 
             strokes[strokes.length - 1].push(curPos);
@@ -432,7 +438,7 @@ function setGameMode(mode) {
             break;
         case GAME_MODE.playing:
             getReticle().hide(); // hide until mouse move reveals
-            $('#retry').html("It's trash, start over")
+            $('#retry').html("Start over, it's trash")
             updateModeClass(mode);
             break;
         case GAME_MODE.nextChallenge:

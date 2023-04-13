@@ -128,7 +128,7 @@ const boob = new PbgShape(
         const centerX = canvasSize / 2;
 
         const smallestRadius = BRUSH_TYPES[1].sizes[2] / 2.2;
-        const mediumRadius = smallestRadius * 1.4;
+        const mediumRadius = smallestRadius * 1.45;
         const outerRadius =  centerX * .65;
 
         ctx.beginPath();
@@ -145,7 +145,7 @@ const boob = new PbgShape(
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(centerX, centerX * 1.22, smallestRadius, 0, Math.PI * 2);
+        ctx.arc(centerX, centerX * 1.23, smallestRadius, 0, Math.PI * 2);
         ctx.fillStyle = 'white';
     }
 );

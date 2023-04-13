@@ -43,6 +43,19 @@ class PbgCanvas {
         }
     }
 
+    flushBuffer() {
+        const bufferLength = this.buffer.length;
+        const totals = this.buffer.reduce((a, b) => ({ x: a.x + b.x, y: a.y + b.y }));
+        const avgPos = {
+            x: totals.x / bufferLength,
+            y: totals.y / bufferLength,
+            brushSize: this.buffer[0].brushSize
+        };
+
+        this.strokes[this.strokes.length - 1].splice(-(bufferLength - 1), bufferLength - 1, avgPos);
+        this.buffer = [];
+    }
+
     analyze() {
         // TODO: only 1/4 canvas at a time? either by region or modulus?
         const imageData = this.ctx.getImageData(0, 0, this.ctx.canvas.width, this.ctx.canvas.height).data; // R, G, B, A, R, G, B, etc.
