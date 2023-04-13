@@ -37,7 +37,6 @@ class PbgCanvas {
 
     stopDrawing() {
         this.isDrawing = false;
-
         if (this.strokes.length && this.strokes.slice(-1)[0].length > 0) {
             this.strokes.push([]);
         }
@@ -45,6 +44,8 @@ class PbgCanvas {
 
     flushBuffer() {
         const bufferLength = this.buffer.length;
+        if (!bufferLength) return;
+
         const totals = this.buffer.reduce((a, b) => ({ x: a.x + b.x, y: a.y + b.y }));
         const avgPos = {
             x: totals.x / bufferLength,

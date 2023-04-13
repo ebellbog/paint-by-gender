@@ -759,5 +759,5 @@ function redrawGame(ctx) {
         if (points.length === 1) drawPoint(ctx, points[0]);
         else drawPath(ctx, points);
     }
-    if (total % 10 === 0) updatePercentAsync();
+    if (pbgGame.isQuantized || total % 10 === 0) updatePercentAsync();
 }
