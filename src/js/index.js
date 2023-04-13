@@ -143,6 +143,7 @@ function hookEvents() {
                     $('#retry').click();
                 } else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
                     pbgGame.outcome = GAME_OUTCOME.passed;
+                    flashAffirmation();
                     setGameMode(pbgGame.advanceGame());
                 }
                 pressedArrow = false;
@@ -262,11 +263,6 @@ function hookEvents() {
 
 /* Helper functions */
 
-function randomAffirmation() {
-    const affirmations = ['Nice job!', 'Awesome!', '100%', 'Nailed it!'];
-    return affirmations[Math.floor(Math.random() * affirmations.length)];
-}
-
 function getPathPoint(canvas, e) {
     const rect = canvas.getBoundingClientRect();
     let x = (e.clientX - rect.left) / canvasScale;
@@ -330,6 +326,7 @@ function updatePercentPainted() {
     else if (percent >= 1 && pbgGame.mode === GAME_MODE.playing) {
         $fill.css('background-color', '#0f0');
         pbgGame.outcome = GAME_OUTCOME.passed;
+        flashAffirmation();
         setGameMode(pbgGame.advanceGame());
     }
 }
@@ -460,7 +457,6 @@ function setGameMode(mode) {
                 });
             }), 1000);
 
-            flashExpanding(randomAffirmation(), 800, { hold: 400, styling: 'small', expand: 200 });
             break;
         case GAME_MODE.complete:
             $('#retry').html('PLAY AGAIN');
@@ -470,12 +466,12 @@ function setGameMode(mode) {
 
             pbgGame.setEndText();
 
-            transitionManager.boxOut(() => {
+            setTimeout(() => transitionManager.boxOut(() => {
                 setTimeout(
                     () => $body.addClass('show-overlay show-curtain'),
                     150
                 );
-            });
+            }), 900);
             break;
         case GAME_MODE.failed:
             const {attempts} = pbgGame.currentChallenge;
@@ -545,6 +541,10 @@ function flashExpanding(message, duration, options) {
         .appendTo('td#main');
 
     setTimeout(() => $number.animate({ 'font-size': `+=${expand}`, opacity: 0 }, duration - hold, () => $number.remove()), hold);
+}
+
+function flashAffirmation() {
+    flashExpanding(pbgGame.currentLevel.randomAffirmation, 800, { hold: 400, styling: 'small', expand: 200 });
 }
 
 function flashStationary(message, duration, fade) {

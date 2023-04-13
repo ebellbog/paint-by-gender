@@ -5,6 +5,8 @@ class PbgLevel {
 
     levelName = '';
     levelDescription = '';
+
+    affirmations = [];
     endMessages = {};
 
     // State
@@ -14,6 +16,8 @@ class PbgLevel {
     constructor(cfg, challenges) {
         this.levelName = cfg.levelName;
         this.levelDescription = cfg.levelDescription;
+
+        this.affirmations = cfg.affirmations;
         this.endMessages = cfg.endMessages;
 
         this.challenges.push(...challenges);
@@ -26,6 +30,10 @@ class PbgLevel {
 
     get currentChallenge() {
         return this.challenges[this.challengeIdx];
+    }
+
+    get randomAffirmation() {
+        return this.affirmations[Math.floor(Math.random() * this.affirmations.length)];
     }
 }
 

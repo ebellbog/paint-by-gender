@@ -6,6 +6,7 @@ const level1 = new PbgLevel(
     {
         levelName: "How We're Shaped",
         levelDescription: 'Square pegs in square holes. Everything in its place. Your life is shaping up just fine!',
+        affirmations: ['Nice job!', 'Awesome!', '100%', 'Nailed it!'],
         endMessages: {
             0: ["Congrats!", "You played the game. You painted inside the lines and feel strangely validated."],
             1: ["Oops.", "You transgressed too far. People noticed, and they care way more than they should."],
@@ -52,6 +53,7 @@ const level2 = new PbgLevel(
     {
         levelName: "Out of Shape",
         levelDescription: 'Something went wrong this time around... Nothing makes sense anymore.',
+        affirmations: ['Close enough!', 'Half-decent!', 'Interesting!', 'Ok then!'],
         endMessages: {
             0: ["Congrats!", "You played the game. You painted inside the lines and feel strangely validated."],
             1: ["Oops.", "You transgressed too far. People noticed, and they care way more than they should."],
