@@ -34,6 +34,17 @@ const level1 = new PbgLevel(
                 guybrush: ['Guybrush', 'A solid brush with precise movement. Great for geometric shapes like these!'],
             }
         }),
+        new PbgChallenge({
+            shape: SHAPES.boob,
+            timeLimit: 50,
+            maxSpill: 7500,
+            enabledTools: [1, 0, 0],
+            tooltips: {
+                galbrush: ['Galbrush', 'A soft brush with smooth movement. Great for natural curves like these!'],
+                guybrush: ['Guybrush', 'A solid brush with precise movement. You wouldn\'t have much use for it here.'],
+                'mystery-tool': ['???', ''],
+            }
+        }),
     ]
 );
 
@@ -63,6 +74,12 @@ const level2 = new PbgLevel(
             timeLimit: 30,
             maxSpill: 9000,
             enabledTools: [1, 0, 0],
+        }),
+        new PbgChallenge({
+            shape: SHAPES.boob,
+            timeLimit: 50,
+            maxSpill: 15000,
+            enabledTools: [0, 1, 0],
         }),
     ]
 );

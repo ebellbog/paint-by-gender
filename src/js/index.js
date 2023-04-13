@@ -168,14 +168,15 @@ function hookEvents() {
         updatePercentPainted();
     });
 
-    $('#retry').on('click', () => {
+    $('#retry').on('click', (e) => {
         if (pbgGame.mode === GAME_MODE.complete) {
             resetGame();
             return $('#next-level').click();
-        } else if (pbgGame.mode === GAME_MODE.paused) {
-            resetChallenge();
+        } else if (pbgGame.mode === GAME_MODE.failed) {
+            if (pbgGame.currentChallenge.attempts < 2) resetChallenge();
+            else resetLevel();
         } else {
-            resetLevel();
+            resetChallenge();
         }
         setGameMode(GAME_MODE.starting);
     });
@@ -361,8 +362,7 @@ function _reset(resetType) {
 
     switch(resetType) {
         case 'challenge':
-            pbgGame.resetCurrent();
-            pbgGame.drawChallenge();
+            pbgGame.retryChallenge();
             break;
         case 'level':
             pbgGame.resetLevel();
@@ -393,7 +393,7 @@ function initChallenge() {
     drawToolOptions();
 
     pbgGame.timer.timeLimit = pbgGame.currentChallenge.timeLimit;
-    pbgGame.resetCurrent();
+    pbgGame.resetChallenge();
     pbgCanvas.updateMaxCounts();
 
     pbgGame.currentChallenge.setTooltips();
@@ -432,7 +432,7 @@ function setGameMode(mode) {
             break;
         case GAME_MODE.playing:
             getReticle().hide(); // hide until mouse move reveals
-            $('#retry').html('RETRY DRAWING')
+            $('#retry').html("It's trash, start over")
             updateModeClass(mode);
             break;
         case GAME_MODE.nextChallenge:
@@ -472,7 +472,10 @@ function setGameMode(mode) {
             });
             break;
         case GAME_MODE.failed:
-            $('#retry').html( `RETRY LEVEL ${pbgGame.levelIdx + 1}`);
+            const {attempts} = pbgGame.currentChallenge;
+            const suffix = ['nd', 'rd'][attempts];
+            const label = (suffix) ? `Give it a ${attempts + 2}${suffix} try?` : 'Just restart the<br>whole darn level';
+            $('#retry').html(label);
             pbgGame.setEndText();
         case GAME_MODE.paused:
             pauseGame(true);

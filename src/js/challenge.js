@@ -41,8 +41,11 @@ class PbgChallenge {
     }
 
     retry() {
-        this.undosRemaining = this.maxUndos;
         this.attempts++;
+
+        this.undosRemaining = this.maxUndos;
+        this.updateUndoStatus();
+
         this.draw();
     }
 
@@ -89,6 +92,7 @@ class PbgChallenge {
 
     destroyTooltips() {
         this.tippyInstances.forEach((ti) => ti.destroy());
+        this.tippyInstances = [];
     }
 }
 

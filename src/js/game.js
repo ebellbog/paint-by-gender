@@ -24,10 +24,13 @@ class PbgGame {
         this.timer = new PbgTimer();
     }
 
-
-    resetCurrent() {
+    retryChallenge() {
+        this.currentChallenge.retry();
+        this.timer.reset();
+    }
+    resetChallenge() {
         this.currentChallenge.reset();
-        this.drawChallenge();
+        this.currentChallenge.draw();
         this.timer.reset();
     }
     resetLevel() {

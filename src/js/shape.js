@@ -7,35 +7,42 @@ class PbgShape {
     bgColor = null; // Shapes have a fixed background color, regardless of challenge/level
     drawFunc = () => {};
 
+    // State
+
+    ctx = getContext();
+
     constructor(bgColor, drawFunc) {
         this.bgColor = bgColor;
         this.drawFunc = drawFunc;
     }
 
-    draw() {
-        const ctx = getContext();
-        ctx.save();
-
-        ctx.globalCompositeOperation = 'source-over';
-        this.clearCanvas(ctx);
-
-        // Setup context for drawing
-        ctx.fillStyle = rgbToStr(COLORS.white);
-        ctx.strokeStyle = rgbToStr(COLORS.outline);
-        ctx.lineWidth = 3.5;
-
-        // Draw path, then fill in
-        this.drawFunc(ctx);
-        ctx.stroke();
-        ctx.fill();
-
-        ctx.restore();
+    _setupContext() {
+        this.ctx.fillStyle = rgbToStr(COLORS.white);
+        this.ctx.strokeStyle = rgbToStr(COLORS.outline);
+        this.ctx.lineWidth = 4.5;
     }
 
-    clearCanvas(ctx) {
+    draw() {
+        this.ctx.save();
+
+        this.ctx.globalCompositeOperation = 'source-over';
+
+        this.clearCanvas();
+        this._setupContext();
+        this.drawFunc(this.ctx, this.bgColor);
+
+        this.ctx.stroke();
+        this.ctx.fill();
+
+        this.ctx.restore();
+    }
+
+    clearCanvas() {
         const canvasSize = getCanvasSize();
-        ctx.fillStyle = rgbToStr(this.bgColor);
-        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        this.ctx.save();
+        this.ctx.fillStyle = rgbToStr(this.bgColor);
+        this.ctx.fillRect(0, 0, canvasSize, canvasSize);
+        this.ctx.restore();
     }
 }
 
@@ -113,7 +120,37 @@ const heart = new PbgShape(
     }
 );
 
-const SHAPES = {curvyToy, qrCode, heart};
+const boob = new PbgShape(
+    COLORS.pink,
+    (ctx, bgColor) => {
+        const canvasSize = getCanvasSize();
+
+        const centerX = canvasSize / 2;
+
+        const smallestRadius = BRUSH_TYPES[1].sizes[2] / 2.2;
+        const mediumRadius = smallestRadius * 1.4;
+        const outerRadius =  centerX * .65;
+
+        ctx.beginPath();
+
+        ctx.arc(centerX, centerX, outerRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fill();
+
+        ctx.beginPath();
+
+        ctx.arc(centerX, centerX * 1.21, mediumRadius, 0, Math.PI * 2);
+        ctx.fillStyle = rgbToStr(bgColor);
+        ctx.stroke();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerX * 1.22, smallestRadius, 0, Math.PI * 2);
+        ctx.fillStyle = 'white';
+    }
+);
+
+const SHAPES = {curvyToy, qrCode, heart, boob};
 
 export {SHAPES};
 export default PbgShape;
