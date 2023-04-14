@@ -38,8 +38,6 @@ let undoGroups = [], currentUndoSize = 1, doIncreaseUndoSize = false;
 /* Initialization & event handlers */
 
 $(document).ready(function () {
-    $('body').removeClass('preload');
-
     tippy('#help-icon', {
         allowHTML: true,
         maxWidth: 425,
@@ -51,8 +49,10 @@ $(document).ready(function () {
     canvasSize = parseInt($canvas.attr('height'));
     canvasScale = $canvas.height() / canvasSize;
 
-    initGame();
     hookEvents();
+    initGame();
+
+    $('body').removeClass('preload');
 });
 
 function startDrawing(e) {
@@ -235,8 +235,12 @@ function hookEvents() {
     });
 
     $('#quit').on('click', () => {
-        resetGame();
-        return $('#next-level').click();
+        const $body = $('body');
+        $body.removeClass('show-game');
+        setTimeout(() => {
+            $body.addClass('show-splash');
+            setTimeout(resetGame, 1000);
+        }, 1000);
     });
 
     $('.tool')
@@ -291,6 +295,14 @@ function hookEvents() {
     });
     $('body').on('brush-size-change', () => {
         drawReticle();
+    });
+
+    $('#btn-begin').on('click', () => {
+        const $body = $('body');
+        $body.removeClass('show-splash');
+        setTimeout(() => {
+            $body.addClass('show-game');
+        }, 1000);
     });
 }
 
@@ -382,6 +394,9 @@ function initGame() {
 
     startingChallenge = parseInt(searchParams.get('c'));
 
+    if (!isNaN(startingLevel) || !isNaN(startingChallenge)) {
+        $('body').addClass('show-game').removeClass('show-splash');
+    }
     setGameMode(GAME_MODE.newLevel);
 }
 
@@ -416,7 +431,7 @@ function _reset(resetType) {
             break;
         case 'game':
             pbgGame.resetAll();
-            initChallenge();
+            initGame();
             break;
     }
 
@@ -453,6 +468,7 @@ function setGameMode(mode) {
             updateModeClass(mode);
 
             $body.addClass('show-overlay show-blur');
+            $body.removeClass('show-curtain');
             break;
         case GAME_MODE.starting:
             $body.removeClass('show-overlay show-curtain');
