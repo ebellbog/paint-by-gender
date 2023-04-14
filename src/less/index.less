@@ -72,13 +72,24 @@ body, #layout, #menu-bar {
 
 #title {
     font-family: 'Slackey', cursive;
-    font-size: 1.7em;
+    font-size: 1.5em;
     font-weight: 600;
     letter-spacing: 1px;
     white-space: nowrap;
+    text-transform: uppercase;
+
+    span {
+        display: inline-block;
+        margin-right: .4em;
+        &:nth-child(1), &:nth-child(3) {
+            &::first-letter {
+                font-size: 1.3em;
+            }
+        }
+    }
 
     background: linear-gradient(
-        90deg,
+        115deg,
         #85eeff,
         #ffaeae 200px
     );
@@ -87,8 +98,10 @@ body, #layout, #menu-bar {
     -webkit-text-fill-color: transparent;
 
     filter: drop-shadow(2px 2px 1px darken(@purple, 15%));
-    transform: scaleX(.9);
+    transform: scaleX(.95);
     transform-origin: 0% 50%;
+
+    margin: -.08em 0;
 }
 
 #status {
@@ -98,6 +111,10 @@ body, #layout, #menu-bar {
     width: @canvasSize * @canvasScale;
     font-size: 26px;
     letter-spacing: 1px;
+
+    span {
+        margin-bottom: -.1em;
+    }
 }
 
 #level-number {
@@ -115,7 +132,7 @@ body, #layout, #menu-bar {
 
 #level-icon-wrapper {
     float: right;
-    padding-top: 4px;
+    padding-top: 2px;
     font-size: 24px;
     opacity: 0.9;
 }
@@ -162,7 +179,7 @@ body, #layout, #menu-bar {
     border: 2px solid @purple;
     box-shadow: 4px 4px 0 darken(@purple, 5%);
 
-    #game, #canvas-texture, #blurred-game, #blurred-game canvas {
+    #game, #canvas-texture, #blurred-game, #blurred-game canvas, #confetti-canvas {
         .fullSize();
     }
 }
@@ -213,6 +230,11 @@ body, #layout, #menu-bar {
 #canvas-texture, #new-level-curtain {
     background-image: url('../../img/canvas_texture.png');
     background-size: 250px;
+}
+
+#confetti-canvas {
+    z-index: 10;
+    pointer-events: none;
 }
 
 #reticle {

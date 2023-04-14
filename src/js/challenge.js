@@ -13,6 +13,7 @@ class PbgChallenge {
     tooltips = {};
     spillColor = null;
     maxUndos = 3;
+    emojis = [];
 
     // State
 
@@ -22,7 +23,7 @@ class PbgChallenge {
     tippyInstances = [];
 
     constructor(options) {
-        ['shape', 'enabledTools', 'timeLimit', 'spillColor', 'maxSpill', 'tooltips']
+        ['shape', 'enabledTools', 'timeLimit', 'spillColor', 'maxSpill', 'tooltips', 'emojis']
             .forEach((key) => this[key] = options[key]);
     }
 

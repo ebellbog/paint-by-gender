@@ -12,6 +12,7 @@ class PbgLevel {
     // Optional config
 
     winPercent = 1;
+    emojis = [];
 
     // State
 
@@ -23,6 +24,8 @@ class PbgLevel {
 
         this.affirmations = cfg.affirmations;
         this.endMessages = cfg.endMessages;
+
+        this.emojis = cfg.emojis;
 
         if (cfg.winPercent) this.winPercent = cfg.winPercent;
 

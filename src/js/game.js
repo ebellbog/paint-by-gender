@@ -1,9 +1,11 @@
 import PbgTimer from './timer';
-import {getContext} from './utils';
-import {BRUSH_TYPES, GAME_MODE} from './enums';
+import {getContext, rgbToStr} from './utils';
+import {BRUSH_TYPES, COLORS, GAME_MODE} from './enums';
 
 import rangeSlider from 'range-slider-input';
 import 'range-slider-input/dist/style.css';
+
+import JSConfetti from 'js-confetti'
 
 const MIN_BRUSH_SIZE = 8;
 const MAX_BRUSH_SIZE = 50;
@@ -26,6 +28,8 @@ class PbgGame {
     mode = null;
     outcome = null;
 
+    confetti = null;
+
     constructor(levels) {
         this.levels = levels;
         this.timer = new PbgTimer();
@@ -36,6 +40,8 @@ class PbgGame {
             thumbsDisabled: [true, false],
             rangeSlideDisabled: true
         });
+
+        this.confetti = new JSConfetti({canvas: $('#confetti-canvas')[0]});
     }
 
     retryChallenge() {
@@ -73,6 +79,8 @@ class PbgGame {
     }
 
     advanceGame() {
+        this.throwEmojis();
+
         this.currentChallenge.completionTime = this.timer.timeElapsed;
         this.currentChallenge.attempts++;
         this.currentChallenge.destroyTooltips();
@@ -88,11 +96,27 @@ class PbgGame {
                 this.levelIdx++;
                 nextMode = GAME_MODE.nextLevel;
             }
+
+            setTimeout(() => this.throwConfetti(), 2800);
         } else {
             nextMode = GAME_MODE.nextChallenge;
         }
 
         return nextMode;
+    }
+
+    throwEmojis(emojis) {
+        emojis = emojis || this.currentChallenge.emojis || this.currentLevel.emojis;
+        this.confetti.addConfetti({emojis, emojiSize: 50});
+    }
+
+    throwConfetti() {
+        const COLOR_CYCLE = [rgbToStr(COLORS.pink), rgbToStr(COLORS.blue), 'white'];
+        const DELAY = 750;
+
+        for (let i = 0; i < COLOR_CYCLE.length; i++) {
+            setTimeout(() => this.confetti.addConfetti({confettiColors: COLOR_CYCLE.slice(i, i+1)}), i * DELAY);
+        }
     }
 
     setLevelTitle() {
