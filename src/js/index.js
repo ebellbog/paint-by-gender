@@ -28,10 +28,11 @@ const pbgGame = new PbgGame(levelData);
 const pbgCanvas = new PbgCanvas(pbgGame);
 const transitionManager = new PbgTransitionManager(pbgGame);
 
-let tooltips, canvasScale, canvasSize;
+let canvasScale, canvasSize;
 let _$reticle;
 
 let startingChallenge;
+let undoGroups = [], currentUndoSize = 1, doIncreaseUndoSize = false;
 
 
 /* Initialization & event handlers */
@@ -54,23 +55,32 @@ $(document).ready(function () {
     hookEvents();
 });
 
+function startDrawing(e) {
+    pbgCanvas.startDrawing();
+
+    const strokes = pbgCanvas.strokes;
+    if (!strokes.length) strokes.push([]);
+
+    const pt = getPathPoint(getCanvas()[0], e);
+    strokes[strokes.length - 1].push(pt);
+
+    if (doIncreaseUndoSize) {
+        currentUndoSize++;
+        doIncreaseUndoSize = false;
+    }
+
+    drawPoint(getContext(), pt);
+    updatePercentAsync();
+}
+
 function hookEvents() {
     const ctx = getContext();
 
     getCanvas()
         .on('mousedown', function (e) {
             if (pbgGame.mode != GAME_MODE.playing) return;
-
-            pbgCanvas.startDrawing();
-
-            const strokes = pbgCanvas.strokes;
-            if (!strokes.length) strokes.push([]);
-
-            const pt = getPathPoint(getCanvas()[0], e);
-            strokes[strokes.length - 1].push(pt);
-
-            drawPoint(ctx, pt);
-            updatePercentAsync();
+            currentUndoSize = 1;
+            startDrawing(e);
         })
         .on('mousemove', function (e) {
             updateReticle(e);
@@ -78,10 +88,13 @@ function hookEvents() {
             if (!pbgCanvas.isDrawing) return;
 
             const strokes = pbgCanvas.strokes;
-            const buffer = pbgCanvas.buffer;
+
+            const lastPos = strokes[strokes.length - 1].slice(-1)[0];
+            if (!lastPos) {
+                return startDrawing(e);
+            }
 
             const curPos = getPathPoint(getCanvas()[0], e);
-            const lastPos = strokes[strokes.length - 1].slice(-1)[0];
             const distance = getDistance(curPos, lastPos);
 
             if (pbgGame.isQuantized) {
@@ -94,27 +107,33 @@ function hookEvents() {
                 }
             } else {
                 if (distance < 10) {
-                    buffer.push(curPos);
+                    pbgCanvas.buffer.push(curPos);
                 } else {
                     pbgCanvas.buffer = [];
                 }
             }
 
-            if (buffer.length > 3) {
+            if (pbgCanvas.buffer.length > 3) {
                 pbgCanvas.flushBuffer();
                 pbgCanvas.buffer.push(curPos);
             }
 
             strokes[strokes.length - 1].push(curPos);
-            redrawGame(ctx);
+            redrawGame();
         })
         .on('mouseout', function (e) {
             getReticle().hide();
         });
 
     $(document).on('mouseup', function () {
-        pbgCanvas.stopDrawing();
-        updatePercentPainted();
+        if (pbgCanvas.isDrawing) {
+            pbgCanvas.stopDrawing();
+
+            doIncreaseUndoSize = false;
+            undoGroups.push(currentUndoSize);
+
+            updatePercentPainted();
+        }
     });
 
     $(document).keydown((e) => {
@@ -126,14 +145,27 @@ function hookEvents() {
             case 40: // down arrow
                 pbgGame.toolTypeIdx++;
                 validateToolType(1000);
-                drawToolOptions();
+                updateToolOptions();
                 break;
             case 37: // left arrow
-                pbgGame.toolOptionIdx -= 2;
+                if (pbgGame.isQuantized) {
+                    pbgGame.toolOptionIdx -= 2;
+                } else {
+                    pbgGame.brushSize = pbgGame.brushSize - 4;
+                }
             case 39: // right arrow
-                const sizes = pbgGame.brushType.sizes.length;
-                pbgGame.toolOptionIdx = (pbgGame.toolOptionIdx + 1 + sizes) % sizes;
-                updateRadioGroup('toolOption', pbgGame.toolOptionIdx);
+                if (pbgGame.isQuantized) {
+                    const sizes = pbgGame.brushType.sizes.length;
+                    pbgGame.toolOptionIdx = (pbgGame.toolOptionIdx + 1 + sizes) % sizes;
+                    updateRadioGroup('toolOption', pbgGame.toolOptionIdx);
+                } else {
+                    pbgGame.brushSize = pbgGame.brushSize + 2;
+                    if (pbgCanvas.isDrawing) {
+                        pbgCanvas.stopDrawing();
+                        pbgCanvas.startDrawing();
+                        doIncreaseUndoSize = true;
+                    }
+                }
                 break;
             case 13: // return key
             case 32: // spacebar
@@ -168,10 +200,11 @@ function hookEvents() {
 
         if (pbgGame.mode !== GAME_MODE.playing || !undosRemaining || strokes.length < 2) return;
 
-        strokes.splice(strokes.length - 2, 1);
+        const lastUndoSize = undoGroups.splice(-1)[0];
+        strokes.splice(strokes.length - lastUndoSize - 1, lastUndoSize);
         pbgGame.currentChallenge.undo();
 
-        redrawGame(ctx);
+        redrawGame();
         updatePercentPainted();
     });
 
@@ -220,16 +253,15 @@ function hookEvents() {
                 if (groupType === 'toolType') {
                     if (!pbgGame.isToolEnabled(inputIdx)) return;
                     pbgGame.toolTypeIdx = inputIdx;
+                    updateToolOptions();
                 } else {
                     pbgGame.toolOptionIdx = inputIdx;
                 }
+                drawReticle();
                 $group.find('.active').removeClass('active');
             }
 
             $input.addClass('active');
-
-            drawReticle();
-            drawToolOptions();
         })
         .on('mouseup mouseout', ({currentTarget}) => {
             const $input = $(currentTarget);
@@ -255,9 +287,11 @@ function hookEvents() {
     pbgGame.timer.on('clocked', () => {
         pbgGame.outcome = GAME_OUTCOME.clocked;
         $('#spill-warning .slider-wrapper').removeClass('danger');
-    setGameMode(GAME_MODE.failed);
-})
-
+        setGameMode(GAME_MODE.failed);
+    });
+    $('body').on('brush-size-change', () => {
+        drawReticle();
+    });
 }
 
 
@@ -362,6 +396,8 @@ function resetGame() {
 
 function _reset(resetType) {
     pbgCanvas.reset();
+    undoGroups = [];
+    doIncreaseUndoSize = false;
 
     switch(resetType) {
         case 'challenge':
@@ -398,7 +434,7 @@ function initChallenge() {
     validateToolType((pbgGame.currentLevel.challengeIdx > 0) ? 2600 : null);
 
     drawReticle();
-    drawToolOptions();
+    updateToolOptions();
 }
 
 function setGameMode(mode) {
@@ -571,33 +607,10 @@ function showCountdown(count, options) {
 
 /* Tool options & selectors */
 
-function drawToolOptions() {
-    const starred = pbgGame.isStarred;
-    const sides = pbgGame.brushSides;
-    let size = sides ? 5 : 4;
-
-    $('#footer canvas').each((_idx, canvas) => {
-        const $canvas = $(canvas);
-        const ctx = getContext($canvas);
-        ctx.clearRect(0, 0, $canvas.width(), $canvas.height());
-
-        let centerX = $canvas.width() / 2;
-        let centerY = centerX;
-
-        if (!sides) {
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
-            ctx.fill();
-            size += 6;
-        } else {
-            centerX = $canvas.width() / 2;
-            centerY = centerX;
-            if (sides == 5) centerY += 1;
-            drawPolygon(ctx, centerX, centerY, sides, size, {style: 'fill', color: 'white', starred: starred});
-            size += 7;
-        }
-    });
+function updateToolOptions() {
+    const isQuantized = !!pbgGame.isQuantized;
+    $('#guybrush-options').toggle(isQuantized);
+    $('#galbrush-options').toggle(!isQuantized);
 
     $('[data-group="toolType"] .tool').each((idx, el) => {
         $(el).toggleClass('disabled', !pbgGame.isToolEnabled(idx));
@@ -756,7 +769,8 @@ function drawPath(ctx, pts) {
     }
 }
 
-function redrawGame(ctx) {
+function redrawGame() {
+    const ctx = getContext();
     pbgGame.drawChallenge();
     pbgCanvas.setupContext(pbgGame.brushColor);
 

@@ -82,7 +82,7 @@
                     <div id="canvas-texture"></div>
                     <canvas id="game" width=540px height=540px></canvas>
 
-                    <canvas id="reticle" width=240px height=240px></canvas>
+                    <canvas id="reticle" width=300px height=300px></canvas>
                 </div>
             </td>
             <td id="stats" align="center">
@@ -108,16 +108,23 @@
         <tr id="footer">
             <td />
             <td align="center">
-                <div class="tool-group group-horizontal radio-group" data-group="toolOption">
+                <div id="guybrush-options" class="tool-group group-horizontal radio-group" data-group="toolOption">
                     <div class="tool">
-                        <canvas width="40px" height="40px"></canvas>
+                        <i class="fa-fw fa-solid fa-square-full"></i>
                     </div>
                     <div class="tool active">
-                        <canvas width="40px" height="40px"></canvas>
+                        <i class="fa-solid fa-square-full"></i>
                     </div>
                     <div class="tool">
-                        <canvas width="40px" height="40px"></canvas>
+                        <i class="fa-solid fa-square-full"></i>
                     </div>
+                </div>
+                <div id="galbrush-options" class="tool-group">
+                    <i class="fa-fw fa-xs fa-solid fa-circle"></i>
+                    <span>
+                        <div id="range-slider"></div>
+                    </span>
+                    <i class="fa-fw fa-2x fa-solid fa-circle"></i>
                 </div>
             </td>
             <td />

@@ -2,6 +2,12 @@ import PbgTimer from './timer';
 import {getContext} from './utils';
 import {BRUSH_TYPES, GAME_MODE} from './enums';
 
+import rangeSlider from 'range-slider-input';
+import 'range-slider-input/dist/style.css';
+
+const MIN_BRUSH_SIZE = 8;
+const MAX_BRUSH_SIZE = 50;
+
 class PbgGame {
     // Required config
 
@@ -15,6 +21,7 @@ class PbgGame {
 
     toolTypeIdx = 0;
     toolOptionIdx = 1;
+    rangeSlider = null;
 
     mode = null;
     outcome = null;
@@ -22,6 +29,13 @@ class PbgGame {
     constructor(levels) {
         this.levels = levels;
         this.timer = new PbgTimer();
+
+        this.rangeSlider = rangeSlider($('#range-slider')[0], {
+            onInput: () => $('body').trigger('brush-size-change'),
+            value: [0, MAX_BRUSH_SIZE - MIN_BRUSH_SIZE],
+            thumbsDisabled: [true, false],
+            rangeSlideDisabled: true
+        });
     }
 
     retryChallenge() {
@@ -140,12 +154,17 @@ class PbgGame {
     }
 
     get brushSize() {
-        let size = this.brushDiameter;
-
         if (this.brushType.isQuantized) {
-            size = size / (Math.cos(Math.PI / this.brushSides) * 2);
+            return this.brushDiameter / (Math.cos(Math.PI / this.brushSides) * 2);
+        } else {
+            return this.rangeSlider.value()[1] + MIN_BRUSH_SIZE;
         }
-        return size;
+    }
+
+    set brushSize(size) {
+        if (!this.brushSize.isQuantized) {
+            this.rangeSlider.value([0, size - MIN_BRUSH_SIZE]);
+        }
     }
 
     get brushDiameter() {

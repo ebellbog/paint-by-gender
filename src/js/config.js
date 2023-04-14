@@ -74,7 +74,7 @@ const level2 = new PbgLevel(
         new PbgChallenge({
             shape: SHAPES.qrCode,
             timeLimit: 70,
-            maxSpill: 11000,
+            maxSpill: 12000,
             enabledTools: [1, 0, 0],
         }),
         new PbgChallenge({
