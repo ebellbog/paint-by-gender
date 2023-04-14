@@ -150,7 +150,53 @@ const boob = new PbgShape(
     }
 );
 
-const SHAPES = {curvyToy, qrCode, heart, boob};
+const briefcase = new PbgShape(
+    COLORS.blue,
+    (ctx) => {
+        const ss = BRUSH_TYPES[1].sizes[0];
+        const ms = BRUSH_TYPES[1].sizes[1];
+        const ls = BRUSH_TYPES[1].sizes[2];
+
+        ctx.beginPath();
+        ctx.rect(ms * 3, ms * 4, ms * 4, ms * 4);
+        ctx.rect(ms * 1, ms * 4, ms + ss, ms * 4);
+        ctx.rect(ms * 1, ms * 4, ms + ss, ms * 4);
+        ctx.rect(ls * 4 - ss, ms * 4, ms + ss, ms * 4);
+        ctx.rect(ms * 2, ms * 2, ms * 6, ss);
+        ctx.rect(ms * 2, ms * 2, ms, ms + ss);
+        ctx.rect(ls * 4 - ms, ms * 2, ms * 1, ms + ss);
+
+    }
+)
+
+const silhouette = new PbgShape(
+    COLORS.blue,
+    (ctx) => {
+        const ss = BRUSH_TYPES[1].sizes[0];
+        const ms = BRUSH_TYPES[1].sizes[1];
+        const ls = BRUSH_TYPES[1].sizes[2];
+
+        ctx.beginPath();
+        ctx.rect(ms * 3, ms * 2, ls * 3, ls); // arms
+        ctx.rect(ls  * 2, ls * 2, ls * 2, ms + ss); // waist
+        ctx.rect(ms * 5, ms, ms * 2, ms); // neck
+
+        // Legs
+        ctx.moveTo(ls * 2, ls * 3);
+        ctx.lineTo(ls * 4, ls * 3);
+        ctx.lineTo(ls * 4, ms * 9);
+        ctx.lineTo(ms * 6 + ss, ms * 9);
+        ctx.lineTo(ms * 6 + ss, ms * 7 + ss);
+        ctx.lineTo(ms * 6, ms * 7 + ss);
+        ctx.lineTo(ms * 6, ms * 8);
+        ctx.lineTo(ms * 5 + ss, ms * 8);
+        ctx.lineTo(ms * 5 + ss, ms * 9);
+        ctx.lineTo(ms * 4, ms * 9 );
+        ctx.closePath();
+    }
+)
+
+const SHAPES = {curvyToy, qrCode, heart, boob, briefcase, silhouette};
 
 export {SHAPES};
 export default PbgShape;

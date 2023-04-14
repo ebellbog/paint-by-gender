@@ -26,9 +26,9 @@ const level1 = new PbgLevel(
             }
         }),
         new PbgChallenge({
-            shape: SHAPES.qrCode,
+            shape: SHAPES.briefcase,
             timeLimit: 30,
-            maxSpill: 9000,
+            maxSpill: 4300,
             enabledTools: [0, 1, 0],
             tooltips: {
                 galbrush: ['Galbrush', 'A soft brush with smooth movement. You wouldn\'t have much use for it here.'],
@@ -46,6 +46,16 @@ const level1 = new PbgLevel(
                 'mystery-tool': ['???', ''],
             }
         }),
+        new PbgChallenge({
+            shape: SHAPES.silhouette,
+            timeLimit: 30,
+            maxSpill: 2950,
+            enabledTools: [0, 1, 0],
+            tooltips: {
+                galbrush: ['Galbrush', 'A soft brush with smooth movement. You wouldn\'t have much use for it here.'],
+                guybrush: ['Guybrush', 'A solid brush with precise movement. Great for geometric shapes like these!'],
+            }
+        }),
     ]
 );
 
@@ -58,7 +68,8 @@ const level2 = new PbgLevel(
             0: ["Congrats!", "You played the game. You painted inside the lines and feel strangely validated."],
             1: ["Oops.", "You transgressed too far. People noticed, and they care way more than they should."],
             2: ["You got clocked", "Time's up. Not everyone gets a chance to fulfill their purpose."]
-        }
+        },
+        winPercent: .995,
     },
     [
         new PbgChallenge({
@@ -72,16 +83,30 @@ const level2 = new PbgLevel(
             }
         }),
         new PbgChallenge({
-            shape: SHAPES.qrCode,
-            timeLimit: 70,
-            maxSpill: 12000,
+            shape: SHAPES.briefcase,
+            timeLimit: 30,
+            maxSpill: 4300,
             enabledTools: [1, 0, 0],
+            tooltips: {
+                galbrush: ['Galbrush', 'A soft brush with smooth movement. You wouldn\'t have much use for it here.'],
+                guybrush: ['Guybrush', 'A solid brush with precise movement. Great for geometric shapes like these!'],
+            }
         }),
         new PbgChallenge({
             shape: SHAPES.boob,
             timeLimit: 50,
-            maxSpill: 15000,
+            maxSpill: 16000,
             enabledTools: [0, 1, 0],
+        }),
+        new PbgChallenge({
+            shape: SHAPES.silhouette,
+            timeLimit: 70,
+            maxSpill: 7500,
+            enabledTools: [1, 0, 0],
+            tooltips: {
+                galbrush: ['Galbrush', 'A soft brush with smooth movement. You wouldn\'t have much use for it here.'],
+                guybrush: ['Guybrush', 'A solid brush with precise movement. Great for geometric shapes like these!'],
+            }
         }),
     ]
 );

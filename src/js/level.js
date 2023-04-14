@@ -9,6 +9,10 @@ class PbgLevel {
     affirmations = [];
     endMessages = {};
 
+    // Optional config
+
+    winPercent = 1;
+
     // State
 
     challengeIdx = 0;
@@ -19,6 +23,8 @@ class PbgLevel {
 
         this.affirmations = cfg.affirmations;
         this.endMessages = cfg.endMessages;
+
+        if (cfg.winPercent) this.winPercent = cfg.winPercent;
 
         this.challenges.push(...challenges);
     }

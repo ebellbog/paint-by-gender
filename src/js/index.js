@@ -351,13 +351,14 @@ function updatePercentPainted() {
     const color = chromaScale(1 - spillPercent).toString();
     $spillSlider.find('.mark-color').css({backgroundColor: color});
 
-    $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1 && percent < 1);
+    const winPercent = pbgGame.currentLevel.winPercent || 1;
+    $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1 && percent < winPercent);
     if (spillPercent === 1) {
         $spillWarning.addClass('transgressed');
         pbgGame.outcome = GAME_OUTCOME.transgressed;
         setGameMode(GAME_MODE.failed);
     }
-    else if (percent >= 1 && pbgGame.mode === GAME_MODE.playing) {
+    else if (percent >= winPercent && pbgGame.mode === GAME_MODE.playing) {
         $fill.css('background-color', '#0f0');
         pbgGame.outcome = GAME_OUTCOME.passed;
         flashAffirmation();
@@ -423,15 +424,17 @@ function _reset(resetType) {
 }
 
 function initChallenge() {
-    $('#game-wrapper').css('background-color', rgbToStr(pbgGame.bgColor));
-    $('#percent-painted .slider-fill').css('background-color', rgbToStr(pbgGame.brushColor));
-
     pbgGame.timer.timeLimit = pbgGame.currentChallenge.timeLimit;
     pbgGame.resetChallenge();
     pbgCanvas.updateMaxCounts();
 
     pbgGame.currentChallenge.setTooltips();
     validateToolType((pbgGame.currentLevel.challengeIdx > 0) ? 2600 : null);
+
+    $('#game-wrapper').css('background-color', rgbToStr(pbgGame.bgColor));
+    setTimeout(() => // allow time for fill to empty before changing color
+        $('#percent-painted .slider-fill').css('background-color', rgbToStr(pbgGame.brushColor)),
+        500);
 
     drawReticle();
     updateToolOptions();
