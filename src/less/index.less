@@ -867,7 +867,7 @@ body, #layout, #menu-bar {
         }
         #overlay-body {
             color: @purple;
-            text-shadow: 2px 2px 0 white;
+            text-shadow: 1.5px 1.5px 0 white;
         }
     }
 }
@@ -909,13 +909,22 @@ body, #layout, #menu-bar {
         }
     }
 }
-.mode-complete, .mode-failed {
+.mode-failed {
     #game-overlay {
         #overlay-btns {
             #quit {
                 display: block;
             }
             #retry {
+                display: inline-block;
+            }
+        }
+    }
+}
+.mode-complete {
+    #game-overlay {
+        #overlay-btns {
+            #quit {
                 display: inline-block;
             }
         }
@@ -972,7 +981,7 @@ body, #layout, #menu-bar {
 
     #disclaimer {
         color: white;
-        opacity: .65;
+        opacity: .7;
         font-size: 1.25em;
         font-weight: 100;
         margin-top: 8px;

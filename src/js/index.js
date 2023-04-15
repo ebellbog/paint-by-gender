@@ -42,7 +42,7 @@ let undoGroups = [], currentUndoSize = 1, doIncreaseUndoSize = false;
 $(document).ready(function () {
     tippy('#help-icon', {
         allowHTML: true,
-        maxWidth: 425,
+        maxWidth: 450,
         offset: [0, 15],
         theme: 'purple',
     });
@@ -219,8 +219,8 @@ function hookEvents() {
             resetGame();
             return $('#next-level').click();
         } else if (pbgGame.mode === GAME_MODE.failed) {
-            if (pbgGame.currentChallenge.attempts < 2) resetChallenge();
-            else resetLevel();
+            // TODO: consider limiting attempts in the future
+            resetChallenge();
         } else {
             resetChallenge();
         }
@@ -369,7 +369,8 @@ function updatePercentPainted() {
     const color = chromaScale(1 - spillPercent).toString();
     $spillSlider.find('.mark-color').css({backgroundColor: color});
 
-    const winPercent = pbgGame.currentLevel.winPercent || 1;
+    const winPercent = pbgGame.currentChallenge.winPercent || pbgGame.currentLevel.winPercent || 1;
+    console.log(winPercent);
     $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1 && percent < winPercent);
     if (spillPercent === 1) {
         $spillWarning.addClass('transgressed');
@@ -534,8 +535,8 @@ function setGameMode(mode) {
             break;
         case GAME_MODE.failed:
             const {attempts} = pbgGame.currentChallenge;
-            const suffix = ['nd', 'rd'][attempts];
-            const label = (suffix) ? `Give it a ${attempts + 2}${suffix} try?` : 'Just restart the<br>whole darn level';
+            const suffix = ['nd', 'rd'][attempts] || 'th';
+            const label = `Give it a ${attempts + 2}${suffix} try`;
             $('#retry').html(label);
             pbgGame.setEndText();
         case GAME_MODE.paused:
