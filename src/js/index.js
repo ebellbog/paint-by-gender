@@ -24,6 +24,8 @@ import levelData from './config';
 
 /* Global state */
 
+const TOOLTIP_DURATION = 3600;
+
 const pbgGame = new PbgGame(levelData);
 const pbgCanvas = new PbgCanvas(pbgGame);
 const transitionManager = new PbgTransitionManager(pbgGame);
@@ -140,19 +142,23 @@ function hookEvents() {
         let pressedArrow = true;
 
         switch (e.which) {
+            case 87: // W key
             case 38: // up arrow
                 pbgGame.toolTypeIdx -= 2;
+            case 83: // S key
             case 40: // down arrow
                 pbgGame.toolTypeIdx++;
                 validateToolType(1000);
                 updateToolOptions();
                 break;
+            case 65: // A key
             case 37: // left arrow
                 if (pbgGame.isQuantized) {
                     pbgGame.toolOptionIdx -= 2;
                 } else {
                     pbgGame.brushSize = pbgGame.brushSize - 4;
                 }
+            case 68: // D key
             case 39: // right arrow
                 if (pbgGame.isQuantized) {
                     const sizes = pbgGame.brushType.sizes.length;
@@ -438,13 +444,13 @@ function _reset(resetType) {
     updateBlurLayer();
 }
 
-function initChallenge() {
+function initChallenge(doDraw = true) {
     pbgGame.timer.timeLimit = pbgGame.currentChallenge.timeLimit;
-    pbgGame.resetChallenge();
+    pbgGame.resetChallenge(doDraw);
     pbgCanvas.updateMaxCounts();
 
     pbgGame.currentChallenge.setTooltips();
-    validateToolType((pbgGame.currentLevel.challengeIdx > 0) ? 2600 : null);
+    validateToolType((pbgGame.currentLevel.challengeIdx > 0) ? TOOLTIP_DURATION : null);
 
     $('#game-wrapper').css('background-color', rgbToStr(pbgGame.bgColor));
     setTimeout(() => // allow time for fill to empty before changing color
@@ -472,7 +478,7 @@ function setGameMode(mode) {
             break;
         case GAME_MODE.starting:
             $body.removeClass('show-overlay show-curtain');
-            showCountdown(0, { // TODO: change back to 3
+            showCountdown(3, {
                 callback: () => {
                     flashStationary('Paint!', 1000, 400);
                     transitionManager.fadeIn({
@@ -502,13 +508,14 @@ function setGameMode(mode) {
             setTimeout(() => transitionManager.wipeOut(() => {
                 pbgCanvas.reset();
 
-                pbgGame.timer.reset();
-                initChallenge();
+                $body.addClass('show-curtain show-blur');
 
-                transitionManager.wipeIn(() => {
-                    pbgGame.timer.restart();
-                    setGameMode(GAME_MODE.playing);
-                });
+                initChallenge();
+                updateBlurLayer();
+
+                $body.removeClass('show-curtain');
+
+                setTimeout(() => setGameMode(GAME_MODE.starting), 600);
             }), 1000);
 
             break;
@@ -517,8 +524,6 @@ function setGameMode(mode) {
         case GAME_MODE.nextLevel:
             pauseGame();
             updateModeClass(mode);
-
-            pbgGame.setEndText();
 
             setTimeout(() => transitionManager.boxOut(() => {
                 setTimeout(

@@ -48,9 +48,9 @@ class PbgGame {
         this.currentChallenge.retry();
         this.timer.reset();
     }
-    resetChallenge() {
+    resetChallenge(doDraw = true) {
         this.currentChallenge.reset();
-        this.currentChallenge.draw();
+        if (doDraw) this.currentChallenge.draw();
         this.timer.reset();
     }
     resetLevel() {
@@ -80,6 +80,7 @@ class PbgGame {
 
     advanceGame() {
         this.throwEmojis();
+        this.setEndText();
 
         this.currentChallenge.completionTime = this.timer.timeElapsed;
         this.currentChallenge.attempts++;
