@@ -15,6 +15,8 @@ html {
 }
 
 body {
+    position: relative;
+
     background-image: url('../../img/kidpix_bg.png');
     background-size: 16px;
     image-rendering: pixelated;
@@ -69,7 +71,7 @@ body {
         flex: 1;
     }
 }
-body, #layout, #menu-bar {
+body, #layout, #menu-bar, #splash-screen {
     min-width: 1200px;
     max-width: 1800px;
 }
@@ -833,6 +835,9 @@ body, #layout, #menu-bar {
         opacity: 1;
         pointer-events: all;
     }
+    .tippy-box {
+        display: none;
+    }
 }
 
 .mode-paused {
@@ -982,8 +987,13 @@ body, #layout, #menu-bar {
     width: 100%;
 
     img {
-        width: 70%;
-        max-width: 900px;
+        display: block;
+        margin: 0 auto;
+
+        max-width: 65%;
+        max-height: 67vh;
+        object-fit: contain;
+
         box-shadow: 6px 6px 0 @purple, -6px -6px 0 white;
     }
 
@@ -1007,7 +1017,7 @@ body, #layout, #menu-bar {
         width: 173px;
 
         padding-left: 1em;
-        margin: 2em auto 0 auto;
+        margin: 1.5em auto 0 auto;
         border: none;
 
         color: white;

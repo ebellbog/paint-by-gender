@@ -77,6 +77,7 @@ html {
   background-color: #946fa9;
 }
 body {
+  position: relative;
   background-image: url(kidpix_bg.png);
   background-size: 16px;
   image-rendering: pixelated;
@@ -121,7 +122,8 @@ body * {
 }
 body,
 #layout,
-#menu-bar {
+#menu-bar,
+#splash-screen {
   min-width: 1200px;
   max-width: 1800px;
 }
@@ -710,6 +712,9 @@ body,
   opacity: 1;
   pointer-events: all;
 }
+.show-splash .tippy-box {
+  display: none;
+}
 .mode-paused #play-icon {
   display: block;
 }
@@ -822,8 +827,11 @@ body,
   width: 100%;
 }
 #splash-wrapper img {
-  width: 70%;
-  max-width: 900px;
+  display: block;
+  margin: 0 auto;
+  max-width: 65%;
+  max-height: 67vh;
+  object-fit: contain;
   box-shadow: 6px 6px 0 purple, -6px -6px 0 white;
 }
 #splash-wrapper #disclaimer {
@@ -843,7 +851,7 @@ body,
   height: 95px;
   width: 173px;
   padding-left: 1em;
-  margin: 2em auto 0 auto;
+  margin: 1.5em auto 0 auto;
   border: none;
   color: white;
   font-family: 'Slackey';
