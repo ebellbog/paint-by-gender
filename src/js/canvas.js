@@ -120,6 +120,7 @@ class PbgCanvas {
             .find('.mark-color')
             .css('background-color', 'limegreen');
         $('#percent-painted .slider-fill').css('height', '0%');
+        $('#percent-painted .slider-label').html('0% Painted');
     }
 }
 

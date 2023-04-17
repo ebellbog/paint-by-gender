@@ -5,6 +5,14 @@ import 'tippy.js/dist/tippy.css';
 
 import '../less/index.less';
 
+import '../../img/pbg_splash.jpg';
+import '../../img/guybrush.png';
+import '../../img/galbrush.png';
+import '../../img/question_mark.png';
+import '../../img/play.png';
+import '../../img/pause.png';
+import '../../img/undo_btn.png';
+
 import {COLORS, BRUSH_TYPES,
     GAME_MODE, GAME_OUTCOME} from './enums';
 
@@ -173,17 +181,21 @@ function hookEvents() {
                     }
                 }
                 break;
+            case 90: // Z
+                $('#btn-undo').click();
+                break;
             case 13: // return key
             case 32: // spacebar
                 if (pbgGame.mode == GAME_MODE.newLevel) {
                     $('#start').click();
                 } else if (pbgGame.mode == GAME_MODE.complete) {
                     $('#retry').click();
-                } else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
-                    pbgGame.outcome = GAME_OUTCOME.passed;
-                    flashAffirmation();
-                    setGameMode(pbgGame.advanceGame());
-                }
+                } 
+                // else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
+                //     pbgGame.outcome = GAME_OUTCOME.passed;
+                //     flashAffirmation();
+                //     setGameMode(pbgGame.advanceGame());
+                // }
                 pressedArrow = false;
                 break;
             case 27:
@@ -356,6 +368,7 @@ function updatePercentPainted() {
 
     const $fill = $('#percent-painted .slider-fill');
     $fill.css('height', `${percent * 100}%`);
+    $('#percent-painted .slider-label').html(`${Math.floor(percent * 100)}% Painted`);
 
     const spillPercent = Math.min(spill / maxSpill, 1);
 
@@ -370,7 +383,6 @@ function updatePercentPainted() {
     $spillSlider.find('.mark-color').css({backgroundColor: color});
 
     const winPercent = pbgGame.currentChallenge.winPercent || pbgGame.currentLevel.winPercent || 1;
-    console.log(winPercent);
     $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1 && percent < winPercent);
     if (spillPercent === 1) {
         $spillWarning.addClass('transgressed');
@@ -495,7 +507,6 @@ function setGameMode(mode) {
             });
             break;
         case GAME_MODE.playing:
-            getReticle().hide(); // hide until mouse move reveals
             $('#retry').html("Start over, it's trash")
             updateModeClass(mode);
             break;

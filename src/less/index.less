@@ -240,6 +240,8 @@ body, #layout, #menu-bar {
 
 #reticle {
     position: absolute;
+    top: 25%;
+    left: 25%;
     pointer-events: none;
     display: none;
     z-index: 3;
@@ -307,6 +309,14 @@ body, #layout, #menu-bar {
 
         z-index: 4;
         width: 95%;
+
+        // for FA icons
+        svg {
+            margin: 0 4px;
+            path {
+                fill: white;
+            }
+        }
     }
 
     #overlay-btns {
@@ -960,8 +970,6 @@ body, #layout, #menu-bar {
     .fullSize();
     z-index: 10;
 
-    background: radial-gradient(@bgColorLight, @bgColorDark);
-
     opacity: 0;
     transition: opacity 1s;
     pointer-events: none;
@@ -980,9 +988,13 @@ body, #layout, #menu-bar {
     }
 
     #disclaimer {
+        display: inline-block;
         color: white;
-        opacity: .7;
-        font-size: 1.25em;
+        background-color: rgba(189, 155, 193, 85%);
+        border-radius: 16px;
+        padding: 1px 13px;
+        opacity: .65;
+        font-size: 1.4em;
         font-weight: 100;
         margin-top: 8px;
         letter-spacing: .5px;
