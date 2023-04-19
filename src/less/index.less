@@ -34,6 +34,8 @@ body {
     }
 }
 #layout {
+    .unselectable();
+
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -198,6 +200,10 @@ body, #layout, #menu-bar, #splash-screen {
     pointer-events: none;
     mix-blend-mode: multiply;
     opacity: .6;
+
+    .is-safari & {
+        display: none;
+    }
 }
 
 #game, #canvas-texture {
@@ -229,6 +235,10 @@ body, #layout, #menu-bar, #splash-screen {
 
     transition: height 2s;
     transition-timing-function: linear;
+
+    .is-safari & {
+        background-image: none;
+    }
 }
 
 #canvas-texture, #new-level-curtain {
@@ -251,6 +261,8 @@ body, #layout, #menu-bar, #splash-screen {
 }
 
 .flash {
+    .unselectable();
+
     font-size: 150px;
     font-weight: 100;
     text-transform: uppercase;
@@ -510,6 +522,9 @@ body, #layout, #menu-bar, #splash-screen {
 
 .tool-group {
     filter: drop-shadow(2px 2px 1px fade(darken(@purple, 15%), 40%));
+    .is-safari & {
+        filter: none;
+    }
 
     .tool {
         .raised-btn();
@@ -696,6 +711,10 @@ body, #layout, #menu-bar, #splash-screen {
         }
 
         filter: drop-shadow(2px 2px 0 @purple);
+    }
+
+    .is-safari & #range-slider {
+        filter: none;
     }
 }
 
@@ -1044,7 +1063,7 @@ body, #layout, #menu-bar, #splash-screen {
 
 // Utility classes
 
-.unselectable {
+.unselectable() {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;

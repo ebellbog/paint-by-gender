@@ -93,10 +93,18 @@ function joinPolys(ctx, p1, p2) {
     }
 }
 
+function isSafari() {
+    return /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || location.hostname.includes('bs-local');
+}
+
+function isMac() {
+    return navigator.platform.includes('Mac');
+}
 
 export {
     getCanvas, getCanvasSize, getContext,
     rgbToStr, rgbSum,
     midPointBtw, getDistance,
     getPolyPath, drawPolygon, joinPolys,
+    isSafari, isMac,
 };
