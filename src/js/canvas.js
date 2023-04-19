@@ -14,7 +14,6 @@ class PbgCanvas {
     ctx = getContext();
 
     game = null;
-    confetti = null;
 
     constructor(game) {
         this.game = game;

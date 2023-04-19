@@ -20,7 +20,8 @@ import {
     rgbToStr,
     getCanvas, getContext,
     midPointBtw, getDistance,
-    getPolyPath, drawPolygon, joinPolys
+    getPolyPath, drawPolygon, joinPolys,
+    isSafari
 } from './utils';
 
 
@@ -62,7 +63,9 @@ $(document).ready(function () {
     hookEvents();
     initGame();
 
-    $('body').removeClass('preload');
+    $('body')
+        .removeClass('preload')
+        .toggleClass('is-safari', isSafari());
 });
 
 function startDrawing(e) {
@@ -465,7 +468,7 @@ function initChallenge(doDraw = true) {
     pbgGame.currentChallenge.setTooltips();
     validateToolType((pbgGame.currentLevel.challengeIdx > 0) ? TOOLTIP_DURATION : null);
 
-    $('#game-wrapper').css('background-color', rgbToStr(pbgGame.bgColor));
+    $('#game-wrapper, #game').css('background-color', rgbToStr(pbgGame.bgColor));
     setTimeout(() => // allow time for fill to empty before changing color
         $('#percent-painted .slider-fill').css('background-color', rgbToStr(pbgGame.brushColor)),
         500);

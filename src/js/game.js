@@ -1,5 +1,5 @@
 import PbgTimer from './timer';
-import {getContext, rgbToStr} from './utils';
+import {getContext, rgbToStr, isMac} from './utils';
 import {BRUSH_TYPES, COLORS, GAME_MODE} from './enums';
 
 import rangeSlider from 'range-slider-input';
@@ -108,7 +108,7 @@ class PbgGame {
 
     throwEmojis(emojis) {
         emojis = emojis || this.currentChallenge.emojis || this.currentLevel.emojis;
-        this.confetti.addConfetti({emojis, emojiSize: 50});
+        this.confetti.addConfetti({emojis, emojiSize: isMac() ? 75 : 50});
     }
 
     throwConfetti() {
