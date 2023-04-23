@@ -688,29 +688,35 @@ body, #layout, #menu-bar, #splash-screen {
     }
 
     #range-slider {
-        width: 175px;
-        margin-top: 23px;
+        height: 24px;
+        width: 160px;
+        margin-top: 16px;
 
-        background-color: white;
+        background-image: url('../../img/white_slider_triangle.png');
+        background-size: 160px 95%;
+        background-position-y: 70%;
+        background-repeat: no-repeat;
+        background-color: transparent;
+
         border-radius: 0;
 
         .range-slider__thumb[data-lower] {
             width: 0;
         }
         .range-slider__thumb[data-upper] {
-            width: 7px;
-            height: 25px;
+            width: 8px;
+            height: 28px;
 
             border-radius: 0;
-            border: 1px solid #333;
+            border: 1.5px solid hsl(0 50% 25%);
 
-            background: hsl(0 50% 40% / 1);
+            background: hsl(0 50% 40%);
         }
         .range-slider__range {
-            background-color: tomato;
+            background-image: url('../../img/red_slider_triangle.png');
+            background-size: 160px 100%;
+            background-color: transparent;
         }
-
-        filter: drop-shadow(2px 2px 0 @purple);
     }
 
     .is-safari & #range-slider {
