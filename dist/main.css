@@ -91,6 +91,12 @@ body * {
   image-rendering: auto;
 }
 #layout {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -236,6 +242,9 @@ body,
   mix-blend-mode: multiply;
   opacity: 0.6;
 }
+.is-safari #canvas-texture {
+  display: none;
+}
 #game,
 #canvas-texture {
   transition: opacity 0.5s;
@@ -260,6 +269,9 @@ body,
   transition: height 2s;
   transition-timing-function: linear;
 }
+.is-safari #new-level-curtain {
+  background-image: none;
+}
 #canvas-texture,
 #new-level-curtain {
   background-image: url(canvas_texture.png);
@@ -278,6 +290,12 @@ body,
   z-index: 3;
 }
 .flash {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   font-size: 150px;
   font-weight: 100;
   text-transform: uppercase;
@@ -470,6 +488,9 @@ body,
 .tool-group {
   filter: drop-shadow(2px 2px 1px rgba(52, 0, 51, 0.4));
 }
+.is-safari .tool-group {
+  filter: none;
+}
 .tool-group .tool {
   border-top: 3px solid #cf59cf;
   border-left: 3px solid #cf59cf;
@@ -619,6 +640,9 @@ body,
 }
 #galbrush-options #range-slider .range-slider__range {
   background-color: tomato;
+}
+.is-safari #galbrush-options #range-slider {
+  filter: none;
 }
 .tippy-box {
   font-family: 'Londrina Solid', sans-serif;
@@ -868,14 +892,6 @@ body,
 #splash-wrapper #btn-begin:hover {
   filter: brightness(1.2);
   transform: scale(1.1);
-}
-.unselectable {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 .preload * {
   transition: none !important;
