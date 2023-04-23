@@ -711,6 +711,11 @@ body, #layout, #menu-bar, #splash-screen {
             border: 1.5px solid hsl(0 50% 25%);
 
             background: hsl(0 50% 40%);
+
+            cursor: grab;
+            &:active {
+                cursor: grabbing;
+            }
         }
         .range-slider__range {
             background-image: url('../../img/red_slider_triangle.png');
@@ -782,6 +787,22 @@ body, #layout, #menu-bar, #splash-screen {
                 &::before {
                     border-right-width: 9px;
                     border-right-color: white;
+                }
+            }
+        }
+        &[data-placement^='bottom'] {
+            & > .tippy-arrow {
+                &::before {
+                    border-bottom-width: 9px;
+                    border-bottom-color: white;
+                }
+            }
+        }
+        &[data-placement^='top'] {
+            & > .tippy-arrow {
+                &::before {
+                    border-top-width: 9px;
+                    border-top-color: white;
                 }
             }
         }

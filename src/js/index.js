@@ -56,6 +56,18 @@ $(document).ready(function () {
         theme: 'purple',
     });
 
+    const toolOptionSel = '#galbrush-options, #guybrush-options';
+    $(toolOptionSel)
+        .attr('data-tippy-content', 'Brush size &nbsp;<span class="tt-body">(click or use left/right arrow keys)</span>');
+    tippy(toolOptionSel, {
+        allowHTML: true,
+        delay: [250, null],
+        maxWidth: 400,
+        offset: [0, 15],
+        placement: 'bottom',
+        theme: 'white'
+    });
+
     const $canvas = getCanvas();
     canvasSize = parseInt($canvas.attr('height'));
     canvasScale = $canvas.height() / canvasSize;
