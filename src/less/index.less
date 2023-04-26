@@ -702,12 +702,12 @@ body, #layout, #menu-bar, #splash-screen {
     }
 
     #range-slider {
-        height: 24px;
+        height: 26px;
         width: 160px;
         margin-top: 16px;
 
         background-image: url('../../img/white_slider_triangle.png');
-        background-size: 160px 95%;
+        background-size: 160px 98%;
         background-position-y: 70%;
         background-repeat: no-repeat;
         background-color: transparent;
@@ -718,12 +718,13 @@ body, #layout, #menu-bar, #splash-screen {
             width: 0;
         }
         .range-slider__thumb[data-upper] {
-            width: 8px;
+            .unselectable();
+
+            width: 7px;
             height: 28px;
 
             border-radius: 0;
             border: 1.5px solid hsl(0 50% 25%);
-
             background: hsl(0 50% 40%);
 
             cursor: grab;
