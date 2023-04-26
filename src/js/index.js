@@ -21,7 +21,7 @@ import {
     getCanvas, getContext,
     midPointBtw, getDistance,
     getPolyPath, drawPolygon, joinPolys,
-    isSafari
+    isSafari, isRunningLocally
 } from './utils';
 
 
@@ -207,7 +207,7 @@ function hookEvents() {
                 } else if (pbgGame.mode == GAME_MODE.complete) {
                     $('#retry').click();
                 } 
-                else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
+                else if (pbgGame.mode == GAME_MODE.playing && isRunningLocally()) {
                     updatePercentPainted(true);
                 }
                 pressedArrow = false;

@@ -17,6 +17,7 @@ function getContext($canvas) {
     return ctx;
 }
 
+
 /* Colors */
 
 function rgbToStr(rgbList) {
@@ -30,6 +31,7 @@ function rgbSum(pixelData, start) {
     if (!start) start = 0;
     return pixelData[start] + pixelData[start + 1] + pixelData[start + 2];
 }
+
 
 /* Geometry */
 
@@ -93,6 +95,9 @@ function joinPolys(ctx, p1, p2) {
     }
 }
 
+
+/* Environment */
+
 function isSafari() {
     return /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || location.hostname.includes('bs-local');
 }
@@ -101,10 +106,15 @@ function isMac() {
     return navigator.platform.includes('Mac');
 }
 
+function isRunningLocally() {
+    return ['localhost', '127.0.0.1', ''].includes(location.hostname);
+}
+
+
 export {
     getCanvas, getCanvasSize, getContext,
     rgbToStr, rgbSum,
     midPointBtw, getDistance,
     getPolyPath, drawPolygon, joinPolys,
-    isSafari, isMac,
+    isSafari, isMac, isRunningLocally,
 };
