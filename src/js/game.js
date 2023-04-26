@@ -7,7 +7,7 @@ import 'range-slider-input/dist/style.css';
 
 import JSConfetti from 'js-confetti'
 
-const MIN_BRUSH_SIZE = 8;
+const MIN_BRUSH_SIZE = 15;
 const MAX_BRUSH_SIZE = 50;
 
 class PbgGame {

@@ -12,12 +12,12 @@ const level1 = new PbgLevel(
             1: ["Oops.", "That was a bit embarrassing, but no use crying over spilled paint! In a pinch, just click undo (<i class='fa-solid fa-rotate-left'></i>)."],
             2: ["Time's up", "Brushes down, the test is over. You'll ace it next time! Did you know you can pause<br>(<i class='fa fa-pause'></i>) if you need a break?"],
         },
-        winPercent: .997,
+        winPercent: .999,
     },
     [
         new PbgChallenge({
             shape: SHAPES.curvyToy,
-            timeLimit: 25,
+            timeLimit: 35,
             maxSpill: 3800,
             enabledTools: [1, 0, 0],
             emojis: ['💃','💋','💘', '⌛'],
@@ -29,7 +29,7 @@ const level1 = new PbgLevel(
         }),
         new PbgChallenge({
             shape: SHAPES.briefcase,
-            timeLimit: 30,
+            timeLimit: 35,
             maxSpill: 4300,
             enabledTools: [0, 1, 0],
             emojis:['💼', '👨🏻‍💼', '🧔🏻‍♂️', '📈'],
@@ -40,8 +40,8 @@ const level1 = new PbgLevel(
         }),
         new PbgChallenge({
             shape: SHAPES.boob,
-            timeLimit: 50,
-            maxSpill: 6700,
+            timeLimit: 70,
+            maxSpill: 6500,
             enabledTools: [1, 0, 0],
             emojis:['👙', '👶', '🍼'],
             tooltips: {
@@ -52,7 +52,7 @@ const level1 = new PbgLevel(
         }),
         new PbgChallenge({
             shape: SHAPES.silhouette,
-            timeLimit: 25,
+            timeLimit: 30,
             maxSpill: 2950,
             enabledTools: [0, 1, 0],
             emojis:['🏋️‍♂️','👖', '🍆'],
@@ -90,8 +90,8 @@ const level2 = new PbgLevel(
         }),
         new PbgChallenge({
             shape: SHAPES.briefcase,
-            timeLimit: 70,
-            maxSpill: 8500,
+            timeLimit: 85,
+            maxSpill: 7500,
             enabledTools: [1, 0, 0],
             emojis: ['🤓', '👎', '🤖'],
             tooltips: {
@@ -101,7 +101,7 @@ const level2 = new PbgLevel(
         }),
         new PbgChallenge({
             shape: SHAPES.boob,
-            timeLimit: 85,
+            timeLimit: 80,
             maxSpill: 18000,
             winPercent: .97,
             enabledTools: [0, 1, 0],
@@ -113,8 +113,8 @@ const level2 = new PbgLevel(
         }),
         new PbgChallenge({
             shape: SHAPES.silhouette,
-            timeLimit: 55,
-            maxSpill: 7000,
+            timeLimit: 65,
+            maxSpill: 6000,
             enabledTools: [1, 0, 0],
             emojis: ['👽', '👻'],
             tooltips: {

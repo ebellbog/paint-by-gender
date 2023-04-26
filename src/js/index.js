@@ -372,18 +372,22 @@ function updatePercentPainted() {
     const canvasData = pbgCanvas.analyze();
     const maxSpill = pbgGame.currentChallenge.maxSpill;
 
-    let percent, spill;
+    let percentPainted, spill;
     if (COLORS.spill) {
-        percent = canvasData.painted / (canvasData.painted + canvasData.unpainted);
+        percentPainted = canvasData.painted / (canvasData.painted + canvasData.unpainted);
         spill = canvasData.spill;
     } else {
-        percent = (pbgCanvas.maxShape - canvasData.unpainted) / pbgCanvas.maxShape;
+        percentPainted = (pbgCanvas.maxShape - canvasData.unpainted) / pbgCanvas.maxShape;
         spill = pbgCanvas.maxBg - canvasData.canvas;
     }
 
+    // Update % painted meter
+
     const $fill = $('#percent-painted .slider-fill');
-    $fill.css('height', `${percent * 100}%`);
-    $('#percent-painted .slider-label').html(`${Math.floor(percent * 100)}% Painted`);
+    $fill.css('height', `${percentPainted * 100}%`);
+    $('#percent-painted .slider-label').html(`${Math.floor(percentPainted * 100)}% Painted`);
+
+    // Update spill meter
 
     const spillPercent = Math.min(spill / maxSpill, 1);
 
@@ -397,19 +401,26 @@ function updatePercentPainted() {
     const color = chromaScale(1 - spillPercent).toString();
     $spillSlider.find('.mark-color').css({backgroundColor: color});
 
+    let formattedPercent = Math.floor(percentPainted * 100);
+
     const winPercent = pbgGame.currentChallenge.winPercent || pbgGame.currentLevel.winPercent || 1;
-    $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1 && percent < winPercent);
+    $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1 && percentPainted < winPercent);
     if (spillPercent === 1) {
         $spillWarning.addClass('transgressed');
         pbgGame.outcome = GAME_OUTCOME.transgressed;
         setGameMode(GAME_MODE.failed);
     }
-    else if (percent >= winPercent && pbgGame.mode === GAME_MODE.playing) {
+    else if (percentPainted >= winPercent && pbgGame.mode === GAME_MODE.playing) {
+        formattedPercent = Math.ceil(percentPainted * 100);
         $fill.css('background-color', '#0f0');
-        pbgGame.outcome = GAME_OUTCOME.passed;
+
         flashAffirmation();
+
+        pbgGame.outcome = GAME_OUTCOME.passed;
         setGameMode(pbgGame.advanceGame());
     }
+
+    $('#percent-painted .slider-label').html(`${formattedPercent}% Painted`);
 }
 
 function updatePercentAsync() {
