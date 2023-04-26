@@ -739,6 +739,18 @@ body,
   font-weight: 300;
   width: 250px;
 }
+.is-safari .tippy-box[data-theme~='white'][data-placement^='left'] > .tippy-arrow::before {
+  filter: drop-shadow(4px 0 0 purple);
+}
+.is-safari .tippy-box[data-theme~='white'][data-placement^='right'] > .tippy-arrow::before {
+  filter: drop-shadow(-4px 0 0 purple);
+}
+.is-safari .tippy-box[data-theme~='white'][data-placement^='top'] > .tippy-arrow::before {
+  filter: drop-shadow(0 4px 0 purple);
+}
+.is-safari .tippy-box[data-theme~='white'][data-placement^='bottom'] > .tippy-arrow::before {
+  filter: drop-shadow(0 -4px 0 purple);
+}
 .show-game #layout,
 .show-game #menu-bar {
   pointer-events: all;

@@ -858,6 +858,37 @@ body, #layout, #menu-bar, #splash-screen {
             width: 250px;
         }
     }
+    .is-safari &[data-theme~='white'] {
+        // Safari doesn't automatically apply parent filter to pseudo elements
+        &[data-placement^='left'] {
+            & > .tippy-arrow {
+                &::before {
+                    filter: drop-shadow(4px 0 0 @purple);
+                }
+            }
+        }
+        &[data-placement^='right'] {
+            & > .tippy-arrow {
+                &::before {
+                    filter: drop-shadow(-4px 0 0 @purple);
+                }
+            }
+        }
+        &[data-placement^='top'] {
+            & > .tippy-arrow {
+                &::before {
+                    filter: drop-shadow(0 4px 0 @purple);
+                }
+            }
+        }
+        &[data-placement^='bottom'] {
+            & > .tippy-arrow {
+                &::before {
+                    filter: drop-shadow(0 -4px 0 @purple);
+                }
+            }
+        }
+    }
 }
 
 
