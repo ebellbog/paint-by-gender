@@ -14,7 +14,7 @@ import '../../img/pause.png';
 import '../../img/undo_btn.png';
 
 import {COLORS, BRUSH_TYPES,
-    GAME_MODE, GAME_OUTCOME} from './enums';
+    GAME_MODE, GAME_OUTCOME, OUTCOME_MODIFIER} from './enums';
 
 import {
     rgbToStr,
@@ -34,6 +34,7 @@ import levelData from './config';
 /* Global state */
 
 const TOOLTIP_DURATION = 3600;
+const SPILL_DANGER_THRESHOLD = .75;
 
 const pbgGame = new PbgGame(levelData);
 const pbgCanvas = new PbgCanvas(pbgGame);
@@ -206,11 +207,9 @@ function hookEvents() {
                 } else if (pbgGame.mode == GAME_MODE.complete) {
                     $('#retry').click();
                 } 
-                // else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
-                //     pbgGame.outcome = GAME_OUTCOME.passed;
-                //     flashAffirmation();
-                //     setGameMode(pbgGame.advanceGame());
-                // }
+                else if (pbgGame.mode == GAME_MODE.playing) { // TODO: remove this debugging hack
+                    updatePercentPainted(true);
+                }
                 pressedArrow = false;
                 break;
             case 27:
@@ -366,7 +365,7 @@ function getPathPoint(canvas, e) {
 
 /* Logic functions */
 
-function updatePercentPainted() {
+function updatePercentPainted(forceWin) {
     if (!pbgGame.currentChallenge || pbgGame.mode !== GAME_MODE.playing) return;
 
     const canvasData = pbgCanvas.analyze();
@@ -401,22 +400,39 @@ function updatePercentPainted() {
     const color = chromaScale(1 - spillPercent).toString();
     $spillSlider.find('.mark-color').css({backgroundColor: color});
 
-    let formattedPercent = Math.floor(percentPainted * 100);
-
     const winPercent = pbgGame.currentChallenge.winPercent || pbgGame.currentLevel.winPercent || 1;
-    $spillWarning.toggleClass('danger', spillPercent > .75 && spillPercent !== 1 && percentPainted < winPercent);
+    $spillWarning.toggleClass('danger',
+        spillPercent > SPILL_DANGER_THRESHOLD && spillPercent !== 1 && percentPainted < winPercent);
+
+    let formattedPercent = Math.floor(percentPainted * 100);
     if (spillPercent === 1) {
         $spillWarning.addClass('transgressed');
         pbgGame.outcome = GAME_OUTCOME.transgressed;
         setGameMode(GAME_MODE.failed);
     }
-    else if (percentPainted >= winPercent && pbgGame.mode === GAME_MODE.playing) {
+    else if (forceWin || percentPainted >= winPercent && pbgGame.mode === GAME_MODE.playing) {
         formattedPercent = Math.ceil(percentPainted * 100);
         $fill.css('background-color', '#0f0');
 
+        pbgGame.outcome = GAME_OUTCOME.passed;
+
+        if (spillPercent > SPILL_DANGER_THRESHOLD) {
+            pbgGame.outcomeModifier = OUTCOME_MODIFIER.messy;
+        } else if (pbgGame.timer.timeRemaining < 5) {
+            pbgGame.outcomeModifier = OUTCOME_MODIFIER.slow;
+        } else if (pbgGame.timer.percentElapsed < .33) {
+            pbgGame.outcomeModifier = OUTCOME_MODIFIER.fast;
+        } else if (spillPercent < .33) { // maybe lower?
+            pbgGame.outcomeModifier = OUTCOME_MODIFIER.neat;
+        } else if (pbgGame.currentChallenge.attempts > 2) {
+            pbgGame.outcomeModifier = OUTCOME_MODIFIER.nthTry;
+        } else if (percentPainted < 98.5) {
+            pbgGame.outcomeModifier = OUTCOME_MODIFIER.incomplete
+        } else {
+            pbgGame.outcomeModifier = OUTCOME_MODIFIER.default;
+        }
         flashAffirmation();
 
-        pbgGame.outcome = GAME_OUTCOME.passed;
         setGameMode(pbgGame.advanceGame());
     }
 

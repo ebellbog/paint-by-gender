@@ -359,13 +359,27 @@ body, #layout, #menu-bar, #splash-screen {
             letter-spacing: 1.5px;
             cursor: pointer;
 
-            transition: 0.05s all;
+            transition: 0.07s all;
 
             &:hover {
                 background-color: lighten(@purple, 20%);
                 box-shadow: none;
-                transform: translate(2px, 2px);
                 text-shadow: 2px 2px 5px fade(@purple, 40%);
+                transform: translate(2px, 2px);
+
+                // prevent jitter by extending hoverable area to compensate for downward transformation
+                position: relative;
+                &::before {
+                    content: '';
+                    background-color: transparent;
+
+                    position: absolute;
+                    left: 0;
+                    top: -5px;
+
+                    height: 5px;
+                    width: 100%;
+                }
             }
         }
     }

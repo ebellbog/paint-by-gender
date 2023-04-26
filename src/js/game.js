@@ -27,6 +27,7 @@ class PbgGame {
 
     mode = null;
     outcome = null;
+    outcomeModifier = null;
 
     confetti = null;
 

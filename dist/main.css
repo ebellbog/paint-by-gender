@@ -372,13 +372,23 @@ body,
   font-weight: 400;
   letter-spacing: 1.5px;
   cursor: pointer;
-  transition: 0.05s all;
+  transition: 0.07s all;
 }
 #game-overlay #overlay-btns .overlay-btn:hover {
   background-color: #e600e6;
   box-shadow: none;
-  transform: translate(2px, 2px);
   text-shadow: 2px 2px 5px rgba(128, 0, 128, 0.4);
+  transform: translate(2px, 2px);
+  position: relative;
+}
+#game-overlay #overlay-btns .overlay-btn:hover::before {
+  content: '';
+  background-color: transparent;
+  position: absolute;
+  left: 0;
+  top: -5px;
+  height: 5px;
+  width: 100%;
 }
 #stats {
   position: relative;

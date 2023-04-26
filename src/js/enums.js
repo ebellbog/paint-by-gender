@@ -30,14 +30,25 @@ const GAME_MODE = {
 };
 
 const GAME_OUTCOME = {
-    passed: 0,
-    transgressed: 1,
-    clocked: 2
+    passed: 'passed',
+    transgressed: 'transgressed',
+    clocked: 'clocked',
 };
 
+const OUTCOME_MODIFIER = {
+    default: 'default',
+    fast: 'fast',
+    slow: 'slow',
+    neat: 'neat',
+    messy: 'messy',
+    incomplete: 'incomplete',
+    firstTry: 'firstTry',
+    nthTry: 'nthTry',
+};
 export {
     COLORS,
     BRUSH_TYPES,
     GAME_MODE,
-    GAME_OUTCOME
+    GAME_OUTCOME,
+    OUTCOME_MODIFIER,
 };

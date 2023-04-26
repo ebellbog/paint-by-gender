@@ -8,9 +8,9 @@ const level1 = new PbgLevel(
         levelDescription: 'Square pegs in square holes. Everything in its place. Your life is shaping up just fine!',
         affirmations: ['Nice job!', 'Awesome!', 'A+!', 'Nailed it!'],
         endMessages: {
-            0: ["Congrats!", "You perfected this game like you've been playing it every day. Never change!"],
-            1: ["Oops.", "That was a bit embarrassing, but no use crying over spilled paint! In a pinch, just click undo (<i class='fa-solid fa-rotate-left'></i>)."],
-            2: ["Time's up", "Brushes down, the test is over. You'll ace it next time! Did you know you can pause<br>(<i class='fa fa-pause'></i>) if you need a break?"],
+            passed: ["Congrats!", "You painted inside the lines you've been staying doing it every day. Never change!"],
+            transgressed: ["Oops.", "That was a bit embarrassing, but no use crying over spilled paint! In a pinch, just click undo (<i class='fa-solid fa-rotate-left'></i>)."],
+            clocked: ["Time's up", "Brushes down, the test is over. You'll ace it next time! Did you know you can pause<br>(<i class='fa fa-pause'></i>) if you need a break?"],
         },
         winPercent: .999,
     },
@@ -70,9 +70,9 @@ const level2 = new PbgLevel(
         levelDescription: "So maybe you're shaped a little different. It's ok, just head back to Level 1! Then again... Here you are anyway.",
         affirmations: ['Close enough!', 'Half-decent!', 'Interesting!', 'Ok then!'],
         endMessages: {
-            0: ["Thanks for playing!", "You made it work somehow. You painted inside the lines and feel strangely validated."],
-            1: ["Oops.", "You transgressed too far. People noticed, and they care a surprising amount."],
-            2: ["You got clocked", "Time seems to pass faster for some of us. Not everyone gets a chance to fulfill their purpose."]
+            passed: ["Thanks for playing!", "You made it work somehow. You painted inside the lines and feel strangely validated."],
+            transgressed: ["Oops.", "You transgressed too far. People noticed, and they care a surprising amount."],
+            clocked: ["You got clocked", "Time seems to pass faster for some of us. Not everyone gets a chance to fulfill their purpose."]
         },
         winPercent: .995,
     },

@@ -1,5 +1,7 @@
 import {getContext, rgbToStr} from './utils';
 
+const TIME_DANGER_THRESHOLD = 5;
+
 class PbgTimer {
     startTime = 0;
     timeElapsed = 0;
@@ -69,7 +71,7 @@ class PbgTimer {
 
         this.$time.html(min.toString() + ':' + (sec < 10 ? '0' : '') + sec.toString());
 
-        if (remaining > 5) {
+        if (remaining > TIME_DANGER_THRESHOLD) {
             ctx.strokeStyle = 'white';
         } else {
             // Pulse between white & red, by fading green & blue
@@ -115,6 +117,14 @@ class PbgTimer {
     pause() {
         this.isTimerRunning = false;
         this.prevTimeElapsed = this.timeElapsed;
+    }
+
+    get timeRemaining() {
+        return this.timeLimit - this.timeElapsed;
+    }
+
+    get percentElapsed() {
+        return this.timeElapsed / this.timeLimit;
     }
 }
 
