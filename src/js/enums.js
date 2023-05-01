@@ -35,7 +35,7 @@ const GAME_OUTCOME = {
     clocked: 'clocked',
 };
 
-const OUTCOME_MODIFIER = {
+const OUTCOME_DESCRIPTOR = {
     default: 'default',
     fast: 'fast',
     slow: 'slow',
@@ -50,5 +50,5 @@ export {
     BRUSH_TYPES,
     GAME_MODE,
     GAME_OUTCOME,
-    OUTCOME_MODIFIER,
+    OUTCOME_DESCRIPTOR,
 };

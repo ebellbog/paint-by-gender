@@ -6,7 +6,7 @@ class PbgLevel {
     levelName = '';
     levelDescription = '';
 
-    affirmations = [];
+    affirmations = {};
     endMessages = {};
 
     // Optional config
@@ -39,10 +39,6 @@ class PbgLevel {
 
     get currentChallenge() {
         return this.challenges[this.challengeIdx];
-    }
-
-    get randomAffirmation() {
-        return this.affirmations[Math.floor(Math.random() * this.affirmations.length)];
     }
 }
 

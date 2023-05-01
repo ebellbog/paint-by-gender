@@ -1,13 +1,13 @@
 import PbgTimer from './timer';
-import {getContext, rgbToStr, isMac} from './utils';
-import {BRUSH_TYPES, COLORS, GAME_MODE} from './enums';
+import {getContext, rgbToStr, randomItem, isMac} from './utils';
+import {BRUSH_TYPES, COLORS, GAME_MODE, OUTCOME_DESCRIPTOR} from './enums';
 
 import rangeSlider from 'range-slider-input';
 import 'range-slider-input/dist/style.css';
 
 import JSConfetti from 'js-confetti'
 
-const MIN_BRUSH_SIZE = 15;
+const MIN_BRUSH_SIZE = 20;
 const MAX_BRUSH_SIZE = 50;
 
 class PbgGame {
@@ -27,7 +27,7 @@ class PbgGame {
 
     mode = null;
     outcome = null;
-    outcomeModifier = null;
+    outcomeDescriptor = null;
 
     confetti = null;
 
@@ -161,7 +161,13 @@ class PbgGame {
         return (challenge || this.currentChallenge).enabledTools[idx];
     }
 
-    // Getters
+    // Getters & setters
+
+    getAffirmation() {
+        const levelAffirmations = this.currentLevel.affirmations;
+        const appropriateAffirmations = levelAffirmations[this.outcomeDescriptor] || levelAffirmations[OUTCOME_DESCRIPTOR.default];
+        return randomItem(appropriateAffirmations);
+    }
 
     get currentLevel() {
         return this.levels[this.levelIdx];

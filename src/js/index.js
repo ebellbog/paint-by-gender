@@ -14,7 +14,7 @@ import '../../img/pause.png';
 import '../../img/undo_btn.png';
 
 import {COLORS, BRUSH_TYPES,
-    GAME_MODE, GAME_OUTCOME, OUTCOME_MODIFIER} from './enums';
+    GAME_MODE, GAME_OUTCOME, OUTCOME_DESCRIPTOR} from './enums';
 
 import {
     rgbToStr,
@@ -417,19 +417,19 @@ function updatePercentPainted(forceWin) {
         pbgGame.outcome = GAME_OUTCOME.passed;
 
         if (spillPercent > SPILL_DANGER_THRESHOLD) {
-            pbgGame.outcomeModifier = OUTCOME_MODIFIER.messy;
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.messy;
         } else if (pbgGame.timer.timeRemaining < 5) {
-            pbgGame.outcomeModifier = OUTCOME_MODIFIER.slow;
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.slow;
         } else if (pbgGame.timer.percentElapsed < .33) {
-            pbgGame.outcomeModifier = OUTCOME_MODIFIER.fast;
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.fast;
         } else if (spillPercent < .33) { // maybe lower?
-            pbgGame.outcomeModifier = OUTCOME_MODIFIER.neat;
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.neat;
         } else if (pbgGame.currentChallenge.attempts > 2) {
-            pbgGame.outcomeModifier = OUTCOME_MODIFIER.nthTry;
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.nthTry;
         } else if (percentPainted < 98.5) {
-            pbgGame.outcomeModifier = OUTCOME_MODIFIER.incomplete
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.incomplete
         } else {
-            pbgGame.outcomeModifier = OUTCOME_MODIFIER.default;
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.default;
         }
         flashAffirmation();
 
@@ -657,7 +657,7 @@ function flashExpanding(message, duration, options) {
 }
 
 function flashAffirmation() {
-    flashExpanding(pbgGame.currentLevel.randomAffirmation, 800, { hold: 400, styling: 'small', expand: 200 });
+    flashExpanding(pbgGame.getAffirmation(), 800, { hold: 400, styling: 'small', expand: 200 });
 }
 
 function flashStationary(message, duration, fade) {

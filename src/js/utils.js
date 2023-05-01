@@ -96,6 +96,14 @@ function joinPolys(ctx, p1, p2) {
 }
 
 
+/* Convenience methods */
+
+function randomItem(itemArray) {
+    if (!Array.isArray(itemArray)) return itemArray;
+    return itemArray[Math.floor(Math.random() * itemArray.length)];
+}
+
+
 /* Environment */
 
 function isSafari() {
@@ -116,5 +124,6 @@ export {
     rgbToStr, rgbSum,
     midPointBtw, getDistance,
     getPolyPath, drawPolygon, joinPolys,
+    randomItem,
     isSafari, isMac, isRunningLocally,
 };

@@ -1,12 +1,15 @@
 import PbgLevel from './level';
 import PbgChallenge from './challenge';
 import {SHAPES} from './shape';
+import {OUTCOME_DESCRIPTOR} from './enums';
 
 const level1 = new PbgLevel(
     {
         levelName: "How We're Shaped",
         levelDescription: 'Square pegs in square holes. Everything in its place. Your life is shaping up just fine!',
-        affirmations: ['Nice job!', 'Awesome!', 'A+!', 'Nailed it!'],
+        affirmations: {
+            [OUTCOME_DESCRIPTOR.default]: ['Nice job!', 'Awesome!', 'A+!', 'Nailed it!'],
+        },
         endMessages: {
             passed: ["Congrats!", "You painted inside the lines you've been staying doing it every day. Never change!"],
             transgressed: ["Oops.", "That was a bit embarrassing, but no use crying over spilled paint! In a pinch, just click undo (<i class='fa-solid fa-rotate-left'></i>)."],
@@ -28,16 +31,27 @@ const level1 = new PbgLevel(
             }
         }),
         new PbgChallenge({
-            shape: SHAPES.briefcase,
-            timeLimit: 35,
-            maxSpill: 4300,
+            shape: SHAPES.silhouette,
+            timeLimit: 30,
+            maxSpill: 2950,
             enabledTools: [0, 1, 0],
-            emojis:['💼', '👨🏻‍💼', '🧔🏻‍♂️', '📈'],
+            emojis:['🏋️‍♂️','👖', '🍆'],
             tooltips: {
                 galbrush: ['Galbrush', 'A soft brush with smooth movement and endless sizes. You wouldn\'t have much use for it here.'],
                 guybrush: ['Guybrush', 'A solid brush with precise, tactical movement. Great for geometric shapes like these!'],
             }
         }),
+        // new PbgChallenge({
+        //     shape: SHAPES.briefcase,
+        //     timeLimit: 35,
+        //     maxSpill: 4300,
+        //     enabledTools: [0, 1, 0],
+        //     emojis:['💼', '👨🏻‍💼', '🧔🏻‍♂️', '📈'],
+        //     tooltips: {
+        //         galbrush: ['Galbrush', 'A soft brush with smooth movement and endless sizes. You wouldn\'t have much use for it here.'],
+        //         guybrush: ['Guybrush', 'A solid brush with precise, tactical movement. Great for geometric shapes like these!'],
+        //     }
+        // }),
         new PbgChallenge({
             shape: SHAPES.boob,
             timeLimit: 70,
@@ -50,17 +64,6 @@ const level1 = new PbgLevel(
                 'mystery-tool': ['???', ''],
             }
         }),
-        new PbgChallenge({
-            shape: SHAPES.silhouette,
-            timeLimit: 30,
-            maxSpill: 2950,
-            enabledTools: [0, 1, 0],
-            emojis:['🏋️‍♂️','👖', '🍆'],
-            tooltips: {
-                galbrush: ['Galbrush', 'A soft brush with smooth movement and endless sizes. You wouldn\'t have much use for it here.'],
-                guybrush: ['Guybrush', 'A solid brush with precise, tactical movement. Great for geometric shapes like these!'],
-            }
-        }),
     ]
 );
 
@@ -68,7 +71,9 @@ const level2 = new PbgLevel(
     {
         levelName: "Squaring Circles",
         levelDescription: "So maybe you're shaped a little different. It's ok, just head back to Level 1! Then again... Here you are anyway.",
-        affirmations: ['Close enough!', 'Half-decent!', 'Interesting!', 'Ok then!'],
+        affirmations: {
+            [OUTCOME_DESCRIPTOR.default]: ['Close enough!', 'Half-decent!', 'Interesting!', 'Ok then!'],
+        },
         endMessages: {
             passed: ["Thanks for playing!", "You made it work somehow. You painted inside the lines and feel strangely validated."],
             transgressed: ["Oops.", "You transgressed too far. People noticed, and they care a surprising amount."],
@@ -88,15 +93,26 @@ const level2 = new PbgLevel(
                 guybrush: ['Guybrush', 'A solid brush with rigid movement. Good luck smoothing out these curves!'],
             }
         }),
+        // new PbgChallenge({
+        //     shape: SHAPES.briefcase,
+        //     timeLimit: 85,
+        //     maxSpill: 7500,
+        //     enabledTools: [1, 0, 0],
+        //     emojis: ['🤓', '👎', '🤖'],
+        //     tooltips: {
+        //         galbrush: ['Galbrush', 'A soft brush with gentle movement. This precision work might be a bit demanding for it...'],
+        //         guybrush: ['Guybrush', "A solid brush with consistent, tactical movement. The obvious choice here - but I guess that's not your way."],
+        //     }
+        // }),
         new PbgChallenge({
-            shape: SHAPES.briefcase,
-            timeLimit: 85,
-            maxSpill: 7500,
+            shape: SHAPES.silhouette,
+            timeLimit: 65,
+            maxSpill: 6000,
             enabledTools: [1, 0, 0],
-            emojis: ['🤓', '👎', '🤖'],
+            emojis: ['👽', '👻'],
             tooltips: {
-                galbrush: ['Galbrush', 'A soft brush with gentle movement. This precision work might be a bit demanding for it...'],
-                guybrush: ['Guybrush', "A solid brush with consistent, tactical movement. The obvious choice here - but I guess that's not your way."],
+                galbrush: ['Galbrush', 'A soft brush with squishy movement. I guess you could try squeezing it into this shape?'],
+                guybrush: ['Guybrush', "A solid brush with clean, confident movement. The clear choice, blah, blah, blah. You already know that by now."],
             }
         }),
         new PbgChallenge({
@@ -109,17 +125,6 @@ const level2 = new PbgLevel(
             tooltips: {
                 galbrush: ['Galbrush', 'A soft brush with smooth movement. Generally the only brush used for shapes like this.'],
                 guybrush: ['Guybrush', 'A solid brush with chunky movement. Trying it on curves like these is getting a bit ridiculous.'],
-            }
-        }),
-        new PbgChallenge({
-            shape: SHAPES.silhouette,
-            timeLimit: 65,
-            maxSpill: 6000,
-            enabledTools: [1, 0, 0],
-            emojis: ['👽', '👻'],
-            tooltips: {
-                galbrush: ['Galbrush', 'A soft brush with squishy movement. I guess you could try squeezing it into this shape?'],
-                guybrush: ['Guybrush', "A solid brush with clean, confident movement. The clear choice, blah, blah, blah. You already know that by now."],
             }
         }),
     ]
@@ -141,11 +146,11 @@ const level2 = new PbgLevel(
  * EnabledTools: [1, 0, 1]
  * 
  * Level 5
- * Name: 'Darker Times'
+ * Name: 'Darker Times' // Yes, the hardest level should be 4 or 5
  * EnabledTools: [1, 0, 1]
  * 
  * Level 6:
- * Name: 'Trans-cendence'
+ * Name: 'Trans-cendence' // And I do still want a sense of triumph in the end
  * EnabledTools: [1, 1, 1]
  */
 
