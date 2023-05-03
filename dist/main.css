@@ -105,6 +105,7 @@ body * {
   opacity: 0;
   transition: opacity 1.5s;
   pointer-events: none;
+  overflow: hidden;
 }
 #menu-bar {
   position: absolute;
@@ -313,6 +314,7 @@ body,
   color: purple;
   font-size: 85px;
   text-shadow: 5px 5px 0 white;
+  text-align: center;
 }
 #game-overlay {
   position: absolute;
@@ -523,7 +525,8 @@ body,
   border-top: 3px solid #4d004d;
   border-left: 3px solid #4d004d;
 }
-.tool-group .tool.disabled {
+.tool-group .tool.disabled,
+.tool-group .tool.locked {
   background: repeating-linear-gradient(-45deg, #b758b7, #b758b7 4px, #9d439d 4px, #9d439d 8px);
   border-top: 3px solid #b654b6;
   border-left: 3px solid #b654b6;
@@ -532,11 +535,12 @@ body,
   cursor: not-allowed;
   filter: brightness(1.15) saturate(0.65);
 }
-.tool-group .tool.disabled img {
+.tool-group .tool.disabled img,
+.tool-group .tool.locked img {
   mix-blend-mode: overlay;
   opacity: 0.7;
 }
-.tool-group .tool:hover:not(.active, .disabled) {
+.tool-group .tool:hover:not(.active, .disabled, .locked) {
   background-color: #cb4ecb;
 }
 .tool-group .tool canvas,
@@ -678,13 +682,19 @@ body,
   backdrop-filter: blur(2px);
   font-size: 1.2em;
   font-weight: 100;
-  letter-spacing: 1px;
+  letter-spacing: 0.7px;
   line-height: 1.2em;
   padding: 6px;
   border-radius: 11px;
 }
 .tippy-box[data-theme~='purple'] strong {
   font-weight: 400;
+}
+.tippy-box[data-theme~='purple'] div {
+  margin: 5px 0;
+}
+.tippy-box[data-theme~='purple'] div:last-child {
+  margin-bottom: 0;
 }
 .tippy-box[data-theme~='purple'][data-placement^='bottom'] > .tippy-arrow::before {
   border-bottom-width: 7px;
@@ -726,6 +736,12 @@ body,
 }
 .tippy-box[data-theme~='white'] .tt-title.disabled::after {
   content: '(not allowed here)';
+}
+.tippy-box[data-theme~='white'] .tt-title.locked::after {
+  content: '(locked)';
+}
+.tippy-box[data-theme~='white'] .tt-title.disabled::after,
+.tippy-box[data-theme~='white'] .tt-title.locked::after {
   color: red;
   font-style: italic;
   font-weight: 300;
@@ -916,6 +932,9 @@ body,
   font-weight: 100;
   margin-top: 8px;
   letter-spacing: 0.5px;
+}
+#splash-wrapper #disclaimer .asterisk {
+  font-family: serif;
 }
 #splash-wrapper #btn-begin {
   display: block;

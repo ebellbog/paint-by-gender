@@ -435,7 +435,7 @@ function updatePercentPainted(forceWin) {
         }
         flashAffirmation();
 
-        setTimeout(() => setGameMode(pbgGame.advanceGame()), 200);
+        setGameMode(pbgGame.advanceGame());
     }
 
     $('#percent-painted .slider-label').html(`${formattedPercent}% Painted`);
@@ -572,7 +572,7 @@ function setGameMode(mode) {
                 $body.removeClass('show-curtain');
 
                 setTimeout(() => setGameMode(GAME_MODE.starting), 600);
-            }), 1000);
+            }), 1200);
 
             break;
         case GAME_MODE.complete:
@@ -586,7 +586,7 @@ function setGameMode(mode) {
                     () => $body.addClass('show-overlay show-curtain'),
                     150
                 );
-            }), 900);
+            }), 1000);
             break;
         case GAME_MODE.failed:
             const {attempts} = pbgGame.currentChallenge;

@@ -100,8 +100,8 @@ const level2 = new PbgLevel(
     [
         new PbgChallenge({
             shape: SHAPES.curvyToy,
-            timeLimit: 60,
-            maxSpill: 15000,
+            timeLimit: 55,
+            maxSpill: 14000,
             enabledTools: [0, 1, 0],
             emojis: ['🤷‍♀️', '🤷‍♂️', '🤔'],
             tooltips: {
@@ -135,8 +135,8 @@ const level2 = new PbgLevel(
         }),
         new PbgChallenge({
             shape: SHAPES.boob,
-            timeLimit: 75,
-            maxSpill: 18000,
+            timeLimit: 55,
+            maxSpill: 15000,
             winPercent: .97,
             enabledTools: [0, 1, 0],
             emojis: ['🤡', '🤣'],
