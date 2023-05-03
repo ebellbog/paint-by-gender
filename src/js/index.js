@@ -420,7 +420,7 @@ function updatePercentPainted(forceWin) {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.messy;
         } else if (pbgGame.timer.timeRemaining < 5) {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.slow;
-        } else if (pbgGame.timer.percentElapsed < .33) {
+        } else if (pbgGame.timer.percentElapsed < .4) {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.fast;
         } else if (spillPercent < .35) {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.neat;
