@@ -11,8 +11,9 @@ class PbgLevel {
 
     // Optional config
 
-    winPercent = 1;
+    lockedTools = [];
     emojis = [];
+    winPercent = 1;
 
     // State
 
@@ -27,9 +28,13 @@ class PbgLevel {
 
         this.emojis = cfg.emojis;
 
-        if (cfg.winPercent) this.winPercent = cfg.winPercent;
+        this.winPercent = cfg.winPercent || this.winPercent;
+        this.lockedTools = cfg.lockedTools || this.lockedTools;
 
-        this.challenges.push(...challenges);
+        challenges.forEach((challenge) => {
+            challenge.lockedTools = this.lockedTools;
+            this.challenges.push(challenge);
+        });
     }
 
     reset() {

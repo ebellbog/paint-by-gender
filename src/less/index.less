@@ -46,6 +46,8 @@ body {
     opacity: 0;
     transition: opacity 1.5s;
     pointer-events: none;
+
+    overflow: hidden;
 }
 #menu-bar {
     position: absolute;
@@ -283,6 +285,7 @@ body, #layout, #menu-bar, #splash-screen {
         color: @purple;
         font-size: 85px;
         text-shadow: 5px 5px 0 white;
+        text-align: center;
     }
 }
 
@@ -562,7 +565,7 @@ body, #layout, #menu-bar, #splash-screen {
             border-top: @borderWidth solid darken(@purple, 10%);
             border-left: @borderWidth solid darken(@purple, 10%);
         }
-        &.disabled {
+        &.disabled, &.locked {
             @disabledLight: lighten(desaturate(@btnColor, 15%), 10%);
             @disabledDark: darken(@disabledLight, 9%);
 
@@ -588,7 +591,7 @@ body, #layout, #menu-bar, #splash-screen {
 
             filter: brightness(1.15) saturate(0.65);
         }
-        &:hover:not(.active, .disabled) {
+        &:hover:not(.active, .disabled, .locked) {
             background-color: lighten(@btnColor, 12%);
         }
 
@@ -756,7 +759,7 @@ body, #layout, #menu-bar, #splash-screen {
 
         font-size: 1.2em;
         font-weight: 100;
-        letter-spacing: 1px;
+        letter-spacing: .7px;
         line-height: 1.2em;
 
         padding: 6px;
@@ -764,6 +767,13 @@ body, #layout, #menu-bar, #splash-screen {
 
         strong {
             font-weight: 400;
+        }
+
+        div {
+            margin: 5px 0;
+            &:last-child {
+                margin-bottom: 0;
+            }
         }
 
         &[data-placement^='bottom']>.tippy-arrow {
@@ -835,6 +845,11 @@ body, #layout, #menu-bar, #splash-screen {
 
             &.disabled::after {
                 content: '(not allowed here)';
+            }
+            &.locked::after {
+                content: '(locked)';
+            }
+            &.disabled::after, &.locked::after {
                 color: red;
 
                 font-style: italic;
@@ -1101,6 +1116,10 @@ body, #layout, #menu-bar, #splash-screen {
         font-weight: 100;
         margin-top: 8px;
         letter-spacing: .5px;
+
+        .asterisk {
+            font-family: serif;
+        }
     }
 
     #btn-begin {

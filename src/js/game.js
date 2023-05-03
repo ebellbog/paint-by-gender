@@ -161,6 +161,10 @@ class PbgGame {
         return (challenge || this.currentChallenge).enabledTools[idx];
     }
 
+    isToolLocked(idx) {
+        return !!this.currentLevel.lockedTools[idx];
+    }
+
     // Getters & setters
 
     getAffirmation() {

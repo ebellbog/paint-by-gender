@@ -15,6 +15,7 @@ class PbgChallenge {
     maxUndos = 3;
     winPercent = 0;
     emojis = [];
+    lockedTools = [];
 
     // State
 
@@ -73,14 +74,20 @@ class PbgChallenge {
         if (!this.tooltips) return;
 
         Object.entries(this.tooltips).map(([ttId, ttContent], idx) => {
+            const isLocked = this.lockedTools[idx];
+            const isDisabled = this.enabledTools[idx] === 0;
+            const modifierClass = (isLocked) ? ' locked' :
+                (isDisabled) ? ' disabled' : '';
+
             let formattedContent =
                 `<div class="tt-title
                 ${idx === 0 ? ' text-pink' : ''}
                 ${idx === 1 ? ' text-blue' : ''}
-                ${this.enabledTools[idx] === 0 ? ' disabled' : ''}">
-                ${ttContent[0]}
+                ${modifierClass}">
+                ${isLocked ? '???' : ttContent[0]}
                 </div>`;
             if (ttContent[1]) formattedContent += `<hr><div class="tt-body">${ttContent[1]}</div>`;
+
             $(`#${ttId}`).attr('data-tippy-content', formattedContent);
         });
 

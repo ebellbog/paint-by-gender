@@ -33,7 +33,7 @@ import levelData from './config';
 
 /* Global state */
 
-const TOOLTIP_DURATION = 3600;
+const TOOLTIP_DURATION = 2800;
 const SPILL_DANGER_THRESHOLD = .75;
 
 const pbgGame = new PbgGame(levelData);
@@ -422,18 +422,20 @@ function updatePercentPainted(forceWin) {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.slow;
         } else if (pbgGame.timer.percentElapsed < .33) {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.fast;
-        } else if (spillPercent < .33) { // maybe lower?
+        } else if (spillPercent < .35) {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.neat;
-        } else if (pbgGame.currentChallenge.attempts > 2) {
+        } else if (pbgGame.currentChallenge.attempts >= 2) {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.nthTry;
-        } else if (percentPainted < 98.5) {
-            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.incomplete
+        } else if (pbgGame.currentLevel.challengeIdx === 0 && pbgGame.currentChallenge.attempts === 0) {
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.firstTry;
+        } else if (percentPainted < .985) {
+            pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.incomplete;
         } else {
             pbgGame.outcomeDescriptor = OUTCOME_DESCRIPTOR.default;
         }
         flashAffirmation();
 
-        setGameMode(pbgGame.advanceGame());
+        setTimeout(() => setGameMode(pbgGame.advanceGame()), 200);
     }
 
     $('#percent-painted .slider-label').html(`${formattedPercent}% Painted`);
@@ -651,13 +653,13 @@ function flashExpanding(message, duration, options) {
     const $number = $('<div></div>')
         .addClass(className)
         .html(message)
-        .appendTo('td#main');
+        .appendTo('#main');
 
     setTimeout(() => $number.animate({ 'font-size': `+=${expand}`, opacity: 0 }, duration - hold, () => $number.remove()), hold);
 }
 
 function flashAffirmation() {
-    flashExpanding(pbgGame.getAffirmation(), 800, { hold: 400, styling: 'small', expand: 200 });
+    flashExpanding(pbgGame.getAffirmation(), 1000, {hold: 600, styling: 'small', expand: 200});
 }
 
 function flashStationary(message, duration, fade) {
@@ -691,7 +693,11 @@ function updateToolOptions() {
     $('#galbrush-options').toggle(!isQuantized);
 
     $('[data-group="toolType"] .tool').each((idx, el) => {
-        $(el).toggleClass('disabled', !pbgGame.isToolEnabled(idx));
+        const isLocked = pbgGame.isToolLocked(idx);
+        const isDisabled = !pbgGame.isToolEnabled(idx);
+        $(el)
+            .toggleClass('disabled', isDisabled && !isLocked)
+            .toggleClass('locked', isLocked);
     });
 }
 
